@@ -825,6 +825,7 @@ pinPayload =
         |> with (Schema.Object.Tension.createdBy identity <| SelectionSet.map Username Schema.Object.User.username)
         |> with Schema.Object.Tension.type_
         |> with Schema.Object.Tension.status
+        |> with (Schema.Object.Tension.labels identity labelPayload)
 
 
 

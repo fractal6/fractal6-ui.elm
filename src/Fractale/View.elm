@@ -228,11 +228,19 @@ viewPin session focus origin tension =
                     [ tensionIcon tension.type_ ]
                 ]
             , div [ class "media-content" ]
-                [ a
-                    [ class "has-text-weight-semibold is-human discrete-link "
-                    , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
+                [ div [ class "content mb-1" ]
+                    [ a
+                        [ class "has-text-weight-semibold is-human discrete-link "
+                        , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
+                        ]
+                        [ text tension.title ]
+                    , case tension.labels of
+                        Just labels ->
+                            viewLabels (Just focus.nameid) labels
+
+                        Nothing ->
+                            text ""
                     ]
-                    [ text tension.title ]
                 , div [ class "is-smaller2 mt-2" ]
                     [ span
                         [ title (tensionStatus2str tension.status)

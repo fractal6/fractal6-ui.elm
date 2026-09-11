@@ -217,6 +217,7 @@ type alias PinTension =
     , createdBy : Username
     , type_ : TensionType.TensionType
     , status : TensionStatus.TensionStatus
+    , labels : Maybe (List Label)
     }
 
 
@@ -228,6 +229,7 @@ tensionHead2Pin th =
     , createdBy = th.createdBy
     , type_ = th.type_
     , status = th.status
+    , labels = th.labels
     }
 
 
