@@ -1150,7 +1150,7 @@ viewHeader lexicon isAdmin isEdited col =
                                     , onClick (OpenTensionPane (Just { id = col.id, cards_len = List.length col.cards }))
                                     ]
                                     [ A.icon1 "icon-plus" (T.addTensionColumn lexicon) ]
-                                , hr [ class "dropdown-divider my-4" ] []
+                                , hr [ class "dropdown-divider my-2" ] []
                                 , div [ class "dropdown-item button-light", onClick (OnDeleteColumn col.id) ]
                                     [ A.icon1 "icon-trash" T.deleteColumn ]
                                 , div [ class "dropdown-item button-light is-danger", onClick (OnRemoveColItems col.id) ]

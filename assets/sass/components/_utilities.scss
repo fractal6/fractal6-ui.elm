@@ -284,6 +284,10 @@ a {
         border: 1px solid var(--link2);
     }
 }
+a.tag-circle {
+    color: var(--bulma-link) !important;
+    &:hover { color: var(--bulma-link-bold); }
+}
 
 // @fix bulma
 .is-active {

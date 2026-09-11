@@ -172,7 +172,7 @@ viewCircleTarget : FractalBaseRoute -> CommonMsg msg -> String -> EmitterOrRecei
 viewCircleTarget baseUri commonOp cls er =
     case nid2type er.nameid of
         NodeType.Circle ->
-            span [ class ("tag tag-circle is-rounded is-wrapped " ++ cls) ] [ viewNodeRef False baseUri er ]
+            viewNodeRef False ("tag tag-circle is-rounded " ++ cls) baseUri er
 
         NodeType.Role ->
             viewRole ("is-tiny is-wrapped " ++ cls) False False Nothing (Just <| toLink baseUri er.nameid []) (\_ _ _ -> commonOp.noMsg) (eor2ur er)
@@ -187,10 +187,10 @@ viewTensionArrow : Bool -> String -> EmitterOrReceiver -> EmitterOrReceiver -> H
 viewTensionArrow t_blank cls emitter receiver =
     span [ class cls ]
         [ span [ class "is-small is-inverted is-static is-weak" ]
-            [ viewNodeRef t_blank OverviewBaseUri emitter ]
+            [ viewNodeRef t_blank "" OverviewBaseUri emitter ]
         , span [ class "arrow-right" ] []
         , span [ class "is-small is-inverted is-static" ]
-            [ viewNodeRef t_blank OverviewBaseUri receiver ]
+            [ viewNodeRef t_blank "" OverviewBaseUri receiver ]
         ]
 
 
@@ -243,8 +243,7 @@ viewPin session focus origin tension =
                 ]
             , case origin of
                 Just c ->
-                    span [ class "ml-2 tag is-rounded is-small media-right" ]
-                        [ viewNodeRef False OverviewBaseUri c ]
+                    viewNodeRef False "tag tag-circle is-rounded is-small ml-2 media-right" OverviewBaseUri c
 
                 Nothing ->
                     A.icon "icon-pin is-weak"
@@ -741,8 +740,8 @@ viewNodeDescr inPanel node =
                 ]
 
 
-viewNodeRef : Bool -> FractalBaseRoute -> EmitterOrReceiver -> Html msg
-viewNodeRef t_blank baseUri n =
+viewNodeRef : Bool -> String -> FractalBaseRoute -> EmitterOrReceiver -> Html msg
+viewNodeRef t_blank cls baseUri n =
     let
         ref =
             if n.role_type == Just RoleType.Member then
@@ -758,7 +757,7 @@ viewNodeRef t_blank baseUri n =
             else
                 []
     in
-    a ([ href ref, class "is-wrapped" ] ++ more) [ text n.name ]
+    a ([ href ref, class ("is-wrapped " ++ cls) ] ++ more) [ text n.name ]
 
 
 viewNodeRefShort : FractalBaseRoute -> String -> Html msg
