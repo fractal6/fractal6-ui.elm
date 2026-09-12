@@ -486,6 +486,25 @@ test('a token refresh updates ownership styling without repacking or canceling m
     expect(gp.motionTimer).toBe(active);
 });
 
+test('the in-circle cards box matches the focused circle, including canvas offsets', () => {
+    const { gp } = graph([circle('org', null)], 'org');
+    const cards = document.createElement('div');
+    cards.id = 'canvasCards';
+    cards.className = 'is-invisible';
+    gp.$canvasParent.appendChild(cards);
+    gp.$canvas.getBoundingClientRect = () => ({ left: 80, top: 70, width: 600, height: 444 });
+    gp.$canvasParent.getBoundingClientRect = () => ({ left: 20, top: 40 });
+
+    gp.drawButtons();
+
+    const { centerX, centerY, rayon } = gp.focusedNode.ctx;
+    expect(parseFloat(cards.style.width)).toBeCloseTo(2 * rayon);
+    expect(parseFloat(cards.style.height)).toBeCloseTo(2 * rayon);
+    expect(parseFloat(cards.style.left) + rayon).toBeCloseTo(centerX + 60);
+    expect(parseFloat(cards.style.top) + rayon).toBeCloseTo(centerY + 30);
+    expect(cards.classList.contains('is-invisible')).toBe(false);
+});
+
 test.each([
     ['org#a', 'org#a', 167],
     ['org#a', 'org', 127],

@@ -154,6 +154,7 @@ export const GraphPack = {
     rayon: null,
     zoomCtx: null,
     circlesPadding: 4, // 1.8
+    minCardsSide: 220, // below that, the in-circle action cards are not shown
     fontsizeCircle_start: 22,
     fontsizeRole_start: 19,
     fontstyleCircle: "Cantarell, Quicksand, Roboto, Lato, Ubuntu, Open Sans, Oxygen, sans-serif, fractaleicon",
@@ -252,7 +253,31 @@ export const GraphPack = {
         this.$canvasButtons.style.top = offsetTop + buttonMargin + "px";
         this.$canvasButtons.classList.remove("is-invisible");
 
+        this.placeCanvasCards();
+
         // The tooltip stays hidden until its current node has been positioned.
+    },
+
+    // Fit the action cards box (Elm, empty focused circle only) on the focused circle; the cards draw themselves
+    placeCanvasCards() {
+        var $cards = document.getElementById('canvasCards');
+        if (!$cards) return
+        var node = this.focusedNode;
+        if (!node || this.isZooming || !this.$canvas) return this.clearCanvasCards()
+        this.addNodeCtx(node);
+        var side = 2 * node.ctx.rayon;
+        if (side < this.minCardsSide) return this.clearCanvasCards()
+        var r = this.$canvas.getBoundingClientRect();
+        var p = this.$canvasParent.getBoundingClientRect();
+        $cards.style.width = $cards.style.height = side + "px";
+        $cards.style.left = (node.ctx.centerX + (r.left - p.left) - side / 2) + "px";
+        $cards.style.top = (node.ctx.centerY + (r.top - p.top) - side / 2) + "px";
+        $cards.classList.remove("is-invisible");
+    },
+
+    clearCanvasCards() {
+        var $cards = document.getElementById('canvasCards');
+        if ($cards) $cards.classList.add("is-invisible");
     },
 
     // Size the canvas
@@ -832,6 +857,7 @@ export const GraphPack = {
         this.hoveredNode = null;
         this.clearContextMenu();
         this.clearNodeTooltip();
+        this.clearCanvasCards();
         this.nodeHoveredFromJs(null);
 
         var visible = new Set(this.visibleNodes());
@@ -901,7 +927,10 @@ export const GraphPack = {
             this.exitingNodes = [];
         }
         this.drawCanvas();
-        if (t === 1) this.drawNodeHover(this.focusedNode, true);
+        if (t === 1) {
+            this.drawNodeHover(this.focusedNode, true);
+            this.placeCanvasCards();
+        }
     },
 
     normalizeFocusId(focusid) {
@@ -1472,6 +1501,7 @@ export const GraphPack = {
                 this.computeGeometry();
                 this.sizeDom();
                 this.clearNodeTooltip();
+                this.clearCanvasCards();
                 this.drawCanvas();
             };
 

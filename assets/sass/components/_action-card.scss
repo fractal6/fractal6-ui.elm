@@ -35,6 +35,19 @@
     }
 }
 
+// Icon and title on one row, description below.
+.action-card.is-stacked {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    align-content: center;
+    gap: 0.25rem 0.4rem;
+
+    .media-left { margin: 0; }
+    .media-content { display: contents; }
+    .media-content > :last-child { grid-column: 1 / -1; }
+}
+
 .action-card-icon {
     display: flex;
     align-items: center;

@@ -55,16 +55,19 @@ import Schema.Enum.RoleType as RoleType
 import Utils.Maybe exposing (mor)
 
 
-isFreshOrga : NodesDict -> Bool
-isFreshOrga data =
-    (Dict.filter
-        (\k v ->
-            v.role_type /= Just RoleType.Owner && v.role_type /= Just RoleType.Pending
-        )
-        data
-        |> Dict.size
-    )
-        == 1
+{-| Nothing is packed inside the root circle: Owner/Member roles are not drawn (see formatGraph
+in graphpack\_d3.js), and the orga query filters them out of the tree anyway.
+-}
+isFreshOrga : String -> NodesDict -> Bool
+isFreshOrga rootnameid data =
+    data
+        |> Dict.filter
+            (\_ n ->
+                (Maybe.map .nameid n.parent == Just rootnameid)
+                    && (n.role_type /= Just RoleType.Owner)
+                    && (n.role_type /= Just RoleType.Member)
+            )
+        |> Dict.isEmpty
 
 
 countOpenTensions : NodesDict -> Int

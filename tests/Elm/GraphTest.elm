@@ -5,7 +5,7 @@ import Components.TreeMenu as TreeMenu
 import Dict
 import Expect
 import Fractale.Codecs exposing (FractalBaseRoute(..), focusFromNameid)
-import Fractale.Graph exposing (withDescendants)
+import Fractale.Graph exposing (isFreshOrga, withDescendants)
 import Fractale.HotUpdate exposing (hotNodeMove)
 import Fractale.User exposing (UserState(..))
 import Html
@@ -15,6 +15,7 @@ import ModelSchema exposing (NodesDict, initNode, initUserctx)
 import Org.Overview exposing (viewActionPanel)
 import Ports
 import Schema.Enum.Lang as Lang
+import Schema.Enum.RoleType as RoleType
 import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Test exposing (Test, describe, test)
 import Test.Html.Query as Query
@@ -81,6 +82,43 @@ withDescendantsTests =
             \_ ->
                 withDescendants [ "org#c1" ] NotAsked
                     |> Expect.equal [ "org#c1" ]
+        ]
+
+
+freshOrgaTests : Test
+freshOrgaTests =
+    let
+        withRole role_type =
+            Dict.insert "org#@bob"
+                { initNode | nameid = "org#@bob", parent = Just { nameid = "org", source = Nothing }, role_type = Just role_type }
+    in
+    describe "isFreshOrga"
+        [ test "the root alone is fresh" <|
+            \_ ->
+                tree [ ( "org", Nothing ) ]
+                    |> withDefaultData Dict.empty
+                    |> isFreshOrga "org"
+                    |> Expect.equal True
+        , test "a child of the root is not" <|
+            \_ ->
+                orga
+                    |> withDefaultData Dict.empty
+                    |> isFreshOrga "org"
+                    |> Expect.equal False
+        , test "membership roles are not drawn, they keep the root fresh" <|
+            \_ ->
+                tree [ ( "org", Nothing ) ]
+                    |> withDefaultData Dict.empty
+                    |> withRole RoleType.Owner
+                    |> isFreshOrga "org"
+                    |> Expect.equal True
+        , test "any other role fills the root" <|
+            \_ ->
+                tree [ ( "org", Nothing ) ]
+                    |> withDefaultData Dict.empty
+                    |> withRole RoleType.Peer
+                    |> isFreshOrga "org"
+                    |> Expect.equal False
         ]
 
 

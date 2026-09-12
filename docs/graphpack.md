@@ -113,12 +113,23 @@ an item is not an outside click; the lock is only released by `ActionPanel.OnClo
 (`CLEAR_CONTEXT_MENU`): click outside, click on the tooltip, or the item's
 modal / move closing.
 
-A freshly created organisation shows `#welcomeCards` (action cards for new
-tension, new project, circle, role) above the canvas. Once the root has other
-nodes, the cards hide; a grid icon in `#canvasButtons` toggles them. The project
-card goes to `/p/{nameid}?new=1`, which `Org.Projects` reads to open the create form.
-Cards use the shared [ActionCard component](action-cards.md), also used by both
-post-signup welcome screens.
+Onboarding action cards (new tension, project, circle, role) advertise what can be
+done in the focused node. They live in two mutually exclusive places:
+
+- `#canvasCards` — on a fresh orga (root circle with nothing packed inside, the only
+  empty circle that is zoomed into, see `setZoomed`), the cards occupy its quarters
+  (`Graph.isFreshOrga`). `placeCanvasCards` only sizes the 2x2 box to the circle and
+  hides it during zoom or when too small. Each card paints its own surface with a
+  unit-`viewBox` SVG from `Assets.Shapes` (`quarterDisc`: inset and fillets as fractions
+  of the cell, hence proportional to the circle). CSS (`_canvas.scss`) only positions the SVG behind the
+  button and uses its fill/stroke for hover and keyboard focus. Cards use the
+  `ActionCard` `is-stacked` layout (icon and title in a row, description below).
+- `#welcomeCards` — above the canvas otherwise, toggled by the grid icon in
+  `#canvasButtons`.
+
+Both take the focused node as target; the project card goes to `/p/{nameid}?new=1`,
+which `Org.Projects` reads to open the create form. Cards use the shared
+[ActionCard component](action-cards.md), also used by both post-signup welcome screens.
 
 The canvas is focusable (`tabindex=0`) and `canvasKeyDownEvent` navigates from
 the keyboard: ←/→ cycle siblings, ↓/Enter dive into the first child, ↑/Esc/
@@ -145,7 +156,9 @@ caps, sibling stop level, role factors, transform inversion).
 `tests/Js/graphpackPorts.test.js` exercises the real canvas renderer with controlled
 D3 timers: deterministic packing, encoded focus and move mapping, tooltip placement,
 endpoints, interruptions, exits, reduced motion, interaction pauses, resize/reverse,
-initialization races, cleanup, and recolor-only refreshes. Hover checks cover
+initialization races, cleanup, recolor-only refreshes, and the in-circle cards box
+placement. Hover checks cover
 frame-coalesced replacement, action gating, node entry, tooltip handoff and menu freezing.
 `tests/Elm/GraphTest.elm` covers subtree discovery, atomic moves, snapshot-scoped
 rename payloads, authoritative reconciliation, drag-modal activation and the tooltip menu nesting.
+`tests/Elm/ShapesTest.elm` checks the quarter-disc path geometry (arc radius, inset, symmetry).

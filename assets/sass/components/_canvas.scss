@@ -220,6 +220,62 @@
     }
 }
 
+// Onboarding action cards filling an empty focused circle, one quarter each.
+// graphpack_d3.js sizes this box to the circle; each card paints its surface with an SVG (Assets.Shapes).
+#canvasCards {
+    position: absolute;
+    display: grid;
+    grid-template: repeat(2, minmax(0, 1fr)) / repeat(2, minmax(0, 1fr));
+    pointer-events: none;
+
+    .canvas-card {
+        position: relative;
+        isolation: isolate;
+
+        // Pull the content clear of the outer arc, toward the circle center.
+        &:nth-child(1) .action-card { padding: 28% 6% 6% 28%; }
+        &:nth-child(2) .action-card { padding: 28% 28% 6% 8%; }
+        &:nth-child(3) .action-card { padding: 6% 6% 28% 28%; }
+        &:nth-child(4) .action-card { padding: 6% 28% 28% 8%; }
+    }
+
+    svg {
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        overflow: visible;
+        fill: var(--node-tooltip-background);
+        stroke: var(--border-color-light);
+        stroke-width: 1;
+        transition: fill 0.15s ease;
+
+        // Unit viewBox: keep the stroke in CSS pixels (not inherited, so on the shape itself)
+        > * { vector-effect: non-scaling-stroke; }
+    }
+
+    .canvas-card:hover svg { fill: var(--background-hover-discrete); }
+    // The surface is the focus ring: the button's rectangular outline would cross the gutters.
+    .canvas-card:has(:focus-visible) svg { stroke: var(--link2); stroke-width: 2; }
+
+    .action-card.box {
+        pointer-events: auto;
+        min-height: 0;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        font-size: 1rem;
+        line-height: 1.2;
+
+        &:focus-visible { outline: none; }
+    }
+
+    .action-card-icon {
+        width: 1.6rem;
+        height: 1.6rem;
+        font-size: 1rem;
+    }
+}
+
 #canvasButtons {
     position: absolute;
     //display: flex;

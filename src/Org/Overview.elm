@@ -24,6 +24,7 @@ port module Org.Overview exposing (Flags, Model, Msg, init, page, subscriptions,
 import Array
 import Assets as A
 import Assets.Logo as Logo
+import Assets.Shapes as Shapes
 import Auth exposing (ErrState(..), getNodeRights, hasLazyAdminRole, parseErr)
 import Browser.Events as Events
 import Browser.Navigation as Nav
@@ -1326,9 +1327,11 @@ view_ global model =
         user =
             global.session.common.user
 
-        -- A fresh orga (root alone) shows the welcome cards, otherwise they are toggled from the canvas buttons.
+        -- The root circle of a fresh orga is the only empty circle graphpack zooms into (see
+        -- setZoomed): it hosts the cards itself, deeper empty circles stay small in their parent.
         isFresh =
-            withMaybeData model.tree_data |> withDefault Dict.empty |> isFreshOrga
+            (model.node_focus.nameid == model.node_focus.rootnameid)
+                && (withMaybeData model.tree_data |> unwrap False (isFreshOrga model.node_focus.rootnameid))
 
         focus_m =
             getNode model.node_focus.nameid model.tree_data
@@ -1383,7 +1386,8 @@ view_ global model =
         [ ( "canvas-column"
           , div [ class "column is-6 is-5-fullhd" ]
                 [ --viewQuickSearchBar global.session.common.user model
-                  showIf (isFresh || model.welcomeOpen) <|
+                  -- A fresh orga hosts the cards in its circle, never both at once.
+                  showIf (model.welcomeOpen && not isFresh) <|
                     viewWelcomeCards (isOrgaAdmin user model) model
                 , viewCanvas user isFresh model
                 , viewFromPos model.window_pos.bottomLeft
@@ -1633,6 +1637,7 @@ viewCanvas us isFresh model =
         , div [ id "canvasResizer" ] []
         , div [ id "canvasResizerV", class "is-hidden-mobile" ] []
         , div [ id "canvasResizerC", class "is-hidden-mobile" ] []
+        , showIf isFresh <| viewCanvasCards isAdmin model
 
         {- Hidden classes use in graphpack_d3.js -}
         --
@@ -1771,6 +1776,28 @@ isOrgaAdmin us model =
 -}
 viewWelcomeCards : Bool -> Model -> Html Msg
 viewWelcomeCards isAdmin model =
+    div [ id "welcomeCards", class "columns is-multiline" ]
+        (welcomeCards isAdmin model |> List.map (\card -> div [ class "column is-half" ] [ ActionCard.view [] card ]))
+
+
+{-| Same actions, as quarters of the empty focused circle. Each card draws its own surface
+in a unit SVG scaled to its cell, so graphpack\_d3.js only sizes and centers the container.
+-}
+viewCanvasCards : Bool -> Model -> Html Msg
+viewCanvasCards isAdmin model =
+    div [ id "canvasCards", class "is-invisible" ]
+        (welcomeCards isAdmin model
+            -- Spacing (between cards and to the circle) and fillet radius, as fractions of a quarter.
+            |> List.indexedMap
+                (\i card ->
+                    div [ class "canvas-card" ]
+                        [ Shapes.quarterDisc 0.06 0.06 i, ActionCard.view [ class "is-stacked" ] card ]
+                )
+        )
+
+
+welcomeCards : Bool -> Model -> List (ActionCard.Config Msg)
+welcomeCards isAdmin model =
     let
         p =
             case model.path_data of
@@ -1812,21 +1839,18 @@ viewWelcomeCards isAdmin model =
             , action = ActionCard.Click (NewTensionMsg <| NTF.OnOpenRole p)
             }
     in
-    div [ id "welcomeCards", class "columns is-multiline" ]
-        (tensionCard
-            :: (if isAdmin then
-                    -- Roles have no children
-                    if model.node_focus.type_ == NodeType.Circle then
-                        [ projectCard, circleCard, roleCard ]
-
-                    else
-                        [ projectCard ]
+    tensionCard
+        :: (if isAdmin then
+                -- Roles have no children
+                if model.node_focus.type_ == NodeType.Circle then
+                    [ projectCard, circleCard, roleCard ]
 
                 else
-                    []
-               )
-            |> List.map (\card -> div [ class "column is-half" ] [ ActionCard.view [] card ])
-        )
+                    [ projectCard ]
+
+            else
+                []
+           )
 
 
 viewChildrenExplorer : Model -> Html Msg

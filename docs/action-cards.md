@@ -18,7 +18,8 @@ ActionCard.view []
 
 `assets/sass/components/_action-card.scss` owns the shared appearance. It neutralizes
 Bulma's link-only box shadows, uses theme tokens, and keeps an explicit keyboard focus
-outline for both links and buttons.
+outline for both links and buttons. The `is-stacked` modifier puts icon and title on one
+row with the description below (used inside the graphpack circle).
 
 ## Signup welcome
 
