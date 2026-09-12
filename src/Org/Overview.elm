@@ -1383,7 +1383,7 @@ view_ global model =
         [ ( "canvas-column"
           , div [ class "column is-6 is-5-fullhd" ]
                 [ --viewQuickSearchBar global.session.common.user model
-                  showIf (model.node_focus.nameid == model.node_focus.rootnameid && (isFresh || model.welcomeOpen)) <|
+                  showIf (isFresh || model.welcomeOpen) <|
                     viewWelcomeCards (isOrgaAdmin user model) model
                 , viewCanvas user isFresh model
                 , viewFromPos model.window_pos.bottomLeft
@@ -1664,7 +1664,7 @@ viewCanvas us isFresh model =
                     else
                         []
                    )
-                ++ (if model.node_focus.nameid == model.node_focus.rootnameid && not isFresh then
+                ++ (if not isFresh then
                         [ button
                             [ class "button"
                             , type_ "button"
@@ -1815,7 +1815,12 @@ viewWelcomeCards isAdmin model =
     div [ id "welcomeCards", class "columns is-multiline" ]
         (tensionCard
             :: (if isAdmin then
-                    [ projectCard, circleCard, roleCard ]
+                    -- Roles have no children
+                    if model.node_focus.type_ == NodeType.Circle then
+                        [ projectCard, circleCard, roleCard ]
+
+                    else
+                        [ projectCard ]
 
                 else
                     []
