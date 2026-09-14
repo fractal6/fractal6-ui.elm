@@ -408,9 +408,9 @@ buildAddCommentInput required____ fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { updatedAt = Absent, message = Absent, reactions = Absent, files = Absent }
+                { updatedAt = Absent, message = Absent, reactions = Absent, files = Absent, expected_attachments = Absent }
     in
-    AddCommentInput { createdBy = required____.createdBy, createdAt = required____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, reactions = optionals____.reactions, files = optionals____.files }
+    AddCommentInput { createdBy = required____.createdBy, createdAt = required____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, reactions = optionals____.reactions, files = optionals____.files, expected_attachments = optionals____.expected_attachments }
 
 
 type alias AddCommentInputRequiredFields =
@@ -424,6 +424,7 @@ type alias AddCommentInputOptionalFields =
     , message : OptionalArgument String
     , reactions : OptionalArgument (List ReactionRef)
     , files : OptionalArgument (List FileRef)
+    , expected_attachments : OptionalArgument Int
     }
 
 
@@ -439,6 +440,7 @@ type alias AddCommentInputRaw =
     , message : OptionalArgument String
     , reactions : OptionalArgument (List ReactionRef)
     , files : OptionalArgument (List FileRef)
+    , expected_attachments : OptionalArgument Int
     }
 
 
@@ -453,7 +455,7 @@ type AddCommentInput
 encodeAddCommentInput : AddCommentInput -> Value
 encodeAddCommentInput (AddCommentInput input____) =
     Encode.maybeObject
-        [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "reactions", (encodeReactionRef |> Encode.list) |> Encode.optional input____.reactions ), ( "files", (encodeFileRef |> Encode.list) |> Encode.optional input____.files ) ]
+        [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "reactions", (encodeReactionRef |> Encode.list) |> Encode.optional input____.reactions ), ( "files", (encodeFileRef |> Encode.list) |> Encode.optional input____.files ), ( "expected_attachments", Encode.int |> Encode.optional input____.expected_attachments ) ]
 
 
 buildAddContractInput :
@@ -2641,9 +2643,9 @@ buildCommentPatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, reactions = Absent, files = Absent }
+                { createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, reactions = Absent, files = Absent, expected_attachments = Absent }
     in
-    CommentPatch { createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, reactions = optionals____.reactions, files = optionals____.files }
+    CommentPatch { createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, reactions = optionals____.reactions, files = optionals____.files, expected_attachments = optionals____.expected_attachments }
 
 
 type alias CommentPatchOptionalFields =
@@ -2653,6 +2655,7 @@ type alias CommentPatchOptionalFields =
     , message : OptionalArgument String
     , reactions : OptionalArgument (List ReactionRef)
     , files : OptionalArgument (List FileRef)
+    , expected_attachments : OptionalArgument Int
     }
 
 
@@ -2668,6 +2671,7 @@ type alias CommentPatchRaw =
     , message : OptionalArgument String
     , reactions : OptionalArgument (List ReactionRef)
     , files : OptionalArgument (List FileRef)
+    , expected_attachments : OptionalArgument Int
     }
 
 
@@ -2682,7 +2686,7 @@ type CommentPatch
 encodeCommentPatch : CommentPatch -> Value
 encodeCommentPatch (CommentPatch input____) =
     Encode.maybeObject
-        [ ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "reactions", (encodeReactionRef |> Encode.list) |> Encode.optional input____.reactions ), ( "files", (encodeFileRef |> Encode.list) |> Encode.optional input____.files ) ]
+        [ ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "reactions", (encodeReactionRef |> Encode.list) |> Encode.optional input____.reactions ), ( "files", (encodeFileRef |> Encode.list) |> Encode.optional input____.files ), ( "expected_attachments", Encode.int |> Encode.optional input____.expected_attachments ) ]
 
 
 buildCommentRef :
@@ -2692,9 +2696,9 @@ buildCommentRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, reactions = Absent, files = Absent }
+                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, reactions = Absent, files = Absent, expected_attachments = Absent }
     in
-    CommentRef { id = optionals____.id, createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, reactions = optionals____.reactions, files = optionals____.files }
+    CommentRef { id = optionals____.id, createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, reactions = optionals____.reactions, files = optionals____.files, expected_attachments = optionals____.expected_attachments }
 
 
 type alias CommentRefOptionalFields =
@@ -2705,6 +2709,7 @@ type alias CommentRefOptionalFields =
     , message : OptionalArgument String
     , reactions : OptionalArgument (List ReactionRef)
     , files : OptionalArgument (List FileRef)
+    , expected_attachments : OptionalArgument Int
     }
 
 
@@ -2721,6 +2726,7 @@ type alias CommentRefRaw =
     , message : OptionalArgument String
     , reactions : OptionalArgument (List ReactionRef)
     , files : OptionalArgument (List FileRef)
+    , expected_attachments : OptionalArgument Int
     }
 
 
@@ -2735,7 +2741,7 @@ type CommentRef
 encodeCommentRef : CommentRef -> Value
 encodeCommentRef (CommentRef input____) =
     Encode.maybeObject
-        [ ( "id", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "reactions", (encodeReactionRef |> Encode.list) |> Encode.optional input____.reactions ), ( "files", (encodeFileRef |> Encode.list) |> Encode.optional input____.files ) ]
+        [ ( "id", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "reactions", (encodeReactionRef |> Encode.list) |> Encode.optional input____.reactions ), ( "files", (encodeFileRef |> Encode.list) |> Encode.optional input____.files ), ( "expected_attachments", Encode.int |> Encode.optional input____.expected_attachments ) ]
 
 
 buildContainsFilter :

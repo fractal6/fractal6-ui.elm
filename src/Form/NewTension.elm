@@ -247,7 +247,7 @@ initModel session =
     , projectsPanel = ProjectSearchPanel.init "" SelectProject session.user
     , selectedProjects = []
     , inviteInput = UserInput.init [] True False session
-    , comments = Comments.init "" "" session
+    , comments = Comments.init "" "" session |> Comments.setPasteTargets Comments.modalEditors
     }
 
 
@@ -1334,6 +1334,7 @@ update_ apis message model =
                 in
                 ( newModel
                     |> post "createdAt" (fromTime time)
+                    |> post "nfiles" (String.fromInt (Comments.stagedCount "textAreaModal" model.comments))
                     |> setEvents events
                     |> setStatus (ternary doClose TensionStatus.Closed TensionStatus.Open)
                     |> setActiveButton doClose

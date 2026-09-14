@@ -42,6 +42,11 @@ The first two carriers live inside `Comments.elm`, so the handoff is automatic
 (`handoffPendingForNewComment` / `handoffPendingToCid`). A page owning its own carrier calls
 `kickoffUploads` itself once its mutation succeeds.
 
+The carrier also declares **how many** files are coming (never which): `Comments.stagedCount`
+puts the count in the form post as `nfiles`, and `Query.AddTension.expectedAttachments` maps it
+to `Comment.expected_attachments` (omitted when 0). The backend holds the notification email
+until that many files have landed, so an attachment-free comment notifies immediately.
+
 Uploads then drain **serially per cid** (`drainNext`, `Model.activeByCid`): the backend
 rewrites the `![…](filename)` placeholders inside `Comment.message` on every upload, a
 read-modify-write that concurrent uploads would lose.
@@ -50,6 +55,12 @@ read-modify-write that concurrent uploads would lose.
 
 Textareas carry `data-paste-capture="true"`; a single document-level `paste` listener in
 `assets/js/ports.js` forwards clipboard files to Elm with the textarea id.
+
+That port is a broadcast: every mounted `Comments` instance receives it (a tension page and
+the New Tension modal are subscribed at the same time). Each instance therefore only accepts
+the editors it renders — `Model.pasteTargets`, defaulting to `threadEditors`, overridden with
+`setPasteTargets Comments.modalEditors` by the modal components. Without it the same paste is
+inserted twice in the same textarea.
 
 That JS step is **the source of truth for the filename**: it rebuilds each clipboard `File` as
 `paste-<timestamp>-<i><ext>` and creates the `blob:` object URL. The name must match between
@@ -93,3 +104,4 @@ manual removal, and placeholder pruning.
 | `assets/js/ports.js` | Paste capture, `INSERT_AT_CARET` |
 | `assets/js/textutils.js` | `replaceRange`, shared with rich-text |
 | `src/ModelSchema.elm`, `src/Query/QueryTension.elm` | `CommentFile`, `Comment.files` |
+| `src/Query/AddTension.elm` | `buildComment`, `expectedAttachments` (`nfiles` post key) |

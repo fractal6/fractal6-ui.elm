@@ -52,3 +52,23 @@ messageMin =
 messageMax : SelectionSet (Maybe String) Schema.Object.CommentAggregateResult
 messageMax =
     Object.selectionForField "(Maybe String)" "messageMax" [] (Decode.string |> Decode.nullable)
+
+
+expected_attachmentsMin : SelectionSet (Maybe Int) Schema.Object.CommentAggregateResult
+expected_attachmentsMin =
+    Object.selectionForField "(Maybe Int)" "expected_attachmentsMin" [] (Decode.int |> Decode.nullable)
+
+
+expected_attachmentsMax : SelectionSet (Maybe Int) Schema.Object.CommentAggregateResult
+expected_attachmentsMax =
+    Object.selectionForField "(Maybe Int)" "expected_attachmentsMax" [] (Decode.int |> Decode.nullable)
+
+
+expected_attachmentsSum : SelectionSet (Maybe Int) Schema.Object.CommentAggregateResult
+expected_attachmentsSum =
+    Object.selectionForField "(Maybe Int)" "expected_attachmentsSum" [] (Decode.int |> Decode.nullable)
+
+
+expected_attachmentsAvg : SelectionSet (Maybe Float) Schema.Object.CommentAggregateResult
+expected_attachmentsAvg =
+    Object.selectionForField "(Maybe Float)" "expected_attachmentsAvg" [] (Decode.float |> Decode.nullable)

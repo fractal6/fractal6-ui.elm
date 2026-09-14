@@ -49,6 +49,7 @@ import Schema.Object.AddTensionPayload
 import Schema.Object.Comment
 import Schema.Object.Tension
 import Schema.Scalar
+import Utils.Bool exposing (ternary)
 import Utils.List exposing (listToMaybe)
 
 
@@ -168,7 +169,7 @@ addTensionInputEncoder f =
         inputOpt =
             \x ->
                 { x
-                    | comments = buildComment createdAt f.uctx.username (Just message)
+                    | comments = buildComment createdAt f.uctx.username (Just message) f.post
                     , blobs = buildBlob createdAt f.uctx.username f.withBlob f.users f.node
                     , labels = buildLabels f
                     , assignees = buildAssignees f
@@ -211,8 +212,8 @@ buildAssignees form =
         |> fromMaybe
 
 
-buildComment : Schema.Scalar.DateTime -> String -> Maybe String -> OptionalArgument (List Input.CommentRef)
-buildComment createdAt username message_m =
+buildComment : Schema.Scalar.DateTime -> String -> Maybe String -> Post -> OptionalArgument (List Input.CommentRef)
+buildComment createdAt username message_m post =
     message_m
         |> Maybe.map
             (\message ->
@@ -222,10 +223,23 @@ buildComment createdAt username message_m =
                             | createdAt = Present createdAt
                             , createdBy = Input.buildUserRef (\u -> { u | username = Present username }) |> Present
                             , message = Present message
+                            , expected_attachments = expectedAttachments post
                         }
                     )
                 ]
             )
+        |> fromMaybe
+
+
+{-| How many files the client is about to upload for this comment ("nfiles" post
+key, omitted when nothing is staged). The backend holds the notification email
+until that many File rows exist. See docs/file-attachments.md.
+-}
+expectedAttachments : Post -> OptionalArgument Int
+expectedAttachments post =
+    Dict.get "nfiles" post
+        |> Maybe.andThen String.toInt
+        |> Maybe.andThen (\n -> ternary (n > 0) (Just n) Nothing)
         |> fromMaybe
 
 

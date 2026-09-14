@@ -28,6 +28,9 @@ module Components.Comments exposing
     , init
     , initWithDraft
     , kickoffUploads
+    , modalEditors
+    , setPasteTargets
+    , stagedCount
     , subscriptions
     , update
     , viewCommentInputHeader
@@ -149,6 +152,10 @@ type alias Model =
     , pendingByEditor : Dict.Dict String (List PendingFile)
     , activeByCid : Dict.Dict String UploadBatch
 
+    -- pasteTargets: editor ids this instance renders. The paste port is
+    -- broadcast to every mounted Comments, so foreign pastes must be ignored.
+    , pasteTargets : List String
+
     -- Common
     , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
@@ -204,6 +211,7 @@ initModel nameid tensionid session =
     -- File attachments
     , pendingByEditor = Dict.empty
     , activeByCid = Dict.empty
+    , pasteTargets = threadEditors
 
     -- Common
     , session = session
@@ -238,7 +246,28 @@ initWithDraft nameid tensionid session maybeDraft =
 
 
 
+{-| Editor ids of a tension thread (default) and of the new tension modal.
+-}
+threadEditors : List String
+threadEditors =
+    [ "commentInput", "updateCommentInput" ]
+
+
+modalEditors : List String
+modalEditors =
+    [ "textAreaModal" ]
+
+
+
 -- Global methods
+
+
+{-| Declare the editors this instance owns, for components rendering
+`viewNewTensionCommentInput` (see `pasteTargets`).
+-}
+setPasteTargets : List String -> State -> State
+setPasteTargets targets (State model) =
+    State { model | pasteTargets = targets }
 
 
 getCurrentMessage : State -> Maybe String
@@ -259,7 +288,7 @@ kickoffUploads apis { editorId, tid, cid } (State model) =
             messageForEditor editorId model
 
         ( pendingByEditor0, revokeCmds ) =
-            prunePastesForEditors message [ editorId ] model.pendingByEditor
+            prunePastesForEditor message editorId model.pendingByEditor
 
         ( pendingByEditor1, activeByCid1, cmd ) =
             handoffPendingToCid apis editorId tid cid pendingByEditor0 model.activeByCid
@@ -267,6 +296,20 @@ kickoffUploads apis { editorId, tid, cid } (State model) =
     ( State { model | pendingByEditor = pendingByEditor1, activeByCid = activeByCid1 }
     , Cmd.batch (cmd :: revokeCmds)
     )
+
+
+{-| How many files staged in `editorId` will really be uploaded (pastes whose
+placeholder was deleted before submit don't count). Carrier mutations declare it
+in their post as "nfiles", so the backend can hold the notification email until
+the files have landed.
+-}
+stagedCount : String -> State -> Int
+stagedCount editorId (State model) =
+    Dict.get editorId model.pendingByEditor
+        |> withDefault []
+        |> prunePastesByMessage (messageForEditor editorId model)
+        |> Tuple.first
+        |> List.length
 
 
 {-| Look up the message text from whichever form owns the given editor id.
@@ -541,6 +584,7 @@ update_ apis message model =
                                 form.post
                                     |> Dict.update "message" (Maybe.map (collapseFileUrls model.session.file_server_url))
                                     |> Dict.insert "createdAt" (fromTime time)
+                                    |> Dict.insert "nfiles" (String.fromInt (stagedCount "commentInput" (State model)))
                             , status = status_m
                             , events = eventStatus
                         }
@@ -566,23 +610,16 @@ update_ apis message model =
                         -- Prune paste pendings whose markdown placeholder was
                         -- deleted by the user before submit (revoke their blob
                         -- URLs), then hand off the remaining files under
-                        -- "commentInput" / "textAreaModal" to the upload queue
-                        -- keyed by the new comment's cid.
+                        -- "commentInput" to the upload queue keyed by the new
+                        -- comment's cid. Same editor "nfiles" was counted on.
                         submittedMessage =
                             Dict.get "message" model.tension_form.post |> withDefault ""
 
                         ( pendingByEditor0, revokeCmds ) =
-                            prunePastesForEditors submittedMessage
-                                [ "commentInput", "textAreaModal" ]
-                                model.pendingByEditor
+                            prunePastesForEditor submittedMessage "commentInput" model.pendingByEditor
 
                         ( pendingByEditor1, activeByCid1, uploadCmd ) =
-                            handoffPendingForNewComment apis
-                                [ "commentInput", "textAreaModal" ]
-                                model.tension_form.id
-                                addedComments
-                                pendingByEditor0
-                                model.activeByCid
+                            handoffPendingForNewComment apis "commentInput" model.tension_form.id addedComments pendingByEditor0 model.activeByCid
                     in
                     ( { model
                         | comments = model.comments ++ addedComments
@@ -735,8 +772,8 @@ update_ apis message model =
                             Dict.get "message" model.comment_form.post |> withDefault ""
 
                         ( pendingByEditor0, revokeCmds ) =
-                            prunePastesForEditors submittedMessage
-                                [ "updateCommentInput" ]
+                            prunePastesForEditor submittedMessage
+                                "updateCommentInput"
                                 model.pendingByEditor
 
                         ( pendingByEditor1, activeByCid1, uploadCmd ) =
@@ -989,34 +1026,39 @@ update_ apis message model =
             ( { model | pendingByEditor = pendingByEditor1 }, noOut )
 
         OnPastedFiles { targetId, files, objectUrls } ->
-            let
-                -- ports.js sets each File's name to `paste-<Date.now()>-<i><ext>`
-                -- and ships a parallel blob URL. We just read both off.
-                pairs =
-                    List.map2 Tuple.pair files (objectUrls ++ List.repeat (List.length files) "")
+            if not (List.member targetId model.pasteTargets) then
+                -- Paste meant for another mounted Comments instance.
+                ( model, noOut )
 
-                newPendings =
-                    pairs
-                        |> List.map
-                            (\( fi, url ) ->
-                                { filename = File.name fi
-                                , file = fi
-                                , isPaste = True
-                                , status = Queued
-                                , objectUrl = url
-                                }
-                            )
+            else
+                let
+                    -- ports.js sets each File's name to `paste-<Date.now()>-<i><ext>`
+                    -- and ships a parallel blob URL. We just read both off.
+                    pairs =
+                        List.map2 Tuple.pair files (objectUrls ++ List.repeat (List.length files) "")
 
-                pendingByEditor1 =
-                    Dict.update targetId (Maybe.withDefault [] >> (\xs -> xs ++ newPendings) >> Just) model.pendingByEditor
+                    newPendings =
+                        pairs
+                            |> List.map
+                                (\( fi, url ) ->
+                                    { filename = File.name fi
+                                    , file = fi
+                                    , isPaste = True
+                                    , status = Queued
+                                    , objectUrl = url
+                                    }
+                                )
 
-                insertCmds =
-                    newPendings
-                        |> List.map (\p -> Ports.insertAtCaret targetId ("![](" ++ p.filename ++ ") "))
-            in
-            ( { model | pendingByEditor = pendingByEditor1 }
-            , out0 insertCmds
-            )
+                    pendingByEditor1 =
+                        Dict.update targetId (Maybe.withDefault [] >> (\xs -> xs ++ newPendings) >> Just) model.pendingByEditor
+
+                    insertCmds =
+                        newPendings
+                            |> List.map (\p -> Ports.insertAtCaret targetId ("![](" ++ p.filename ++ ") "))
+                in
+                ( { model | pendingByEditor = pendingByEditor1 }
+                , out0 insertCmds
+                )
 
         OnRemovePending targetId filename ->
             let
@@ -1236,71 +1278,41 @@ prunePastesByMessage message pendings =
     ( keep, urls )
 
 
-{-| Apply prunePastesByMessage to each of the listed editors against a single
-message. Returns the updated dict and a list of revoke commands.
+{-| Apply prunePastesByMessage to one editor against its carrier message.
+Returns the updated dict and a list of revoke commands.
 -}
-prunePastesForEditors : String -> List String -> Dict.Dict String (List PendingFile) -> ( Dict.Dict String (List PendingFile), List (Cmd msg) )
-prunePastesForEditors message editorIds pendingByEditor =
-    List.foldl
-        (\eid ( dict, cmds ) ->
-            case Dict.get eid dict of
-                Just xs ->
-                    let
-                        ( keep, urls ) =
-                            prunePastesByMessage message xs
-                    in
-                    ( Dict.insert eid keep dict
-                    , cmds ++ List.map Ports.revokeObjectUrl urls
-                    )
+prunePastesForEditor : String -> String -> Dict.Dict String (List PendingFile) -> ( Dict.Dict String (List PendingFile), List (Cmd msg) )
+prunePastesForEditor message editorId pendingByEditor =
+    case Dict.get editorId pendingByEditor of
+        Just xs ->
+            let
+                ( keep, urls ) =
+                    prunePastesByMessage message xs
+            in
+            ( Dict.insert editorId keep pendingByEditor
+            , List.map Ports.revokeObjectUrl urls
+            )
 
-                Nothing ->
-                    ( dict, cmds )
-        )
-        ( pendingByEditor, [] )
-        editorIds
+        Nothing ->
+            ( pendingByEditor, [] )
 
 
 
 -- Upload-queue helpers
 
 
-{-| Move pending files from a list of editor target ids to a freshly created
-comment's cid, then kick off the first upload. Returns updated dictionaries
-plus the Cmd to execute.
+{-| Move pending files from an editor target id to a freshly created comment's
+cid, then kick off the first upload. Returns updated dictionaries plus the Cmd
+to execute.
 -}
-handoffPendingForNewComment : Apis -> List String -> String -> List Comment -> Dict.Dict String (List PendingFile) -> Dict.Dict String UploadBatch -> ( Dict.Dict String (List PendingFile), Dict.Dict String UploadBatch, Cmd Msg )
-handoffPendingForNewComment apis editorIds tid added pendingByEditor activeByCid =
+handoffPendingForNewComment : Apis -> String -> String -> List Comment -> Dict.Dict String (List PendingFile) -> Dict.Dict String UploadBatch -> ( Dict.Dict String (List PendingFile), Dict.Dict String UploadBatch, Cmd Msg )
+handoffPendingForNewComment apis editorId tid added pendingByEditor activeByCid =
     case List.head added of
         Nothing ->
             ( pendingByEditor, activeByCid, Cmd.none )
 
         Just c ->
-            let
-                ( collected, pendingByEditor1 ) =
-                    List.foldl
-                        (\eid ( acc, dict ) ->
-                            case Dict.get eid dict of
-                                Just xs ->
-                                    ( acc ++ xs, Dict.remove eid dict )
-
-                                Nothing ->
-                                    ( acc, dict )
-                        )
-                        ( [], pendingByEditor )
-                        editorIds
-            in
-            if List.isEmpty collected then
-                ( pendingByEditor, activeByCid, Cmd.none )
-
-            else
-                let
-                    batch =
-                        { tid = tid, queue = collected }
-
-                    ( _, cmd, activeByCid1 ) =
-                        drainNext apis tid c.id collected (Dict.insert c.id batch activeByCid)
-                in
-                ( pendingByEditor1, activeByCid1, cmd )
+            handoffPendingToCid apis editorId tid c.id pendingByEditor activeByCid
 
 
 {-| Same idea but for an existing comment id (edit flow): moves files from

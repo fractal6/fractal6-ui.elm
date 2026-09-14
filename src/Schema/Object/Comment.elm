@@ -24,6 +24,30 @@ message =
     Object.selectionForField "String" "message" [] Decode.string
 
 
+type alias TensionsOptionalArguments =
+    { filter : OptionalArgument Schema.InputObject.TensionFilter
+    , order : OptionalArgument Schema.InputObject.TensionOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+tensions :
+    (TensionsOptionalArguments -> TensionsOptionalArguments)
+    -> SelectionSet decodesTo Schema.Object.Tension
+    -> SelectionSet (Maybe (List decodesTo)) Schema.Object.Comment
+tensions fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Schema.InputObject.encodeTensionFilter, Argument.optional "order" filledInOptionals____.order Schema.InputObject.encodeTensionOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "tensions" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
+
+
 type alias ReactionsOptionalArguments =
     { filter : OptionalArgument Schema.InputObject.ReactionFilter
     , order : OptionalArgument Schema.InputObject.ReactionOrder
@@ -72,6 +96,11 @@ files fillInOptionals____ object____ =
     Object.selectionForCompositeField "files" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
+expected_attachments : SelectionSet (Maybe Int) Schema.Object.Comment
+expected_attachments =
+    Object.selectionForField "(Maybe Int)" "expected_attachments" [] (Decode.int |> Decode.nullable)
+
+
 id : SelectionSet Schema.ScalarCodecs.Id Schema.Object.Comment
 id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapCodecs |> .codecId |> .decoder)
@@ -105,6 +134,26 @@ createdAt =
 updatedAt : SelectionSet (Maybe Schema.ScalarCodecs.DateTime) Schema.Object.Comment
 updatedAt =
     Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "updatedAt" [] (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
+
+
+type alias TensionsAggregateOptionalArguments =
+    { filter : OptionalArgument Schema.InputObject.TensionFilter }
+
+
+tensionsAggregate :
+    (TensionsAggregateOptionalArguments -> TensionsAggregateOptionalArguments)
+    -> SelectionSet decodesTo Schema.Object.TensionAggregateResult
+    -> SelectionSet (Maybe decodesTo) Schema.Object.Comment
+tensionsAggregate fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Schema.InputObject.encodeTensionFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "tensionsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
 type alias ReactionsAggregateOptionalArguments =

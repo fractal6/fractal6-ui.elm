@@ -164,7 +164,7 @@ patchTensionInputEncoder f =
                         (\s ->
                             { s
                                 | updatedAt = fromMaybe updatedAt
-                                , comments = buildComment createdAt f.uctx.username message
+                                , comments = buildComment createdAt f.uctx.username message f.post
                                 , history = buildEvents createdAt f.uctx.username (f.events ++ pce_m)
                                 , blobs = buildBlob createdAt f.uctx.username f.withBlob f.users f.node
                             }
@@ -528,7 +528,7 @@ setMoveEncoder f =
                 (\s ->
                     { s
                         | history = buildEvents createdAt f.uctx.username (f.events ++ pce_m)
-                        , comments = buildComment createdAt f.uctx.username message
+                        , comments = buildComment createdAt f.uctx.username message f.post
                     }
                 )
                 |> Present
@@ -689,7 +689,7 @@ actionInputEncoder f =
                     Input.buildTensionPatch
                         (\s ->
                             { s
-                                | comments = buildComment createdAt f.uctx.username message
+                                | comments = buildComment createdAt f.uctx.username message f.post
                                 , history = buildEvents createdAt f.uctx.username (f.events ++ pce_m)
                                 , blobs =
                                     if f.bid /= "" then

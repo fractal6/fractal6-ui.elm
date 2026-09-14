@@ -11,11 +11,12 @@ type CommentOrderable
     = CreatedAt
     | UpdatedAt
     | Message
+    | Expected_attachments
 
 
 list : List CommentOrderable
 list =
-    [ CreatedAt, UpdatedAt, Message ]
+    [ CreatedAt, UpdatedAt, Message, Expected_attachments ]
 
 
 decoder : Decoder CommentOrderable
@@ -32,6 +33,9 @@ decoder =
 
                     "message" ->
                         Decode.succeed Message
+
+                    "expected_attachments" ->
+                        Decode.succeed Expected_attachments
 
                     _ ->
                         Decode.fail ("Invalid CommentOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -51,6 +55,9 @@ toString enum____ =
 
         Message ->
             "message"
+
+        Expected_attachments ->
+            "expected_attachments"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -75,6 +82,9 @@ fromString enumString____ =
 
         "message" ->
             Just Message
+
+        "expected_attachments" ->
+            Just Expected_attachments
 
         _ ->
             Nothing

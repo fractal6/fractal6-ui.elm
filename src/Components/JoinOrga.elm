@@ -113,7 +113,7 @@ initModel nameid session =
 
     -- Components
     , userInput = UserInput.init [ nameid ] True True session
-    , comments = Comments.init nameid "" session
+    , comments = Comments.init nameid "" session |> Comments.setPasteTargets Comments.modalEditors
     }
 
 
@@ -337,6 +337,7 @@ update_ apis message model =
 
                         newComments =
                             Comments.initWithDraft rootnameid "" model.session model.currentDraft
+                                |> Comments.setPasteTargets Comments.modalEditors
                     in
                     if method == JoinOne && not (isMember uctx rootnameid || isPndg) then
                         -- Join

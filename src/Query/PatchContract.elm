@@ -197,7 +197,7 @@ commentInputDecoder f =
                         (\s ->
                             { s
                                 | -- updatedAt = Present createdAt -- Only the creator of the the contract can update this field
-                                  comments = buildComment createdAt f.uctx.username message
+                                  comments = buildComment createdAt f.uctx.username message f.post
                             }
                         )
                         |> Present
