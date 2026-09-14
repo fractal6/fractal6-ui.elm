@@ -299,7 +299,10 @@ update_ apis message model =
 
         OnClose ->
             -- @warning: Ports.click to reset the outsideClickClose handler.
-            ( resetModel model, out0 [ Ports.click "" ] )
+            -- The reset would drop in-flight uploads: hold it until the batch drains (see CommentsMsg).
+            ( ternary (Comments.hasActiveUploads model.comments) { model | isOpen = False } (resetModel model)
+            , out0 [ Ports.click "" ]
+            )
 
         OnSetPath path_data ->
             ( { model | path_data = path_data }, noOut )
@@ -716,7 +719,10 @@ update_ apis message model =
                         _ ->
                             ( model.draftSaveTimer, Cmd.none )
             in
-            ( { model | comments = data, tension_result = tension_result, draftSaveTimer = draftTimer }
+            -- Apply the close that was held while files were uploading.
+            ( ternary (out.result == Just UploadsDone && not model.isOpen)
+                (resetModel model)
+                { model | comments = data, tension_result = tension_result, draftSaveTimer = draftTimer }
             , Out (draftSaveCmd :: (out.cmds |> List.map (\m -> Cmd.map CommentsMsg m))) out.gcmds Nothing
             )
 

@@ -24,6 +24,7 @@ module Components.Comments exposing
     , OutType(..)
     , State
     , getCurrentMessage
+    , hasActiveUploads
     , hasEscConsumer
     , init
     , initWithDraft
@@ -33,6 +34,7 @@ module Components.Comments exposing
     , stagedCount
     , subscriptions
     , update
+    , uploadProgress
     , viewCommentInputHeader
     , viewCommentsContract
     , viewCommentsTension
@@ -60,10 +62,11 @@ import Fractale.Form exposing (CommentPatchForm, Ev, InputViewMode(..), TensionF
 import Fractale.HotUpdate exposing (pushCommentReaction, removeCommentReaction)
 import Fractale.User exposing (UserState(..), uctxFromUser)
 import Fractale.View exposing (statusColorReverse, viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2)
-import Html exposing (Html, a, br, button, div, hr, li, p, span, strong, text, textarea, ul)
+import Html exposing (Html, a, br, button, div, hr, li, p, progress, span, strong, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, style, target, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
+import Http
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD
 import List.Extra as LE
@@ -174,13 +177,41 @@ type alias PendingFile =
 type PendingStatus
     = Queued
     | Uploading
+    | Uploaded String -- saved file id
     | UploadFailed ApiFile.ApiError
 
 
 type alias UploadBatch =
     { tid : String
-    , queue : List PendingFile
+    , editorId : String
+    , files : List PendingFile -- retained until the entire batch finishes
+    , done : Int -- acknowledged files; also the index of the file in flight
+    , fraction : Float -- upload progress of the file in flight
     }
+
+
+type alias UploadProgress =
+    { done : Int, total : Int, fraction : Float }
+
+
+{-| True while any batch is still draining. Owners that reset this state on
+close (e.g. the card panel) must hold their reset until it is False.
+-}
+hasActiveUploads : State -> Bool
+hasActiveUploads (State model) =
+    not (Dict.isEmpty model.activeByCid)
+
+
+{-| Live upload state of the batch handed off by `editorId`, if any. Callers
+owning the carrier mutation (e.g. the new tension modal) use it to hold their
+close until the files have landed.
+-}
+uploadProgress : String -> State -> Maybe UploadProgress
+uploadProgress editorId (State model) =
+    model.activeByCid
+        |> Dict.values
+        |> LE.find (\b -> b.editorId == editorId)
+        |> Maybe.map (\b -> { done = b.done, total = List.length b.files, fraction = b.fraction })
 
 
 initModel : String -> String -> SessionCommon -> Model
@@ -426,6 +457,7 @@ type Msg
     | OnPastedFiles PastedFiles
     | OnRemovePending String String -- targetId, filename
     | OnUploadAck String String (Result ApiFile.ApiError ApiFile.UploadResult) -- cid, filename, result
+    | OnUploadProgress String Http.Progress -- cid, progress
     | OnDeleteAttachment String String -- cid, fileId
     | OnDeleteAttachmentAck String String (Result ApiFile.ApiError ())
       -- Components
@@ -450,6 +482,7 @@ type alias Out =
 type OutType
     = TensionCommentAdded (Maybe TensionStatus.TensionStatus)
     | PostChanged ( String, String )
+    | UploadsDone
 
 
 noOut : Out
@@ -1083,7 +1116,7 @@ update_ apis message model =
                 Just batch ->
                     let
                         revokeCmd =
-                            List.head batch.queue
+                            LE.getAt batch.done batch.files
                                 |> Maybe.map .objectUrl
                                 |> Maybe.withDefault ""
                                 |> (\u ->
@@ -1093,6 +1126,24 @@ update_ apis message model =
                                         else
                                             []
                                    )
+
+                        status =
+                            case result of
+                                Ok up ->
+                                    Uploaded up.id
+
+                                Err err ->
+                                    UploadFailed err
+
+                        batch1 =
+                            { batch
+                                | files = LE.updateAt batch.done (\p -> { p | status = status }) batch.files
+                                , done = batch.done + 1
+                                , fraction = 0
+                            }
+
+                        batchOut =
+                            ternary (batch1.done == List.length batch1.files) (Just UploadsDone) Nothing
                     in
                     case result of
                         Ok up ->
@@ -1125,25 +1176,30 @@ update_ apis message model =
                                                     c
                                             )
 
-                                ( queue1, nextCmd, activeByCid1 ) =
-                                    drainNext apis batch.tid cid (List.drop 1 batch.queue) model.activeByCid
+                                ( nextCmd, activeByCid1 ) =
+                                    drainNext apis cid batch1 model.activeByCid
                             in
                             ( { model | comments = comments1, activeByCid = activeByCid1 }
-                            , out0 (nextCmd :: revokeCmd)
+                            , Out (nextCmd :: revokeCmd) [] batchOut
                             )
 
                         Err err ->
-                            -- Mark the head as failed and continue with the rest of the queue.
+                            -- Keep the failed chip visible while continuing the batch.
                             let
-                                ( _, nextCmd, activeByCid1 ) =
-                                    drainNext apis batch.tid cid (List.drop 1 batch.queue) model.activeByCid
-
-                                _ =
-                                    err
+                                ( nextCmd, activeByCid1 ) =
+                                    drainNext apis cid batch1 model.activeByCid
                             in
                             ( { model | activeByCid = activeByCid1 }
-                            , out0 (nextCmd :: Ports.logErr ("file upload failed for " ++ filename ++ ": " ++ ApiFile.errorToString err) :: revokeCmd)
+                            , Out (nextCmd :: Ports.logErr ("file upload failed for " ++ filename ++ ": " ++ ApiFile.errorToString err) :: revokeCmd) [] batchOut
                             )
+
+        OnUploadProgress cid progress ->
+            case progress of
+                Http.Sending p ->
+                    ( { model | activeByCid = Dict.update cid (Maybe.map (\b -> { b | fraction = Http.fractionSent p })) model.activeByCid }, noOut )
+
+                Http.Receiving _ ->
+                    ( model, noOut )
 
         OnDeleteAttachment cid fileId ->
             ( model
@@ -1333,35 +1389,31 @@ handoffPendingToCid apis editorId tid cid pendingByEditor activeByCid =
                     Dict.remove editorId pendingByEditor
 
                 batch =
-                    { tid = tid, queue = collected }
+                    { tid = tid, editorId = editorId, files = collected, done = 0, fraction = 0 }
 
-                ( _, cmd, activeByCid1 ) =
-                    drainNext apis tid cid collected (Dict.insert cid batch activeByCid)
+                ( cmd, activeByCid1 ) =
+                    drainNext apis cid batch activeByCid
             in
             ( pendingByEditor1, activeByCid1, cmd )
 
 
-{-| Take the head of a queue and start uploading it. Updates `activeByCid`
-with the queue (head set to Uploading) so the view can render a spinner.
-Returns the remaining queue, the Cmd, and the updated dict.
+{-| Upload the next file serially, retaining every chip until the batch completes.
 -}
-drainNext : Apis -> String -> String -> List PendingFile -> Dict.Dict String UploadBatch -> ( List PendingFile, Cmd Msg, Dict.Dict String UploadBatch )
-drainNext apis tid cid queue activeByCid =
-    case queue of
-        [] ->
-            ( [], Cmd.none, Dict.remove cid activeByCid )
+drainNext : Apis -> String -> UploadBatch -> Dict.Dict String UploadBatch -> ( Cmd Msg, Dict.Dict String UploadBatch )
+drainNext apis cid batch activeByCid =
+    case LE.getAt batch.done batch.files of
+        Nothing ->
+            ( Cmd.none, Dict.remove cid activeByCid )
 
-        head :: rest ->
-            let
-                batch1 =
-                    { tid = tid
-                    , queue = { head | status = Uploading } :: rest
-                    }
-            in
-            ( rest
-            , ApiFile.upload apis (ApiFile.CommentAnchor { tid = tid, cid = cid }) head.file (OnUploadAck cid head.filename)
-            , Dict.insert cid batch1 activeByCid
+        Just file ->
+            ( ApiFile.upload apis (uploadTracker cid) (ApiFile.CommentAnchor { tid = batch.tid, cid = cid }) file.file (OnUploadAck cid file.filename)
+            , Dict.insert cid { batch | files = LE.updateAt batch.done (\p -> { p | status = Uploading }) batch.files } activeByCid
             )
+
+
+uploadTracker : String -> String
+uploadTracker cid =
+    "upload-" ++ cid
 
 
 {-| True when an inner widget already closes on Escape (so parents must not).
@@ -1388,6 +1440,7 @@ subscriptions (State model) =
             else
                 []
            )
+        ++ (Dict.keys model.activeByCid |> List.map (\cid -> Http.track (uploadTracker cid) (OnUploadProgress cid)))
         ++ (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
         ++ (EmojiPicker.subscriptions model.emojiPicker |> List.map (\s -> Sub.map EmojiPickerMsg s))
         ++ [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose ]
@@ -1405,7 +1458,7 @@ viewCommentsContract session (State model) =
         [ model.comments
             |> List.map
                 (\c ->
-                    viewComment session c model.comment_form model.comment_result model.comment_delete_result model.highlightedCommentId model.userInput model.emojiPicker model.pendingByEditor (List.member c.id model.fadingOut)
+                    viewComment session c model.comment_form model.comment_result model.comment_delete_result model.highlightedCommentId model.userInput model.emojiPicker model.pendingByEditor (Dict.get c.id model.activeByCid) (List.member c.id model.fadingOut)
                 )
             |> div []
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
@@ -1415,7 +1468,7 @@ viewCommentsContract session (State model) =
 viewCommentsTension : SessionCommon -> { t | governed_node : Maybe GovernedNode, draft_node_type : Maybe NodeType.NodeType } -> State -> Html Msg
 viewCommentsTension session tension (State model) =
     div []
-        [ viewComments_ session tension model.history model.comments model.comment_form model.comment_result model.comment_delete_result model.expandedEvents model.highlightedCommentId model.userInput model.emojiPicker model.pendingByEditor model.fadingOut
+        [ viewComments_ session tension model.history model.comments model.comment_form model.comment_result model.comment_delete_result model.expandedEvents model.highlightedCommentId model.userInput model.emojiPicker model.pendingByEditor model.activeByCid model.fadingOut
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
 
@@ -1433,9 +1486,10 @@ viewComments_ :
     -> UserInput.State
     -> EmojiPicker.State
     -> Dict.Dict String (List PendingFile)
+    -> Dict.Dict String UploadBatch
     -> List String
     -> Html Msg
-viewComments_ session tension history comments comment_form comment_result comment_delete_result expandedEvents highlightedCommentId userInput emojiPicker pendingByEditor fadingOut =
+viewComments_ session tension history comments comment_form comment_result comment_delete_result expandedEvents highlightedCommentId userInput emojiPicker pendingByEditor activeByCid fadingOut =
     let
         nodeType =
             getTensionNode tension |> Maybe.map .type_ |> withDefault NodeType.Role
@@ -1477,7 +1531,7 @@ viewComments_ session tension history comments comment_form comment_result comme
                 Nothing ->
                     case LE.getAt e.i comments of
                         Just c ->
-                            viewComment session c comment_form comment_result comment_delete_result highlightedCommentId userInput emojiPicker pendingByEditor (List.member c.id fadingOut)
+                            viewComment session c comment_form comment_result comment_delete_result highlightedCommentId userInput emojiPicker pendingByEditor (Dict.get c.id activeByCid) (List.member c.id fadingOut)
 
                         Nothing ->
                             text ""
@@ -1552,8 +1606,8 @@ viewComments_ session tension history comments comment_form comment_result comme
         |> div []
 
 
-viewComment : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> ( String, GqlData IdPayload ) -> String -> UserInput.State -> EmojiPicker.State -> Dict.Dict String (List PendingFile) -> Bool -> Html Msg
-viewComment session c form result delete_result highlightedCommentId userInput emojiPicker pendingByEditor isFadingOut =
+viewComment : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> ( String, GqlData IdPayload ) -> String -> UserInput.State -> EmojiPicker.State -> Dict.Dict String (List PendingFile) -> Maybe UploadBatch -> Bool -> Html Msg
+viewComment session c form result delete_result highlightedCommentId userInput emojiPicker pendingByEditor uploadBatch isFadingOut =
     let
         isAuthor =
             c.createdBy.username == form.uctx.username
@@ -1575,7 +1629,7 @@ viewComment session c form result delete_result highlightedCommentId userInput e
             , attribute "style" "width: 66.66667%;"
             ]
             [ if form.id == c.id && Dict.get "stealth" form.post /= Just "true" then
-                viewUpdateInput session c form result userInput emojiPicker (Dict.get "updateCommentInput" pendingByEditor |> withDefault [])
+                viewUpdateInput session c form result userInput emojiPicker (Dict.get "updateCommentInput" pendingByEditor |> withDefault []) (uploadBatch |> Maybe.map (Dict.singleton c.id) |> withDefault Dict.empty)
 
               else
                 div [ id c.id, class "message commentMessage", classList [ ( "is-focusing", isFocused ) ] ]
@@ -1643,7 +1697,7 @@ viewComment session c form result delete_result highlightedCommentId userInput e
                                                )
                                     ]
                                 , if form.linkCopied == c.id then
-                                    span [ class "copy-notif is-size-7 has-text-success" ] [ text "Copied!" ]
+                                    span [ class "copy-notif is-size-7 has-text-success" ] [ text T.copied ]
 
                                   else
                                     text ""
@@ -1657,7 +1711,7 @@ viewComment session c form result delete_result highlightedCommentId userInput e
 
                             message ->
                                 renderMarkdown session.file_server_url "is-human" message
-                        , viewSavedAttachments session c
+                        , viewSavedAttachments session c uploadBatch
                         , div [ class "emoji-reactions" ] <|
                             List.map
                                 (\r ->
@@ -1732,70 +1786,104 @@ viewDeleteCommentError cid ( targetCid, result ) =
         text ""
 
 
-{-| Render the "Attach files" button + pending-upload chips for an editor.
-Source of truth for in-flight uploads is `pendingByEditor`; once a carrier
-mutation succeeds the queue moves out and the chips here disappear (they
-reappear under the saved comment as `viewSavedAttachments`).
+{-| Staged files stay in the editor; only modal uploads remain here after handoff.
 -}
-viewPendingsRow : String -> List PendingFile -> Html Msg
-viewPendingsRow targetId pendings =
-    -- Inline pastes are managed via the markdown placeholder in the
-    -- textarea (delete the `![](paste-…)` line to drop the file); only
-    -- non-paste picks get a chip here.
+viewPendingsRow : String -> List PendingFile -> Dict.Dict String UploadBatch -> Html Msg
+viewPendingsRow targetId pendings activeByCid =
     let
-        visible =
-            List.filter (not << .isPaste) pendings
+        batches =
+            Dict.values activeByCid |> List.filter (\batch -> batch.editorId == targetId)
     in
-    div [ class "is-flex is-flex-wrap-wrap is-align-items-center", style "gap" "0.4rem" ]
+    div [ class "pending-files is-flex is-flex-wrap-wrap is-align-items-center" ]
         ([ button
             [ class "button is-small is-tiny py-1"
             , type_ "button"
+            , disabled (not (List.isEmpty batches))
+            , title (ternary (List.isEmpty batches) "" T.uploadInProgress)
             , onClick (OnPickFiles targetId)
             ]
-            [ A.icon1 "icon-paperclip icon-xs" "Attach" ]
+            [ A.icon1 "icon-paperclip icon-xs" T.attach ]
          ]
-            ++ List.map (viewPendingChip targetId) visible
+            ++ (if List.member targetId modalEditors then
+                    List.concatMap (\batch -> List.map (viewPendingChip targetId False batch.fraction) batch.files) batches
+
+                else
+                    []
+               )
+            -- Staged pastes are removed through their markdown placeholder, not a chip.
+            ++ List.map (viewPendingChip targetId True 0) (List.filter (not << .isPaste) pendings)
         )
 
 
-viewPendingChip : String -> PendingFile -> Html Msg
-viewPendingChip targetId p =
+viewPendingChip : String -> Bool -> Float -> PendingFile -> Html Msg
+viewPendingChip targetId removable fraction p =
     let
-        statusEl =
+        ( statusEl, progressFraction ) =
             case p.status of
                 Queued ->
-                    A.icon "icon-clock"
+                    ( A.icon "icon-clock", Nothing )
 
                 Uploading ->
-                    span [ class "loader is-inline-block ml-1" ] []
+                    ( span [ class "loader is-inline-block ml-1" ] [], Just (clamp 0 1 fraction) )
+
+                Uploaded _ ->
+                    ( A.icon "icon-check has-text-success", Just 1 )
 
                 UploadFailed _ ->
-                    A.icon "icon-alert-triangle has-text-danger"
+                    ( A.icon "icon-alert-triangle has-text-danger", Nothing )
     in
-    span [ class "tag" ]
-        [ statusEl
-        , span [ class "ml-1" ] [ text p.filename ]
-        , button
-            [ class "delete is-small ml-2"
-            , type_ "button"
-            , onClick (OnRemovePending targetId p.filename)
-            ]
-            []
+    span [ class "tag attachment-chip", title p.filename ]
+        [ case progressFraction of
+            Just amount ->
+                progress
+                    [ class "progress is-success mb-0"
+                    , value (String.fromFloat amount)
+                    , attribute "max" "1"
+                    , attribute "aria-label" p.filename
+                    ]
+                    []
+
+            Nothing ->
+                text ""
+        , statusEl
+        , span [ class "attachment-name ml-1" ] [ text p.filename ]
+        , showIf removable <|
+            button
+                [ class "delete is-small ml-2"
+                , type_ "button"
+                , title T.remove
+                , attribute "aria-label" (T.remove ++ " " ++ p.filename)
+                , onClick (OnRemovePending targetId p.filename)
+                ]
+                []
         ]
 
 
-{-| Render attachment chips for a saved comment. Hides the delete button when
-the viewer is not the file's uploader.
+{-| Saved files and the active batch belonging to this comment, without duplicate chips.
 -}
-viewSavedAttachments : SessionCommon -> Comment -> Html Msg
-viewSavedAttachments session c =
+viewSavedAttachments : SessionCommon -> Comment -> Maybe UploadBatch -> Html Msg
+viewSavedAttachments session c uploadBatch =
     let
         viewer =
             (uctxFromUser session.user).username
 
+        uploadedIds =
+            uploadBatch
+                |> Maybe.map .files
+                |> withDefault []
+                |> List.filterMap
+                    (\p ->
+                        case p.status of
+                            Uploaded fileId ->
+                                Just fileId
+
+                            _ ->
+                                Nothing
+                    )
+
         chips =
             c.files
-                |> List.filter (\f -> not f.embedded)
+                |> List.filter (\f -> not f.embedded && not (List.member f.id uploadedIds))
                 |> List.map
                     (\f ->
                         span [ class "tag mr-2 mb-1" ]
@@ -1822,11 +1910,21 @@ viewSavedAttachments session c =
                             ]
                     )
     in
-    if List.isEmpty chips then
+    if List.isEmpty chips && uploadBatch == Nothing then
         text ""
 
     else
-        div [ class "comment-attachments mt-2" ] chips
+        div [ class "comment-attachments mt-2" ]
+            (chips
+                ++ [ case uploadBatch of
+                        Just batch ->
+                            div [ class "pending-files is-flex is-flex-wrap-wrap is-align-items-center" ]
+                                (List.map (viewPendingChip batch.editorId False batch.fraction) batch.files)
+
+                        Nothing ->
+                            text ""
+                   ]
+            )
 
 
 viewNewTensionCommentInput : SessionCommon -> CommentOpts -> State -> Html Msg
@@ -1845,14 +1943,14 @@ viewNewTensionCommentInput session opts (State model) =
                 [ div [ class "control" ] [ viewCommentTextarea session "textAreaModal" opts model.tension_form model.userInput model.emojiPicker (Dict.get "textAreaModal" model.pendingByEditor |> withDefault []) ]
                 , div [ class "is-flex is-flex-wrap-wrap is-align-items-center is-justify-content-space-between mt-1", style "gap" "0.4rem" ]
                     [ showIf opts.attachmentsEnabled <|
-                        viewPendingsRow "textAreaModal" (Dict.get "textAreaModal" model.pendingByEditor |> withDefault [])
+                        viewPendingsRow "textAreaModal" (Dict.get "textAreaModal" model.pendingByEditor |> withDefault []) model.activeByCid
                     , showIf opts.hasTips <|
                         span
                             [ class "is-hidden-mobile help ml-auto"
                             , classList [ ( "is-hidden", isMobile session.screen ) ]
                             , style "font-size" "10px"
                             ]
-                            [ text "Tips: <C+Enter> to submit" ]
+                            [ text T.tipsSubmitShortcut ]
                     ]
                 , showIf (opts.messageHelper /= "") <|
                     p [ class "help-label" ] [ text opts.messageHelper ]
@@ -1861,8 +1959,8 @@ viewNewTensionCommentInput session opts (State model) =
         ]
 
 
-viewUpdateInput : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> UserInput.State -> EmojiPicker.State -> List PendingFile -> Html Msg
-viewUpdateInput session comment form_ result userInput emojiPicker pendings =
+viewUpdateInput : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> UserInput.State -> EmojiPicker.State -> List PendingFile -> Dict.Dict String UploadBatch -> Html Msg
+viewUpdateInput session comment form_ result userInput emojiPicker pendings activeByCid =
     let
         expandedCommentMessage =
             expandFileUrls session.file_server_url comment.message
@@ -1894,7 +1992,7 @@ viewUpdateInput session comment form_ result userInput emojiPicker pendings =
             [ div [ class "field" ]
                 [ div [ class "control" ]
                     [ viewCommentTextarea session "updateCommentInput" defaultCommentOpts form userInput emojiPicker pendings ]
-                , viewPendingsRow "updateCommentInput" pendings
+                , viewPendingsRow "updateCommentInput" pendings activeByCid
                 ]
             , case result of
                 Failure err ->
@@ -1970,7 +2068,7 @@ viewTensionCommentInput session tension (State model) =
                     [ div [ class "field" ]
                         [ div [ class "control" ]
                             [ viewCommentTextarea session "commentInput" defaultCommentOpts form model.userInput model.emojiPicker (Dict.get "commentInput" model.pendingByEditor |> withDefault []) ]
-                        , viewPendingsRow "commentInput" (Dict.get "commentInput" model.pendingByEditor |> withDefault [])
+                        , viewPendingsRow "commentInput" (Dict.get "commentInput" model.pendingByEditor |> withDefault []) model.activeByCid
                         ]
                     , case model.tension_patch of
                         Failure err ->

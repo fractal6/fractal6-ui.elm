@@ -1,32 +1,27 @@
 # File Attachments
 
-Attach files to comments and paste screenshots inline. All the frontend logic lives in
-`src/Components/Comments.elm`; the backend serves and stores through the `/file/*` REST routes
-(`Apis.file` in `Session.elm`).
+Attach files to comments and paste screenshots inline. Frontend logic lives in
+`src/Components/Comments.elm`, transport in `src/Api/File.elm`, backend on the `/file/*` REST
+routes (`Apis.file`).
 
 ## URL resolution
 
-Files are stored as relative `/file/<id>` paths, both in the comment markdown and in the
-`Comment.files` edge. The file server origin is prepended at render time: `frac6Renderer`
-overrides the `image` handler for any `src` starting with `/file/`, and `viewSavedAttachments`
-builds its `href` from `session.file_server_url`. The origin is injected at build time
-(`FILE_SERVER_URL` in `webpack.config.js`) and mirrored on `Apis` and `SessionCommon`. Pass
-`""` as `renderMarkdown`'s first argument for content that can't hold attachments — the image
-override then does nothing.
+Files are stored as relative `/file/<id>` paths, in both the comment markdown and the
+`Comment.files` edge. The origin (`FILE_SERVER_URL`, injected at build time) is prepended at
+render time by `frac6Renderer`'s `image` override. Pass `""` as `renderMarkdown`'s first
+argument for content that can't hold attachments.
 
 ## Transport — `src/Api/File.elm`
 
-Stand-alone REST module: the `/file/*` routes are not in the GraphQL schema (only the
-read-only `Comment.files`, `User.avatar`, `Node.avatar` edges are).
+Stand-alone REST module: `/file/*` is not in the GraphQL schema (only the read-only
+`Comment.files`, `User.avatar`, `Node.avatar` edges are).
 
-- `upload` — multipart `POST {api.file}/upload` with the anchor fields alongside `file`.
+- `upload` — multipart `POST {api.file}/upload`, anchor fields alongside `file`.
 - `delete` — `DELETE {api.file}/<id>`; 404 counts as success.
-- No GET: render `/file/<id>` directly and let the browser follow the redirect to the
-  presigned URL.
+- No GET: render `/file/<id>` and let the browser follow the redirect to the presigned URL.
 
-`Anchor` is `CommentAnchor { tid, cid }` / `UserAvatar` / `OrgAvatar`; only comments are wired
-to a UI. Errors map to an `ApiError` union (`StorageDisabled`, `TooLarge`, `Unauthorized`, …)
-with `errorToString` for display.
+`Anchor` is `CommentAnchor { tid, cid }` / `UserAvatar` / `OrgAvatar`; errors map to an
+`ApiError` union (`StorageDisabled`, `TooLarge`, `Unauthorized`, …) with `errorToString`.
 
 ## Upload ordering
 
@@ -34,40 +29,46 @@ An upload anchors on a saved `cid`, so the carrier mutation must land first:
 
 | Flow | Order |
 |------|-------|
-| New comment on existing tension | `pushTensionPatch` → returned cid → upload each file |
-| Edit comment | `patchComment` → reuse cid → upload each file |
-| New tension with attachments | the page runs `addOneTension`, then calls `Comments.kickoffUploads` with `{tid, cid}` |
+| New comment on existing tension | `pushTensionPatch` → returned cid → upload |
+| Edit comment | `patchComment` → reuse cid → upload |
+| New tension | page runs `addOneTension`, then calls `Comments.kickoffUploads` with `{tid, cid}` |
 
-The first two carriers live inside `Comments.elm`, so the handoff is automatic
-(`handoffPendingForNewComment` / `handoffPendingToCid`). A page owning its own carrier calls
-`kickoffUploads` itself once its mutation succeeds.
+The first two carriers live in `Comments.elm` so the handoff is automatic; a page owning its
+own carrier calls `kickoffUploads` itself.
 
-The carrier also declares **how many** files are coming (never which): `Comments.stagedCount`
-puts the count in the form post as `nfiles`, and `Query.AddTension.expectedAttachments` maps it
-to `Comment.expected_attachments` (omitted when 0). The backend holds the notification email
-until that many files have landed, so an attachment-free comment notifies immediately.
+The carrier also declares **how many** files are coming (never which): `stagedCount` posts
+`nfiles`, mapped to `Comment.expected_attachments` by `Query.AddTension.expectedAttachments`.
+The backend holds the notification email until that many files land.
 
-Uploads then drain **serially per cid** (`drainNext`, `Model.activeByCid`): the backend
-rewrites the `![…](filename)` placeholders inside `Comment.message` on every upload, a
-read-modify-write that concurrent uploads would lose.
+Uploads drain **serially per cid** (`drainNext`): the backend rewrites the `![…](filename)`
+placeholders in `Comment.message` on every upload, a read-modify-write that concurrent
+uploads would lose.
+
+## Progress and close gate
+
+Each upload is tracked as `upload-<cid>` (`Http.track`); `uploadProgress editorId` exposes
+`{done, total, fraction}`. Chips render in selection order, progress filling behind the
+filename, and are replaced by saved links on the final ack.
+
+Closing a carrier resets the `Comments.State` and would drop the queue, so the close is held
+until `OutType.UploadsDone`: `NewTension` on its success branch, `CardPanel` by hiding the
+panel and deferring `resetModel` (`Comments.hasActiveUploads`). A manual close still drops what
+is left in the queue, on purpose.
 
 ## Inline paste
 
-Textareas carry `data-paste-capture="true"`; a single document-level `paste` listener in
-`assets/js/ports.js` forwards clipboard files to Elm with the textarea id.
+Textareas carry `data-paste-capture="true"`; a document-level `paste` listener in
+`assets/js/ports.js` forwards clipboard files to Elm with the textarea id. Two constraints on
+that JS step:
 
-That port is a broadcast: every mounted `Comments` instance receives it (a tension page and
-the New Tension modal are subscribed at the same time). Each instance therefore only accepts
-the editors it renders — `Model.pasteTargets`, defaulting to `threadEditors`, overridden with
-`setPasteTargets Comments.modalEditors` by the modal components. Without it the same paste is
-inserted twice in the same textarea.
-
-That JS step is **the source of truth for the filename**: it rebuilds each clipboard `File` as
-`paste-<timestamp>-<i><ext>` and creates the `blob:` object URL. The name must match between
-the markdown placeholder and the multipart part, because the backend rewrite
-(`web/handlers/files.go::rewriteMessageForFile`) looks the placeholder up by multipart name —
-clipboard items would otherwise all arrive as `image.png`. Uniqueness is on us: the server
-only rewrites the first occurrence of each name.
+- **It owns the filename.** It rebuilds each clipboard `File` as `paste-<timestamp>-<i><ext>`.
+  The name must match between the markdown placeholder and the multipart part, because the
+  backend rewrite (`web/handlers/files.go::rewriteMessageForFile`) looks the placeholder up by
+  multipart name, and only rewrites the first occurrence of each name.
+- **The port is a broadcast.** Every mounted `Comments` instance receives it, so each only
+  accepts the editors it renders — `Model.pasteTargets`, defaulting to `threadEditors`,
+  overridden with `setPasteTargets Comments.modalEditors` by modal components. Without it the
+  same paste is inserted twice.
 
 Then, in Elm:
 
@@ -75,19 +76,22 @@ Then, in Elm:
    `![](<filename>)` at the caret through `Ports.insertAtCaret` (undo-preserving).
 2. On carrier success the queue drains.
 3. Each `OnUploadAck` rewrites the local message to `/file/<id>` and appends the file to
-   `comment.files`, mirroring what the server stored — a refresh renders the same `<img>`.
+   `comment.files`, mirroring what the server stored.
 
-## Chips and preview
+Blob URLs are revoked through `REVOKE_OBJECT_URL` on ack, manual removal, and pruning.
 
-The editor row (`viewPendingsRow`) shows the Attach button and one tag per non-paste pending
-file. Pastes are deliberately absent: they live as markdown in the textarea, and deleting that
-line is how you cancel them (`prunePastesByMessage` drops them and revokes the blob URL at
-handoff). The saved row (`viewSavedAttachments`) lists `comment.files` with `embedded == False`
-under each rendered comment, with a delete button for the file owner.
+## Views
 
-In `Preview` mode, pending `![](paste-…)` placeholders are swapped for their `blob:` URL
-before rendering. Blob URLs are revoked through the `REVOKE_OBJECT_URL` port on upload ack,
-manual removal, and placeholder pruning.
+- `viewPendingsRow` — editor row: Attach button, one chip per pending file, upload progress.
+- `viewSavedAttachments` — `comment.files` with `embedded == False` under a rendered comment,
+  plus delete for the owner.
+- Staged pastes live as markdown in the textarea; deleting the line cancels them
+  (`prunePastesByMessage`). `Preview` mode swaps placeholders for their `blob:` URL.
+
+## Check
+
+`npm run test:js -- --runInBand uploadChips` drives the real Elm state and views in jsdom (no
+HTTP, no browser engine).
 
 ## Not wired
 

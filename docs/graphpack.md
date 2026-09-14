@@ -17,12 +17,10 @@ Elm sends a flat node list (`INIT_GRAPHPACK`). `formatGraph` nests it into a tre
 
 ### Sizing
 
-`packGraph`/`packLayout` pack the tree bottom-up with `d3.packSiblings`, then scale
-it to fit the canvas. A role's radius is `sqrt(nodeSize)` (weight decreasing with
-depth); a circle encloses its packed children but never goes below `minCircleRayon`,
-the footprint of two of its own roles — so empty, one-role and two-role circles share
-one baseline size. Sibling order and sizes are independent of snapshot order and of
-renames (packed circles first, then descending radius, name/`nameid` as tie-breakers).
+`packGraph`/`packLayout` pack the tree bottom-up with `d3.packSiblings`, then scale it
+to fit the canvas. Circles have a minimum size (`minCircleRayon`) so small ones stay
+comparable, and sibling order is deterministic — independent of snapshot order and of
+renames.
 
 ### Update payload and identity
 
@@ -44,24 +42,19 @@ focused node:
 - `drawOutside` — up to 2 ancestors and the focused node's siblings, dimmed.
 - `drawInside` — the focused subtree, at most 3 levels deep.
 
-`drawNode` projects pack coordinates through `zoomCtx` (`addNodeCtx`, cached on
-`node.ctx`); role circles are shrunk by type (`nodeRayon`). Names, hover borders and
-the tooltip are drawn on top. Colors come from CSS variables
-(`computeCircleColorRange`).
+`drawNode` projects pack coordinates through `zoomCtx`; names, hover borders and the
+tooltip are drawn on top. Colors come from CSS variables (`computeCircleColorRange`).
 
 ### Motion and lifecycle
 
-One cancelable D3 timer eases layout and viewport over 400ms: visible nodes and
-ancestors interpolate `x/y/r`, entries grow, exits shrink and fade, focus zooms use
-`interpolateZoom`. Interruptions resume from the displayed frame; reduced motion
-applies endpoints immediately. Interaction (hit-testing, dragging, keyboard, tooltip
-actions) is paused during motion. Canvas removal cancels listeners and timers; empty,
-unusable or different-org snapshots clear the old data.
+One cancelable D3 timer eases both layout and viewport; interruptions resume from the
+displayed frame and reduced motion applies endpoints immediately. Interaction
+(hit-testing, dragging, keyboard, tooltip actions) is paused during motion. Canvas
+removal cancels listeners and timers; empty, unusable or different-org snapshots clear
+the old data.
 
-The canvas is resizable by dragging the grips around it (`#canvasResizer` below,
-`#canvasResizerV` on the right, `#canvasResizerC` for both axes, wired by
-`bindResizer`): height goes to `userHeight`, width to `userColWidth`, split between the
-two Bulma columns by `setColWidth`. Both reset on reload. The `#overview` row is
+The canvas is resizable by dragging the grips around it (`bindResizer`), width being
+split between the two Bulma columns. Sizes are not persisted. The `#overview` row is
 `Html.Keyed` so Elm drops those JS inline styles when leaving the page.
 
 ## Hit-testing
@@ -76,10 +69,8 @@ readbacks, which silently breaks color-keyed lookups.
 ## Interaction
 
 Pointer handlers registered in `init` (`pointer*` events so mouse, touch and pen share
-one path, with `touch-action: pinch-zoom`) resolve the node under the pointer and
-notify Elm: `nodeClickedFromJs` (navigate), `nodeHoveredFromJs` (tooltip),
-`nodeFocusedFromJs`, `nodeLeftClickedFromJs` / `nodeRightClickedFromJs` (tooltip
-actions / context menu).
+one path) resolve the node under the pointer and notify Elm through the
+`node*FromJs` ports: navigate, hover tooltip, focus, tooltip actions, context menu.
 
 The tooltip (`#nodeTooltip`) is an Elm-rendered element positioned by JS; switching
 node keeps it visible and re-places it after Elm renders the options. `isFrozen` locks
@@ -92,9 +83,7 @@ in the focused node, in two mutually exclusive places:
 
 - `#canvasCards` — on a fresh orga (root circle with nothing packed inside,
   `Graph.isFreshOrga`), the cards occupy its quarters. `placeCanvasCards` sizes the 2x2
-  box to the circle and hides it during zoom or when too small. Each card paints its own
-  surface with a unit-`viewBox` SVG from `Assets.Shapes` (`quarterDisc`), so insets and
-  fillets scale with the circle; `_canvas.scss` only positions it behind the button.
+  box to the circle and hides it during zoom or when too small.
 - `#welcomeCards` — above the canvas otherwise, toggled by the grid icon in
   `#canvasButtons`.
 
@@ -109,9 +98,8 @@ to the root. Modifier combos are left to the browser.
 ## Drag-and-drop move
 
 Dragging a node onto another circle moves it there. Navigation fires on `mouseup` so a
-press can become a drag: past `dragThreshold` px the drag arms (`drawDragFeedback`), and
-the drop sends `nodeDraggedFromJs [source, target]`. `getDropTarget` rejects roles, the
-current parent and the dragged node's own subtree.
+press can become a drag; the drop sends `nodeDraggedFromJs [source, target]`.
+`getDropTarget` rejects roles, the current parent and the dragged node's own subtree.
 
 Elm side (`Org/Overview.elm`, `NodeDragged`): gated by `getNodeRights`, then
 `ActionPanel.OnMoveTo domid tid target` opens `MoveTension` with the target

@@ -1413,7 +1413,12 @@ update_ apis message model =
                                     link =
                                         Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = tension.id } |> toHref
                                 in
-                                ( send (OnClose { reset = True, link = "" }) :: projectCmds
+                                -- Hold the close (which resets Comments) until the uploads drained;
+                                -- the CommentsMsg branch closes on UploadsDone.
+                                ( ternary (Comments.uploadProgress "textAreaModal" comments1 == Nothing)
+                                    (send (OnClose { reset = True, link = "" }))
+                                    Cmd.none
+                                    :: projectCmds
                                 , [ DoPushSystemNotif
                                         { cls = "is-success"
                                         , content =
@@ -1606,9 +1611,12 @@ update_ apis message model =
 
                 ( cmds, _ ) =
                     mapGlobalOutcmds out.gcmds
+
+                closeCmd =
+                    ternary (out.result == Just UploadsDone) (send (OnClose { reset = True, link = "" })) Cmd.none
             in
             ( { model | comments = data, nodeDoc = nodeDoc, draftSaveTimer = draftTimer }
-            , out2 (draftSaveCmd :: (out.cmds |> List.map (\m -> Cmd.map CommentsMsg m) |> List.append cmds)) out.gcmds
+            , out2 (closeCmd :: draftSaveCmd :: (out.cmds |> List.map (\m -> Cmd.map CommentsMsg m) |> List.append cmds)) out.gcmds
             )
 
         -- Templates
@@ -1743,8 +1751,9 @@ update_ apis message model =
             ( { model | session = { session | user = LoggedIn uctx }, nodeDoc = NodeDoc.setUctx uctx model.nodeDoc }, noOut )
 
         SaveDraftDelayed timerValue ->
-            -- Only save if this is the most recent scheduled save (debounce)
-            if timerValue == model.draftSaveTimer then
+            -- Only save if this is the most recent scheduled save (debounce), and the
+            -- tension was not created meanwhile (the modal lingers while files upload).
+            if timerValue == model.draftSaveTimer && not (isSuccess model.result) then
                 -- Read current message content (may have been modified by rich text ports)
                 let
                     draftTitle =
@@ -2272,7 +2281,7 @@ viewTension tree_data model =
                     [ div [ class "buttons" ]
                         [ button
                             [ class "button is-success defaultSubmit"
-                            , classList [ ( "is-loading", isLoading ) ]
+                            , classList [ ( "is-loading", isLoading || Comments.uploadProgress "textAreaModal" model.comments /= Nothing ) ]
                             , disabled (not isSendable)
                             , onClick (OnSubmit isSendable (OnSubmitTension False))
                             ]

@@ -143,18 +143,18 @@ uploadResultDecoder =
 
 
 {-| Upload a file under `anchor`. Backend rewrites `![…](filename)` references
-in the carrier message when present.
+in the carrier message when present. `trackerId` feeds `Http.track` for progress.
 -}
-upload : Apis -> Anchor -> File -> (Result ApiError UploadResult -> msg) -> Cmd msg
-upload api anchor file msg =
+upload : Apis -> String -> Anchor -> File -> (Result ApiError UploadResult -> msg) -> Cmd msg
+upload api trackerId anchor file msg =
     Http.riskyRequest
         { method = "POST"
         , headers = []
         , url = api.file ++ "/upload"
         , body = Http.multipartBody (Http.filePart "file" file :: anchorParts anchor)
         , expect = expectJsonResult msg uploadResultDecoder
-        , timeout = Nothing
-        , tracker = Nothing
+        , timeout = Just 60000
+        , tracker = Just trackerId
         }
 
 

@@ -1361,6 +1361,22 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Remove"
   fr="Supprimer"
 
+[uploadInProgress]
+  en="Upload in progress"
+  fr="Envoi en cours"
+
+[attach]
+  en="Attach"
+  fr="Joindre"
+
+[copied]
+  en="Copied!"
+  fr="Copié !"
+
+[tipsSubmitShortcut]
+  en="Tips: <C+Enter> to submit"
+  fr="Astuce : <C+Entrée> pour envoyer"
+
 [subscribe]
   en="Subscribe"
   fr="S’abonner"

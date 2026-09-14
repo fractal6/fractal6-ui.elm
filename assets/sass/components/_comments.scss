@@ -87,6 +87,40 @@
     }
 }
 
+.pending-files {
+    // Attachment names must not contribute to the auto-width modal's intrinsic size.
+    contain: inline-size;
+    flex: 1;
+    min-width: 0;
+    max-width: 100%;
+    gap: 0.4rem;
+}
+
+.attachment-chip {
+    position: relative;
+    max-width: 100%;
+
+    > :not(progress) {
+        position: relative;
+    }
+
+    .attachment-name {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .progress {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: inherit;
+        opacity: 0.25;
+        pointer-events: none;
+    }
+}
+
 .commentHeader {
     margin-top: 0;
     margin-bottom: 0 !important;
