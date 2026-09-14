@@ -691,9 +691,7 @@ type Msg
     | OnChangePost String String
     | OnSelectRoleExt RoleExtFull
     | OnSelectVisibility NodeVisibility.NodeVisibility
-    | OnAddDomains
-    | OnAddPolicies
-    | OnAddResponsabilities
+    | OnAddMandateField String
     | OnSubmitTension Bool Time.Posix
     | OnTensionAck (GqlData AddedTension)
       -- Confirm Modal
@@ -1290,14 +1288,8 @@ update_ apis message model =
         OnSelectVisibility visibility ->
             ( { model | nodeDoc = NodeDoc.updatePost "visibility" (NodeVisibility.toString visibility) model.nodeDoc }, out0 [ send (OnChangeNodeStep NodeValidateStep) ] )
 
-        OnAddResponsabilities ->
-            ( { model | nodeDoc = NodeDoc.addResponsabilities model.nodeDoc }, out0 [ Ports.bulma_driver "tensionModal" ] )
-
-        OnAddDomains ->
-            ( { model | nodeDoc = NodeDoc.addDomains model.nodeDoc }, out0 [ Ports.bulma_driver "tensionModal" ] )
-
-        OnAddPolicies ->
-            ( { model | nodeDoc = NodeDoc.addPolicies model.nodeDoc }, out0 [ Ports.bulma_driver "tensionModal" ] )
+        OnAddMandateField key ->
+            ( { model | nodeDoc = NodeDoc.addField key model.nodeDoc }, out0 [ Ports.bulma_driver "tensionModal" ] )
 
         OnSubmitTension doClose time ->
             -- Reject stale or incomplete submits before any state change.
@@ -2452,9 +2444,7 @@ viewNodeValidate model =
             , data = model.nodeDoc
             , result = model.result
             , onChangePost = OnChangePost
-            , onAddDomains = OnAddDomains
-            , onAddPolicies = OnAddPolicies
-            , onAddResponsabilities = OnAddResponsabilities
+            , onAddField = OnAddMandateField
             , mdOps = Nothing
             }
     in

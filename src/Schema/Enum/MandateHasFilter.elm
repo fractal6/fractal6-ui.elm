@@ -12,11 +12,12 @@ type MandateHasFilter
     | Responsabilities
     | Domains
     | Policies
+    | Rules
 
 
 list : List MandateHasFilter
 list =
-    [ Purpose, Responsabilities, Domains, Policies ]
+    [ Purpose, Responsabilities, Domains, Policies, Rules ]
 
 
 decoder : Decoder MandateHasFilter
@@ -36,6 +37,9 @@ decoder =
 
                     "policies" ->
                         Decode.succeed Policies
+
+                    "rules" ->
+                        Decode.succeed Rules
 
                     _ ->
                         Decode.fail ("Invalid MandateHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -58,6 +62,9 @@ toString enum____ =
 
         Policies ->
             "policies"
+
+        Rules ->
+            "rules"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -85,6 +92,9 @@ fromString enumString____ =
 
         "policies" ->
             Just Policies
+
+        "rules" ->
+            Just Rules
 
         _ ->
             Nothing

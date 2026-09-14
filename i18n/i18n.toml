@@ -1625,6 +1625,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Policies"
   fr="Politiques"
 
+[rules]
+  en="Rules"
+  fr="Règles"
+
 [create]
   en="Create"
   fr="Créer"
@@ -1645,6 +1649,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Define the circle policies"
   fr="Définir les politiques du cercle"
 
+[phCircleRules]
+  en="Define the circle rules"
+  fr="Définir les règles du cercle"
+
 [phRolePurpose]
   en="Define the purpose of the role"
   fr="Définir la raison d’être du rôle"
@@ -1660,6 +1668,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [phRolePolicies]
   en="Define the role policies"
   fr="Définir les politiques du rôle"
+
+[phRoleRules]
+  en="Define the role rules"
+  fr="Définir les règles du rôle"
 
 [duplicateNameError]
   en="⚠️ This name already exists, please choose another one."
@@ -2005,6 +2017,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [addPolicies]
   en="Add policies"
   fr="Ajouter des politiques"
+
+[addRules]
+  en="Add rules"
+  fr="Ajouter des règles"
 
 [addColumn]
   en="Add a column"
@@ -3392,8 +3408,12 @@ Ce document peut être modifié ultérieurement au fur et à mesure que l’orga
   fr="Les domaines sont les propriétés, ressources, processus ou zones sur lesquels ce rôle ou cercle a un contrôle exclusif. Les autres doivent obtenir une permission pour impacter ces domaines."
 
 [policiesHelper]
-  en="Policies establish rules, guidelines, or limitations on how the domains of this role or circle can be accessed or used by others. They define the conditions under which permission is granted or restricted."
-  fr="Les politiques établissent des règles, des directives ou des limitations sur la façon dont les domaines de ce rôle ou cercle peuvent être accessibles ou utilisés par d’autres. Elles définissent les conditions dans lesquelles une permission est accordée ou restreinte."
+  en="Policies describe the principles and guidelines that govern this role or circle, including how its domains, when there are any, may be accessed or used by others. They express what is expected and why, and are meant to remain stable over time."
+  fr="Les politiques décrivent les principes et directives qui gouvernent ce rôle ou cercle, ainsi que la manière dont ses domaines, lorsqu’il en existe, peuvent être accessibles ou utilisés par d’autres. Elles expriment ce qui est attendu et pourquoi, et ont vocation à rester stables dans le temps."
+
+[rulesHelper]
+  en="Rules translate the policies into concrete and applicable conditions: what is allowed, forbidden or required, and in which circumstances. A single policy is usually carried out by several rules, which can be adjusted as often as needed without changing the policy itself."
+  fr="Les règles traduisent les politiques en conditions concrètes et applicables : ce qui est autorisé, interdit ou requis, et dans quelles circonstances. Une même politique est généralement mise en œuvre par plusieurs règles, qui peuvent être ajustées aussi souvent que nécessaire sans modifier la politique elle-même."
 
 
 

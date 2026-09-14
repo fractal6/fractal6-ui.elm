@@ -332,5 +332,6 @@ buildMandate mandate =
                 , responsabilities = mandate.responsabilities |> fromMaybe
                 , domains = mandate.domains |> fromMaybe
                 , policies = mandate.policies |> fromMaybe
+                , rules = mandate.rules |> fromMaybe
             }
         )

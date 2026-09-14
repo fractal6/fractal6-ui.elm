@@ -566,6 +566,7 @@ mandatePayload =
         |> with Schema.Object.Mandate.responsabilities
         |> with Schema.Object.Mandate.domains
         |> with Schema.Object.Mandate.policies
+        |> with Schema.Object.Mandate.rules
 
 
 

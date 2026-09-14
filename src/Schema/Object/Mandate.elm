@@ -42,3 +42,8 @@ domains =
 policies : SelectionSet (Maybe String) Schema.Object.Mandate
 policies =
     Object.selectionForField "(Maybe String)" "policies" [] (Decode.string |> Decode.nullable)
+
+
+rules : SelectionSet (Maybe String) Schema.Object.Mandate
+rules =
+    Object.selectionForField "(Maybe String)" "rules" [] (Decode.string |> Decode.nullable)

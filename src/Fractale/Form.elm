@@ -616,6 +616,7 @@ type alias FormText =
     , ph_responsabilities : String
     , ph_domains : String
     , ph_policies : String
+    , ph_rules : String
     , submit : String
     , close_submit : String
     , purposeSubject : String
@@ -635,6 +636,7 @@ initFormText lexicon node_type =
                 ""
                 ""
                 ""
+                ""
                 (T.tensionSubmit lexicon)
                 ""
                 T.orgaSubject
@@ -649,6 +651,7 @@ initFormText lexicon node_type =
                 T.phRoleResponsabilities
                 T.phRoleDomains
                 T.phRolePolicies
+                T.phRoleRules
                 (T.tensionSubmit lexicon)
                 T.tensionRoleCloseSubmit
                 T.roleSubject
@@ -663,6 +666,7 @@ initFormText lexicon node_type =
                 T.phCircleResponsabilities
                 T.phCircleDomains
                 T.phCirclePolicies
+                T.phCircleRules
                 (T.tensionSubmit lexicon)
                 T.tensionCircleCloseSubmit
                 T.circleSubject

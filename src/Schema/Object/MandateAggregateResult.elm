@@ -62,3 +62,13 @@ policiesMin =
 policiesMax : SelectionSet (Maybe String) Schema.Object.MandateAggregateResult
 policiesMax =
     Object.selectionForField "(Maybe String)" "policiesMax" [] (Decode.string |> Decode.nullable)
+
+
+rulesMin : SelectionSet (Maybe String) Schema.Object.MandateAggregateResult
+rulesMin =
+    Object.selectionForField "(Maybe String)" "rulesMin" [] (Decode.string |> Decode.nullable)
+
+
+rulesMax : SelectionSet (Maybe String) Schema.Object.MandateAggregateResult
+rulesMax =
+    Object.selectionForField "(Maybe String)" "rulesMax" [] (Decode.string |> Decode.nullable)

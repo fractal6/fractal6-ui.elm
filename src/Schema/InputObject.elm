@@ -800,9 +800,9 @@ buildAddMandateInput required____ fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { responsabilities = Absent, domains = Absent, policies = Absent }
+                { responsabilities = Absent, domains = Absent, policies = Absent, rules = Absent }
     in
-    { purpose = required____.purpose, responsabilities = optionals____.responsabilities, domains = optionals____.domains, policies = optionals____.policies }
+    { purpose = required____.purpose, responsabilities = optionals____.responsabilities, domains = optionals____.domains, policies = optionals____.policies, rules = optionals____.rules }
 
 
 type alias AddMandateInputRequiredFields =
@@ -813,6 +813,7 @@ type alias AddMandateInputOptionalFields =
     { responsabilities : OptionalArgument String
     , domains : OptionalArgument String
     , policies : OptionalArgument String
+    , rules : OptionalArgument String
     }
 
 
@@ -823,6 +824,7 @@ type alias AddMandateInput =
     , responsabilities : OptionalArgument String
     , domains : OptionalArgument String
     , policies : OptionalArgument String
+    , rules : OptionalArgument String
     }
 
 
@@ -831,7 +833,7 @@ type alias AddMandateInput =
 encodeAddMandateInput : AddMandateInput -> Value
 encodeAddMandateInput input____ =
     Encode.maybeObject
-        [ ( "purpose", Encode.string input____.purpose |> Just ), ( "responsabilities", Encode.string |> Encode.optional input____.responsabilities ), ( "domains", Encode.string |> Encode.optional input____.domains ), ( "policies", Encode.string |> Encode.optional input____.policies ) ]
+        [ ( "purpose", Encode.string input____.purpose |> Just ), ( "responsabilities", Encode.string |> Encode.optional input____.responsabilities ), ( "domains", Encode.string |> Encode.optional input____.domains ), ( "policies", Encode.string |> Encode.optional input____.policies ), ( "rules", Encode.string |> Encode.optional input____.rules ) ]
 
 
 buildAddNodeFragmentInput :
@@ -4706,9 +4708,9 @@ buildMandatePatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { purpose = Absent, responsabilities = Absent, domains = Absent, policies = Absent }
+                { purpose = Absent, responsabilities = Absent, domains = Absent, policies = Absent, rules = Absent }
     in
-    { purpose = optionals____.purpose, responsabilities = optionals____.responsabilities, domains = optionals____.domains, policies = optionals____.policies }
+    { purpose = optionals____.purpose, responsabilities = optionals____.responsabilities, domains = optionals____.domains, policies = optionals____.policies, rules = optionals____.rules }
 
 
 type alias MandatePatchOptionalFields =
@@ -4716,6 +4718,7 @@ type alias MandatePatchOptionalFields =
     , responsabilities : OptionalArgument String
     , domains : OptionalArgument String
     , policies : OptionalArgument String
+    , rules : OptionalArgument String
     }
 
 
@@ -4726,6 +4729,7 @@ type alias MandatePatch =
     , responsabilities : OptionalArgument String
     , domains : OptionalArgument String
     , policies : OptionalArgument String
+    , rules : OptionalArgument String
     }
 
 
@@ -4734,7 +4738,7 @@ type alias MandatePatch =
 encodeMandatePatch : MandatePatch -> Value
 encodeMandatePatch input____ =
     Encode.maybeObject
-        [ ( "purpose", Encode.string |> Encode.optional input____.purpose ), ( "responsabilities", Encode.string |> Encode.optional input____.responsabilities ), ( "domains", Encode.string |> Encode.optional input____.domains ), ( "policies", Encode.string |> Encode.optional input____.policies ) ]
+        [ ( "purpose", Encode.string |> Encode.optional input____.purpose ), ( "responsabilities", Encode.string |> Encode.optional input____.responsabilities ), ( "domains", Encode.string |> Encode.optional input____.domains ), ( "policies", Encode.string |> Encode.optional input____.policies ), ( "rules", Encode.string |> Encode.optional input____.rules ) ]
 
 
 buildMandateRef :
@@ -4744,9 +4748,9 @@ buildMandateRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, purpose = Absent, responsabilities = Absent, domains = Absent, policies = Absent }
+                { id = Absent, purpose = Absent, responsabilities = Absent, domains = Absent, policies = Absent, rules = Absent }
     in
-    { id = optionals____.id, purpose = optionals____.purpose, responsabilities = optionals____.responsabilities, domains = optionals____.domains, policies = optionals____.policies }
+    { id = optionals____.id, purpose = optionals____.purpose, responsabilities = optionals____.responsabilities, domains = optionals____.domains, policies = optionals____.policies, rules = optionals____.rules }
 
 
 type alias MandateRefOptionalFields =
@@ -4755,6 +4759,7 @@ type alias MandateRefOptionalFields =
     , responsabilities : OptionalArgument String
     , domains : OptionalArgument String
     , policies : OptionalArgument String
+    , rules : OptionalArgument String
     }
 
 
@@ -4766,6 +4771,7 @@ type alias MandateRef =
     , responsabilities : OptionalArgument String
     , domains : OptionalArgument String
     , policies : OptionalArgument String
+    , rules : OptionalArgument String
     }
 
 
@@ -4774,7 +4780,7 @@ type alias MandateRef =
 encodeMandateRef : MandateRef -> Value
 encodeMandateRef input____ =
     Encode.maybeObject
-        [ ( "id", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "purpose", Encode.string |> Encode.optional input____.purpose ), ( "responsabilities", Encode.string |> Encode.optional input____.responsabilities ), ( "domains", Encode.string |> Encode.optional input____.domains ), ( "policies", Encode.string |> Encode.optional input____.policies ) ]
+        [ ( "id", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "purpose", Encode.string |> Encode.optional input____.purpose ), ( "responsabilities", Encode.string |> Encode.optional input____.responsabilities ), ( "domains", Encode.string |> Encode.optional input____.domains ), ( "policies", Encode.string |> Encode.optional input____.policies ), ( "rules", Encode.string |> Encode.optional input____.rules ) ]
 
 
 buildMultiPolygonRef :

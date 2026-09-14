@@ -966,6 +966,7 @@ type alias Mandate =
     , responsabilities : Maybe String
     , domains : Maybe String
     , policies : Maybe String
+    , rules : Maybe String
     }
 
 
@@ -1015,7 +1016,7 @@ shrinkNode n =
 
 initMandate : Mandate
 initMandate =
-    Mandate "" Nothing Nothing Nothing
+    Mandate "" Nothing Nothing Nothing Nothing
 
 
 initNodeFragment : Maybe NodeType.NodeType -> NodeFragment

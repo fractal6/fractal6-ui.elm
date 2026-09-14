@@ -569,9 +569,7 @@ type Msg
     | OnToggleDiff String
     | ChangeBlobEdit NodeEdit
     | ChangeBlobPost String String
-    | AddDomains
-    | AddPolicies
-    | AddResponsabilities
+    | AddMandateField String
       -- Blob Submit
     | CommitBlob NodeDoc Time.Posix
     | BlobAck (GqlData PatchTensionPayloadID)
@@ -1053,14 +1051,8 @@ update global message model =
         ChangeBlobPost field value ->
             ( { model | nodeDoc = NodeDoc.updatePost field value model.nodeDoc }, Cmd.none, Cmd.none )
 
-        AddResponsabilities ->
-            ( { model | nodeDoc = NodeDoc.addResponsabilities model.nodeDoc }, Cmd.none, Ports.bulma_driver "blobDocument" )
-
-        AddDomains ->
-            ( { model | nodeDoc = NodeDoc.addDomains model.nodeDoc }, Cmd.none, Ports.bulma_driver "blobDocument" )
-
-        AddPolicies ->
-            ( { model | nodeDoc = NodeDoc.addPolicies model.nodeDoc }, Cmd.none, Ports.bulma_driver "blobDocument" )
+        AddMandateField key ->
+            ( { model | nodeDoc = NodeDoc.addField key model.nodeDoc }, Cmd.none, Ports.bulma_driver "blobDocument" )
 
         CommitBlob data time ->
             let
@@ -1964,9 +1956,7 @@ viewDocument u t b model =
             , onPushBlob = PushBlob
             , onChangeEdit = ChangeBlobEdit
             , onChangePost = ChangeBlobPost
-            , onAddDomains = AddDomains
-            , onAddPolicies = AddPolicies
-            , onAddResponsabilities = AddResponsabilities
+            , onAddField = AddMandateField
             , mdOps = Nothing
             }
     in
@@ -2279,9 +2269,7 @@ viewSidePane u t model =
                                     , onPushBlob = PushBlob
                                     , onChangeEdit = ChangeBlobEdit
                                     , onChangePost = ChangeBlobPost
-                                    , onAddDomains = AddDomains
-                                    , onAddPolicies = AddPolicies
-                                    , onAddResponsabilities = AddResponsabilities
+                                    , onAddField = AddMandateField
                                     , mdOps = Nothing
                                     }
                             in

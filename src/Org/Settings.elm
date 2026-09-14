@@ -601,9 +601,7 @@ type Msg
     | GotRole (GqlData RoleExtFull)
     | GotRoleDel (GqlData String)
     | ToggleMandate String
-    | AddDomains
-    | AddPolicies
-    | AddResponsabilities
+    | AddMandateField String
     | UpdateNodePost String String
     | ChangeMandateViewMode String InputViewMode
     | OnMandateRichText String String
@@ -1174,14 +1172,8 @@ update global message model =
                 _ ->
                     ( { model | role_result_del = result }, Cmd.none, Cmd.none )
 
-        AddResponsabilities ->
-            ( { model | nodeDoc = NodeDoc.addResponsabilities model.nodeDoc }, Cmd.none, Cmd.none )
-
-        AddDomains ->
-            ( { model | nodeDoc = NodeDoc.addDomains model.nodeDoc }, Cmd.none, Cmd.none )
-
-        AddPolicies ->
-            ( { model | nodeDoc = NodeDoc.addPolicies model.nodeDoc }, Cmd.none, Cmd.none )
+        AddMandateField key ->
+            ( { model | nodeDoc = NodeDoc.addField key model.nodeDoc }, Cmd.none, Cmd.none )
 
         UpdateNodePost field value ->
             let
@@ -2665,9 +2657,7 @@ viewRoleAddBox model =
         , viewMandateInput (initFormText model.lexicon (Just NodeType.Role))
             (Just form.mandate)
             { onChangePost = UpdateNodePost
-            , onAddResponsabilities = AddResponsabilities
-            , onAddDomains = AddDomains
-            , onAddPolicies = AddPolicies
+            , onAddField = AddMandateField
             , data = model.nodeDoc
             , session = model.session
             , mdOps =

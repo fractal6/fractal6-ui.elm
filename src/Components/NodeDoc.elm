@@ -53,8 +53,8 @@ import Text as T
 import Time
 import Utils.Bool exposing (ternary)
 import Utils.Date exposing (formatDate)
-import Utils.Html exposing (showIf, showMaybe)
 import Utils.Diff as Diff
+import Utils.Html exposing (showIf, showMaybe)
 import Utils.Maybe exposing (unwrap)
 import Utils.String exposing (space_)
 
@@ -75,10 +75,63 @@ type alias NodeDoc =
     , result : GqlData PatchTensionPayloadID
     , mode : NodeView
     , editMode : Maybe NodeEdit
-    , doAddResponsabilities : Bool
-    , doAddDomains : Bool
-    , doAddPolicies : Bool
+    , doAddFields : List String -- mandate fields manually added by the user
     }
+
+
+{-| The optional mandate fields, in display order (purpose always comes first).
+-}
+type alias MandateField =
+    { key : String
+    , label : String
+    , helper : String
+    , addLabel : String
+    , get : Mandate -> Maybe String
+    , set : Maybe String -> Mandate -> Mandate
+    , ph : FormText -> String
+    }
+
+
+mandateFields : List MandateField
+mandateFields =
+    [ { key = "policies"
+      , label = T.policies
+      , helper = T.policiesHelper
+      , addLabel = T.addPolicies
+      , get = .policies
+      , set = \v m -> { m | policies = v }
+      , ph = .ph_policies
+      }
+    , { key = "rules"
+      , label = T.rules
+      , helper = T.rulesHelper
+      , addLabel = T.addRules
+      , get = .rules
+      , set = \v m -> { m | rules = v }
+      , ph = .ph_rules
+      }
+    , { key = "responsabilities"
+      , label = T.responsabilities
+      , helper = T.responsabilitiesHelper
+      , addLabel = T.addResponsabilities
+      , get = .responsabilities
+      , set = \v m -> { m | responsabilities = v }
+      , ph = .ph_responsabilities
+      }
+    , { key = "domains"
+      , label = T.domains
+      , helper = T.domainsHelper
+      , addLabel = T.addDomains
+      , get = .domains
+      , set = \v m -> { m | domains = v }
+      , ph = .ph_domains
+      }
+    ]
+
+
+mandateFieldId : MandateField -> String
+mandateFieldId f =
+    "mandate" ++ String.toUpper (String.left 1 f.key) ++ String.dropLeft 1 f.key
 
 
 type NodeView
@@ -99,9 +152,7 @@ init lexicon tid node_type mode user =
     , result = NotAsked
     , editMode = Nothing
     , mode = mode
-    , doAddResponsabilities = False
-    , doAddDomains = False
-    , doAddPolicies = False
+    , doAddFields = []
     }
 
 
@@ -115,6 +166,7 @@ initBlob lexicon nf data =
         | node = nf
         , form = { form | node = nf, txt = initFormText lexicon nf.type_ }
         , result = NotAsked
+        , doAddFields = []
     }
 
 
@@ -170,14 +222,7 @@ hasMandate mandate_m =
             --data.form.node.mandate
             withDefault initMandate mandate_m
     in
-    mandate.purpose
-        /= ""
-        || withDefault "" mandate.responsabilities
-        /= ""
-        || withDefault "" mandate.domains
-        /= ""
-        || withDefault "" mandate.policies
-        /= ""
+    mandate.purpose /= "" || List.any (\f -> (f.get mandate |> withDefault "") /= "") mandateFields
 
 
 
@@ -194,19 +239,9 @@ setResult result data =
     { data | result = result }
 
 
-addResponsabilities : NodeDoc -> NodeDoc
-addResponsabilities data =
-    { data | doAddResponsabilities = True }
-
-
-addDomains : NodeDoc -> NodeDoc
-addDomains data =
-    { data | doAddDomains = True }
-
-
-addPolicies : NodeDoc -> NodeDoc
-addPolicies data =
-    { data | doAddPolicies = True }
+addField : String -> NodeDoc -> NodeDoc
+addField key data =
+    { data | doAddFields = key :: data.doAddFields }
 
 
 setForm : TensionForm -> NodeDoc -> NodeDoc
@@ -229,7 +264,7 @@ resetNode data =
         form =
             data.form
     in
-    { data | form = { form | node = data.node } }
+    { data | form = { form | node = data.node }, doAddFields = [] }
 
 
 reset : NodeDoc -> NodeDoc
@@ -473,9 +508,7 @@ type alias Op msg =
     -- Blob change
     , onChangeEdit : NodeEdit -> msg
     , onChangePost : String -> String -> msg
-    , onAddResponsabilities : msg
-    , onAddDomains : msg
-    , onAddPolicies : msg
+    , onAddField : String -> msg
     , mdOps :
         Maybe
             { onChangeViewMode : String -> InputViewMode -> msg
@@ -785,11 +818,9 @@ viewMandateSection session role_type_m mandate_m op_m =
         , case mandate_m of
             Just mandate ->
                 div []
-                    [ viewMandateSubSection session T.purpose (Just mandate.purpose)
-                    , viewMandateSubSection session T.responsabilities mandate.responsabilities
-                    , viewMandateSubSection session T.domains mandate.domains
-                    , viewMandateSubSection session T.policies mandate.policies
-                    ]
+                    (viewMandateSubSection session T.purpose (Just mandate.purpose)
+                        :: List.map (\f -> viewMandateSubSection session f.label (f.get mandate)) mandateFields
+                    )
 
             Nothing ->
                 case role_type_m of
@@ -960,9 +991,7 @@ viewMandateInput :
                     , post : Dict String String
                     }
             , onChangePost : String -> String -> msg
-            , onAddResponsabilities : msg
-            , onAddDomains : msg
-            , onAddPolicies : msg
+            , onAddField : String -> msg
         }
     -> Html msg
 viewMandateInput txt mandate op =
@@ -970,23 +999,11 @@ viewMandateInput txt mandate op =
         purpose =
             mandate |> Maybe.map (\m -> m.purpose) |> withDefault ""
 
-        responsabilities =
-            mandate |> Maybe.map (\m -> withDefault "" m.responsabilities) |> withDefault ""
+        fieldValue f =
+            mandate |> Maybe.andThen f.get |> withDefault ""
 
-        domains =
-            mandate |> Maybe.map (\m -> withDefault "" m.domains) |> withDefault ""
-
-        policies =
-            mandate |> Maybe.map (\m -> withDefault "" m.policies) |> withDefault ""
-
-        showResponsabilities =
-            op.data.doAddResponsabilities || responsabilities /= ""
-
-        showDomains =
-            op.data.doAddDomains || domains /= ""
-
-        showPolicies =
-            op.data.doAddPolicies || policies /= ""
+        isShown f =
+            List.member f.key op.data.doAddFields || fieldValue f /= ""
 
         purpose_len =
             List.length <| String.lines purpose
@@ -1021,17 +1038,45 @@ viewMandateInput txt mandate op =
         md_purpose =
             mdField "mandatePurpose"
 
-        md_responsabilities =
-            mdField "mandateResponsabilities"
+        viewField f =
+            let
+                md =
+                    mdField (mandateFieldId f)
 
-        md_domains =
-            mdField "mandateDomains"
+                val =
+                    fieldValue f
+            in
+            div [ class md.fieldClass ]
+                [ div [ class "label" ] [ text f.label, helperButton "ml-2" f.helper ]
+                , md.header
+                , div [ class "control" ]
+                    [ textarea
+                        [ id (mandateFieldId f)
+                        , class "textarea"
 
-        md_policies =
-            mdField "mandatePolicies"
+                        -- only focus a field the user just added
+                        , classList [ ( "is-invisible-force", md.isPreview ), ( "autofocus", List.member f.key op.data.doAddFields ) ]
+                        , rows (min 15 (max (List.length (String.lines val)) 2))
+                        , placeholder (f.ph txt)
+                        , value val
+                        , onInput <| op.onChangePost f.key
+                        ]
+                        []
+                    , md.preview val
+                    ]
+                ]
+
+        viewAddButton f =
+            span [ class "pr-2" ]
+                [ div [ class "button is-small", onClick (op.onAddField f.key) ]
+                    [ A.icon1 "icon-plus" "", text f.addLabel ]
+                ]
+
+        ( shown, hidden ) =
+            List.partition isShown mandateFields
     in
-    div []
-        [ div [ class md_purpose.fieldClass ]
+    div [] <|
+        div [ class md_purpose.fieldClass ]
             [ div [ class "label" ]
                 [ text T.purpose, helperButton "ml-2" (T.purposeHelper |> Format.value txt.purposeSubject) ]
             , md_purpose.header
@@ -1050,106 +1095,7 @@ viewMandateInput txt mandate op =
                 , md_purpose.preview purpose
                 ]
             ]
-        , if showResponsabilities then
-            let
-                input_len =
-                    List.length <| String.lines purpose
-            in
-            div [ class md_responsabilities.fieldClass ]
-                [ div [ class "label" ] [ text T.responsabilities, helperButton "ml-2" T.responsabilitiesHelper ]
-                , md_responsabilities.header
-                , div [ class "control" ]
-                    [ textarea
-                        [ id "mandateResponsabilities"
-                        , class "textarea autofocus"
-                        , classList [ ( "is-invisible-force", md_responsabilities.isPreview ) ]
-                        , rows (min 15 (max input_len 2))
-                        , placeholder txt.ph_responsabilities
-                        , value responsabilities
-                        , onInput <| op.onChangePost "responsabilities"
-                        ]
-                        []
-                    , md_responsabilities.preview responsabilities
-                    ]
-                ]
-
-          else
-            text ""
-        , if showDomains then
-            let
-                input_len =
-                    List.length <| String.lines purpose
-            in
-            div [ class md_domains.fieldClass ]
-                [ div [ class "label" ] [ text T.domains, helperButton "ml-2" T.domainsHelper ]
-                , md_domains.header
-                , div [ class "control" ]
-                    [ textarea
-                        [ id "mandateDomains"
-                        , class "textarea autofocus"
-                        , classList [ ( "is-invisible-force", md_domains.isPreview ) ]
-                        , rows (min 15 (max input_len 2))
-                        , placeholder txt.ph_domains
-                        , value domains
-                        , onInput <| op.onChangePost "domains"
-                        ]
-                        []
-                    , md_domains.preview domains
-                    ]
-                ]
-
-          else
-            text ""
-        , if showPolicies then
-            let
-                input_len =
-                    List.length <| String.lines purpose
-            in
-            div [ class md_policies.fieldClass ]
-                [ div [ class "label" ] [ text T.policies, helperButton "ml-2" T.policiesHelper ]
-                , md_policies.header
-                , div [ class "control" ]
-                    [ textarea
-                        [ id "mandatePolicies"
-                        , class "textarea autofocus"
-                        , classList [ ( "is-invisible-force", md_policies.isPreview ) ]
-                        , rows (min 15 (max input_len 2))
-                        , placeholder txt.ph_policies
-                        , value policies
-                        , onInput <| op.onChangePost "policies"
-                        ]
-                        []
-                    , md_policies.preview policies
-                    ]
-                ]
-
-          else
-            text ""
-        , if not showResponsabilities then
-            span [ class "pr-2" ]
-                [ div [ class "button is-small", onClick op.onAddResponsabilities ]
-                    [ A.icon1 "icon-plus" "", text T.addResponsabilities ]
-                ]
-
-          else
-            text ""
-        , if not showDomains then
-            span [ class "pr-2" ]
-                [ div [ class "button is-small", onClick op.onAddDomains ]
-                    [ A.icon1 "icon-plus" "", text T.addDomains ]
-                ]
-
-          else
-            text ""
-        , if not showPolicies then
-            span [ class "pr-2" ]
-                [ div [ class "button is-small", onClick op.onAddPolicies ]
-                    [ A.icon1 "icon-plus" "", text T.addPolicies ]
-                ]
-
-          else
-            text ""
-        ]
+            :: (List.map viewField shown ++ List.map viewAddButton hidden)
 
 
 
@@ -1352,7 +1298,8 @@ viewVerRow session expandedDiff onToggleDiff i blob prevBlob =
 --- Blob diff (split view)
 
 
-{-| The diffable text fields of a blob, labels aligned across revisions. -}
+{-| The diffable text fields of a blob, labels aligned across revisions.
+-}
 blobFields : Blob -> List ( String, String )
 blobFields blob =
     let
@@ -1365,10 +1312,8 @@ blobFields blob =
     [ ( T.name, withDefault "" n.name )
     , ( T.about, withDefault "" n.about )
     , ( T.purpose, m.purpose )
-    , ( T.responsabilities, withDefault "" m.responsabilities )
-    , ( T.domains, withDefault "" m.domains )
-    , ( T.policies, withDefault "" m.policies )
     ]
+        ++ List.map (\f -> ( f.label, f.get m |> withDefault "" )) mandateFields
 
 
 viewBlobDiff : Blob -> Maybe Blob -> Html msg
@@ -1403,7 +1348,8 @@ type alias DiffRow =
     { left : Maybe String, right : Maybe String, changed : Bool }
 
 
-{-| Unchanged lines kept around each change. -}
+{-| Unchanged lines kept around each change.
+-}
 diffContext : Int
 diffContext =
     4
@@ -1414,7 +1360,8 @@ type Hunk
     | Skipped Int
 
 
-{-| Pair removed/added hunks side by side, padding the shorter side. -}
+{-| Pair removed/added hunks side by side, padding the shorter side.
+-}
 toSplitRows : List (Diff.Change () String) -> List DiffRow
 toSplitRows changes =
     let
@@ -1453,7 +1400,8 @@ zipPad rem add =
     List.map2 (\l r -> DiffRow l r True) (pad rem) (pad add)
 
 
-{-| Keep changed lines plus `n` lines of context, collapsing the gaps. -}
+{-| Keep changed lines plus `n` lines of context, collapsing the gaps.
+-}
 withContext : Int -> List DiffRow -> List Hunk
 withContext n rows =
     let
@@ -1549,7 +1497,8 @@ isNoChange c =
             False
 
 
-{-| Keep the chars visible on one side, flagging those that changed. -}
+{-| Keep the chars visible on one side, flagging those that changed.
+-}
 sideChar : Bool -> Diff.Change Never Char -> Maybe ( Bool, Char )
 sideChar isLeft c =
     case c of
@@ -1597,15 +1546,6 @@ updateNodeForm field value form =
         "purpose" ->
             { form | node = { node | mandate = Just { mandate | purpose = value } } }
 
-        "responsabilities" ->
-            { form | node = { node | mandate = Just { mandate | responsabilities = ternary (value == "") Nothing (Just value) } } }
-
-        "domains" ->
-            { form | node = { node | mandate = Just { mandate | domains = ternary (value == "") Nothing (Just value) } } }
-
-        "policies" ->
-            { form | node = { node | mandate = Just { mandate | policies = ternary (value == "") Nothing (Just value) } } }
-
         -- NodeFragment
         "nameid" ->
             { form | node = { node | nameid = Just (nameidEncoder value) } }
@@ -1639,5 +1579,10 @@ updateNodeForm field value form =
                 { form | node = { node | name = Just value } }
 
         _ ->
-            -- title, message...
-            { form | post = Dict.insert field value form.post }
+            case LE.find (\f -> f.key == field) mandateFields of
+                Just f ->
+                    { form | node = { node | mandate = Just (f.set (ternary (value == "") Nothing (Just value)) mandate) } }
+
+                Nothing ->
+                    -- title, message...
+                    { form | post = Dict.insert field value form.post }
