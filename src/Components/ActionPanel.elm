@@ -1238,6 +1238,13 @@ viewPanelMenu op model =
                                     [ A.icon1 "icon-git-branch" T.circle ]
                                 , div [ class "dropdown-item", onClick (Do [ DoCreateTension model.form.node.nameid (Just NodeType.Role) Nothing ]) ]
                                     [ A.icon1 "icon-leaf" T.role ]
+                                , showIf isAdmin <| hr [ class "dropdown-divider" ] []
+                                , showIf isAdmin <|
+                                    div
+                                        [ class "dropdown-item"
+                                        , onClick (Navigate (toLink ProjectsBaseUri model.form.node.nameid [] ++ "?new=1"))
+                                        ]
+                                        [ A.icon1 "icon-layout" T.project ]
                                 ]
                             ]
                         ]
