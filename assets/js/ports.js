@@ -823,17 +823,17 @@ export const actions = {
 
             //$e.style.maxHeight = 0.8*screen_h + "px";
 
-            //console.log("document client:", document.body.clientHeight);
-            //console.log("document scroll:", document.body.scrollHeight);
-            //console.log("window inner:", window.innerHeight);
-            //console.log("window outer:", window.outerHeight);
-            //console.log("screen:", screen.height);
-            //console.log("screen avail:", screen.availHeight);
-            //console.log("elt client:", $e.clientHeight);
-            //console.log("elt scrol:", $e.scrollHeight);
-            //console.log("elt style:", $e.style.height);
-            //console.log("elt top:", $e.offsetTop);
-            //console.log("elt bottom:", $e.offsetTop + $e.clientHeight);
+            //console.debug("document client:", document.body.clientHeight);
+            //console.debug("document scroll:", document.body.scrollHeight);
+            //console.debug("window inner:", window.innerHeight);
+            //console.debug("window outer:", window.outerHeight);
+            //console.debug("screen:", screen.height);
+            //console.debug("screen avail:", screen.availHeight);
+            //console.debug("elt client:", $e.clientHeight);
+            //console.debug("elt scrol:", $e.scrollHeight);
+            //console.debug("elt style:", $e.style.height);
+            //console.debug("elt top:", $e.offsetTop);
+            //console.debug("elt bottom:", $e.offsetTop + $e.clientHeight);
         }
 
         setTimeout(() => {

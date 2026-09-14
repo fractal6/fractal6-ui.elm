@@ -35,7 +35,7 @@ const DROPDOWN_SELECTOR = '.dropdown:not(.is-hoverable):not(.elm), .has-dropdown
 export function InitBulma(app, session, eltId) {
     var handlers = session.bulmaHandlers;
     if (!eltId)
-        console.log(`Activate Bulma driver (%d)...`, handlers.length);
+        console.debug(`Activate Bulma driver (%d)...`, handlers.length);
 
     // This timeout is needed when bulma driver is called by elm Cmd,
     // to wait for the Html Msg to be updated by elm in order
@@ -139,11 +139,11 @@ export function BulmaDriver(app, target, handlers) {
     function setupHandler(evt, hdl, elt, ...objs) {
         if (!hasHandler(evt, hdl, elt)) {
             //// Debug what handler is happened
-            //console.log(evt, hdl.name, elt)
+            //console.debug(evt, hdl.name, elt)
             //for (var i=0; i < handlers.length; i++) {
             //    if (evt === handlers[i][0] && hdl.name === handlers[i][1].name ) {
-            //        console.log(evt === handlers[i][0], hdl.name === handlers[i][1].name, elt === handlers[i][2])
-            //        console.log([evt, hdl, elt,handlers[i][2] ])
+            //        console.debug(evt === handlers[i][0], hdl.name === handlers[i][1].name, elt === handlers[i][2])
+            //        console.debug([evt, hdl, elt,handlers[i][2] ])
             //    }
             //}
 
@@ -163,7 +163,7 @@ export function BulmaDriver(app, target, handlers) {
             // Memorize active handlers
             handlers.push([evt, hdl, elt, _hdl_]);
         } else {
-            //console.log("handler already exits, passing");
+            //console.debug("handler already exits, passing");
         }
     }
 

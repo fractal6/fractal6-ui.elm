@@ -3,6 +3,9 @@
 // flag (`true` → returns false, `'throw'` → throws).
 globalThis.__failExecCommand = false;
 
+// Verbose-level logs from assets/js/ are noise in the test report
+console.debug = () => {};
+
 document.execCommand = function (cmd, _ui, value) {
     if (globalThis.__failExecCommand === 'throw') throw new Error('execCommand disabled');
     if (globalThis.__failExecCommand === true) return false;

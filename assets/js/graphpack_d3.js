@@ -1401,7 +1401,7 @@ export const GraphPack = {
             default:
                 console.error("Unknown condition: %s", cond)
         }
-        //console.log(cond, "?", test);
+        //console.debug(cond, "?", test);
         return test
     },
 
@@ -1715,7 +1715,7 @@ export const GraphPack = {
                             // Navigate through same depth node
                         }
                     } else {
-                        console.log("click-node-event: this case should not happend, check me")
+                        console.warn("click-node-event: this case should not happend, report this")
                     }
 
                     this.nodeClickedFromJs(node);
@@ -1913,7 +1913,7 @@ export const GraphPack = {
         //////////////////////////////////////////////////////////////
 
         if (!this.graph) return
-        console.log("Orga Canvas Initalization");
+        console.debug("Orga Canvas Initalization");
         this.isFrozen = false;
         this.endDrag();
 
