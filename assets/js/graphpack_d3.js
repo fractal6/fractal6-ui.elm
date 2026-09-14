@@ -1733,6 +1733,8 @@ export const GraphPack = {
         var canvasMouseDownEvent = e => {
             if (e.button !== 0 || this.isZooming || this.isFrozen) return false
             this.pressed = true;
+            // No drag on touch, the finger belongs to the page scroll (move is in the long-press menu)
+            if (e.pointerType === "touch") return false
             var p = this.getPointerCtx(e);
             if (!this.checkIf(p, "InZoomed")) return false
             var node = this.getNodeUnderPointer(e, p);
