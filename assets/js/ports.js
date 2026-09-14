@@ -135,60 +135,7 @@ window.addEventListener('load', _ => {
                 if (getThemePref() === "system") app.ports.flushGraphPackFromJs.send(null);
             });
 
-            // Paste-capture: any element with [data-paste-capture] forwards
-            // file items from the clipboard to Elm. The element id (if any)
-            // is sent so the receiver can disambiguate multiple editors.
-            document.addEventListener('paste', function (e) {
-                var t = e.target;
-                if (!t || typeof t.matches !== 'function') return;
-                if (!t.matches('[data-paste-capture]')) return;
-                var cd = e.clipboardData;
-                if (!cd) return;
-                var items = cd.items || [];
-                var files = [];
-                var objectUrls = [];
-                // Stamp is shared within a single paste event; the per-file
-                // index keeps names unique. Date.now() is live (unlike a stale
-                // model.session.now relayed through Elm), so two paste events
-                // ≥1ms apart never collide.
-                var stamp = Date.now();
-                for (var i = 0; i < items.length; i++) {
-                    if (items[i].kind === 'file') {
-                        var f = items[i].getAsFile();
-                        if (f) {
-                            // Pick an extension from the original name first,
-                            // then fall back to the MIME subtype. The backend
-                            // sniffs the actual MIME server-side; we just need
-                            // a stable suffix.
-                            var ext = '';
-                            var origName = f.name || '';
-                            var dot = origName.lastIndexOf('.');
-                            if (dot > -1) {
-                                ext = origName.substring(dot);
-                            } else if (f.type && f.type.indexOf('/') > -1) {
-                                ext = '.' + f.type.split('/')[1].toLowerCase();
-                            }
-                            var fname = 'paste-' + stamp + '-' + i + ext;
-                            // Rebuild the File so the multipart upload sends
-                            // OUR filename — the backend's rewrite logic looks
-                            // up `![](<filename>)` placeholders by it.
-                            var renamed = new File([f], fname, {
-                                type: f.type,
-                                lastModified: f.lastModified || stamp,
-                            });
-                            files.push(renamed);
-                            objectUrls.push(URL.createObjectURL(renamed));
-                        }
-                    }
-                }
-                if (files.length === 0) return;
-                e.preventDefault();
-                app.ports.pastedFilesFromJs.send({
-                    targetId: t.id || '',
-                    files: files,
-                    objectUrls: objectUrls,
-                });
-            });
+            initFileCapture(app);
 
             // Scroll position detection with throttling
             window.addEventListener('scroll', function() {
@@ -226,6 +173,104 @@ window.addEventListener('load', _ => {
 // Depth of synthetic clicks emitted by the CLICK action (Elm's `Ports.click ""`,
 // used to unregister an OUTSIDE_CLICK_CLOSE listener). They have no matching
 // mousedown, so the mousedown-inside guard must not swallow them.
+export function initFileCapture(app) {
+    // Paste/drop-capture: any element with [data-paste-capture] forwards
+    // clipboard or dropped files to Elm. The element id (if any)
+    // is sent so the receiver can disambiguate multiple editors.
+    function sendCapturedFiles(e, target, dataTransfer) {
+        var items = dataTransfer.items || [];
+        var files = [];
+        var objectUrls = [];
+        // Stamp is shared within a single event; the per-file
+        // index keeps names unique. Date.now() is live (unlike a stale
+        // model.session.now relayed through Elm), so two events
+        // ≥1ms apart never collide.
+        var stamp = Date.now();
+        for (var i = 0; i < items.length; i++) {
+            if (items[i].kind === 'file') {
+                var f = items[i].getAsFile();
+                if (f) {
+                    // Pick an extension from the original name first,
+                    // then fall back to the MIME subtype. The backend
+                    // sniffs the actual MIME server-side; we just need
+                    // a stable suffix.
+                    var ext = '';
+                    var origName = f.name || '';
+                    var dot = origName.lastIndexOf('.');
+                    if (dot > -1) {
+                        ext = origName.substring(dot);
+                    } else if (f.type && f.type.indexOf('/') > -1) {
+                        ext = '.' + f.type.split('/')[1].toLowerCase();
+                    }
+                    var fname = 'paste-' + stamp + '-' + i + ext;
+                    // Rebuild the File so the multipart upload sends
+                    // OUR filename — the backend's rewrite logic looks
+                    // up `![](<filename>)` placeholders by it.
+                    var renamed = new File([f], fname, {
+                        type: f.type,
+                        lastModified: f.lastModified || stamp,
+                    });
+                    files.push(renamed);
+                    objectUrls.push(URL.createObjectURL(renamed));
+                }
+            }
+        }
+        if (files.length === 0) return;
+        e.preventDefault();
+        app.ports.pastedFilesFromJs.send({
+            targetId: target.id || '',
+            files: files,
+            objectUrls: objectUrls,
+            isPaste: true,
+        });
+    }
+
+    function captureTarget(e) {
+        var t = e.target;
+        if (!t || typeof t.matches !== 'function') return null;
+        if (!t.matches('[data-paste-capture]')) return null;
+        return t;
+    }
+
+    document.addEventListener('paste', function (e) {
+        var t = captureTarget(e);
+        if (t && e.clipboardData) sendCapturedFiles(e, t, e.clipboardData);
+    });
+
+    // dragover must be prevented for the drop event to fire at all.
+    document.addEventListener('dragover', function (e) {
+        var t = captureTarget(e);
+        // Text/link drags carry no files: leave them to the browser's native handling.
+        if (!t || !e.dataTransfer || !Array.prototype.includes.call(e.dataTransfer.types || [], 'Files')) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+        t.classList.add('is-dragover');
+    });
+
+    document.addEventListener('dragleave', function (e) {
+        var t = captureTarget(e);
+        if (t) t.classList.remove('is-dragover');
+    });
+
+    // Dropped files are staged as attachments (chips), not inline placeholders:
+    // their own filename is kept, so no renaming and no blob preview.
+    document.addEventListener('drop', function (e) {
+        var t = captureTarget(e);
+        if (!t) return;
+        t.classList.remove('is-dragover');
+        var files = e.dataTransfer ? Array.prototype.slice.call(e.dataTransfer.files || []) : [];
+        if (files.length === 0) return;
+        e.preventDefault();
+        app.ports.pastedFilesFromJs.send({
+            targetId: t.id || '',
+            files: files,
+            objectUrls: [],
+            isPaste: false,
+        });
+    });
+}
+
+
 let syntheticClickDepth = 0;
 
 // Elm outgoing Ports Actions.

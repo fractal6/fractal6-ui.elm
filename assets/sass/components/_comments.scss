@@ -87,6 +87,12 @@
     }
 }
 
+// Drop target feedback, toggled from ports.js on [data-paste-capture] textareas.
+textarea.is-dragover {
+    border: $border-size dashed var(--bulma-primary) !important;
+    box-shadow: none;
+}
+
 .pending-files {
     // Attachment names must not contribute to the auto-width modal's intrinsic size.
     contain: inline-size;

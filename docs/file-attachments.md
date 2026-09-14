@@ -55,11 +55,22 @@ until `OutType.UploadsDone`: `NewTension` on its success branch, `CardPanel` by 
 panel and deferring `resetModel` (`Comments.hasActiveUploads`). A manual close still drops what
 is left in the queue, on purpose.
 
-## Inline paste
+## Inline paste and drop
 
-Textareas carry `data-paste-capture="true"`; a document-level `paste` listener in
-`assets/js/ports.js` forwards clipboard files to Elm with the textarea id. Two constraints on
-that JS step:
+Textareas carry `data-paste-capture="true"`; `initFileCapture` (`assets/js/ports.js`) attaches
+document-level `paste` / `dragover` / `dragleave` / `drop` listeners that forward files to Elm
+with the textarea id, through the same `pastedFilesFromJs` port. `dragover` is prevented (so
+`drop` fires), sets `dropEffect = 'copy'` and toggles `.is-dragover` on the textarea
+(`assets/sass/components/_comments.scss`) — only for drags carrying files, so text/link drags
+keep their native behaviour.
+
+The payload's `isPaste` splits the two flows:
+
+- **paste** (`isPaste: true`) — files renamed, blob preview, `![](name)` inserted at the caret.
+- **drop** (`isPaste: false`) — original filename, no rename, no placeholder: staged as a plain
+  attachment chip, exactly like the Attach button (`OnFilesSelected`).
+
+Two constraints on the paste step:
 
 - **It owns the filename.** It rebuilds each clipboard `File` as `paste-<timestamp>-<i><ext>`.
   The name must match between the markdown placeholder and the multipart part, because the
@@ -90,8 +101,7 @@ Blob URLs are revoked through `REVOKE_OBJECT_URL` on ack, manual removal, and pr
 
 ## Check
 
-`npm run test:js -- --runInBand uploadChips` drives the real Elm state and views in jsdom (no
-HTTP, no browser engine).
+`npm run test:js -- --runInBand fileCapture` drives the paste/drop listeners in jsdom.
 
 ## Not wired
 
@@ -105,7 +115,9 @@ HTTP, no browser engine).
 | `src/Api/File.elm` | REST upload/delete, `Anchor`, `ApiError`, decoders |
 | `src/Components/Comments.elm` | Per-cid queue, paste handling, chip views, `kickoffUploads` |
 | `src/Ports.elm` | `pastedFilesFromJs`, `insertAtCaret` |
-| `assets/js/ports.js` | Paste capture, `INSERT_AT_CARET` |
+| `assets/js/ports.js` | `initFileCapture` (paste/drop capture), `INSERT_AT_CARET` |
+| `assets/sass/components/_comments.scss` | `.is-dragover` drop-target highlight, chip styles |
+| `tests/Js/fileCapture.test.js` | jsdom check of the paste/drop listeners |
 | `assets/js/textutils.js` | `replaceRange`, shared with rich-text |
 | `src/ModelSchema.elm`, `src/Query/QueryTension.elm` | `CommentFile`, `Comment.files` |
 | `src/Query/AddTension.elm` | `buildComment`, `expectedAttachments` (`nfiles` post key) |

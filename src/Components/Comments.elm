@@ -469,6 +469,7 @@ type alias PastedFiles =
     { targetId : String
     , files : List File.File
     , objectUrls : List String
+    , isPaste : Bool -- False for dropped files, staged as plain attachments
     }
 
 
@@ -1058,7 +1059,7 @@ update_ apis message model =
             in
             ( { model | pendingByEditor = pendingByEditor1 }, noOut )
 
-        OnPastedFiles { targetId, files, objectUrls } ->
+        OnPastedFiles { targetId, files, objectUrls, isPaste } ->
             if not (List.member targetId model.pasteTargets) then
                 -- Paste meant for another mounted Comments instance.
                 ( model, noOut )
@@ -1076,7 +1077,7 @@ update_ apis message model =
                                 (\( fi, url ) ->
                                     { filename = File.name fi
                                     , file = fi
-                                    , isPaste = True
+                                    , isPaste = isPaste
                                     , status = Queued
                                     , objectUrl = url
                                     }
@@ -1086,8 +1087,11 @@ update_ apis message model =
                         Dict.update targetId (Maybe.withDefault [] >> (\xs -> xs ++ newPendings) >> Just) model.pendingByEditor
 
                     insertCmds =
-                        newPendings
-                            |> List.map (\p -> Ports.insertAtCaret targetId ("![](" ++ p.filename ++ ") "))
+                        if isPaste then
+                            List.map (\p -> Ports.insertAtCaret targetId ("![](" ++ p.filename ++ ") ")) newPendings
+
+                        else
+                            []
                 in
                 ( { model | pendingByEditor = pendingByEditor1 }
                 , out0 insertCmds
@@ -1297,10 +1301,11 @@ checkboxDecoder =
 
 pastedFilesDecoder : JD.Decoder PastedFiles
 pastedFilesDecoder =
-    JD.map3 PastedFiles
+    JD.map4 PastedFiles
         (JD.field "targetId" JD.string)
         (JD.field "files" (JD.list File.decoder))
         (JD.field "objectUrls" (JD.list JD.string))
+        (JD.field "isPaste" JD.bool)
 
 
 
