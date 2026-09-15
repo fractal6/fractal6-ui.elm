@@ -445,6 +445,14 @@ a.tag-circle {
     }
 }
 
+// Wrapping row whose content must not widen an auto-width container (eg. modals).
+.is-flex-wrap-contained {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    contain: inline-size;
+}
+
 .is-flex-inline {
     display: inline-flex !important;
 }

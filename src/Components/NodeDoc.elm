@@ -1067,10 +1067,8 @@ viewMandateInput txt mandate op =
                 ]
 
         viewAddButton f =
-            span [ class "pr-2" ]
-                [ div [ class "button is-small", onClick (op.onAddField f.key) ]
-                    [ A.icon1 "icon-plus" "", text f.addLabel ]
-                ]
+            div [ class "button is-small", onClick (op.onAddField f.key) ]
+                [ A.icon1 "icon-plus" "", text f.addLabel ]
 
         ( shown, hidden ) =
             List.partition isShown mandateFields
@@ -1095,7 +1093,9 @@ viewMandateInput txt mandate op =
                 , md_purpose.preview purpose
                 ]
             ]
-            :: (List.map viewField shown ++ List.map viewAddButton hidden)
+            :: (List.map viewField shown
+                    ++ [ div [ class "is-flex-wrap-contained" ] (List.map viewAddButton hidden) ]
+               )
 
 
 
