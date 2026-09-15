@@ -274,6 +274,16 @@ focusGraphPack focusid =
         }
 
 
+{-| Highlight the given nodes in the canvas (an empty list clears the hover).
+-}
+hoverGraphPack : List String -> Cmd msg
+hoverGraphPack nameids =
+    outgoing
+        { action = "HOVER_GRAPHPACK"
+        , data = JE.list JE.string nameids
+        }
+
+
 flushGraphPack : Cmd msg
 flushGraphPack =
     outgoing

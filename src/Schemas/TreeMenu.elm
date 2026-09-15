@@ -24,7 +24,6 @@ module Schemas.TreeMenu exposing (ExpandedLines, PersistentModel, decode, encode
 import Dict exposing (Dict)
 import Json.Decode as JD
 import Json.Encode as JE
-import Json.Encode.Extra as JEE
 import Loading exposing (ModalData)
 import Maybe exposing (withDefault)
 
@@ -35,15 +34,13 @@ type alias ExpandedLines =
 
 type alias PersistentModel =
     { isActive : Bool
-    , hover : Maybe String
     , expanded_lines : ExpandedLines
     }
 
 
-toPersistant : { a | isActive : Bool, hover : Maybe String, expanded_lines : ExpandedLines } -> PersistentModel
+toPersistant : { a | isActive : Bool, expanded_lines : ExpandedLines } -> PersistentModel
 toPersistant model =
     { isActive = model.isActive
-    , hover = model.hover
     , expanded_lines = model.expanded_lines
     }
 
@@ -52,7 +49,6 @@ encode : PersistentModel -> JE.Value
 encode m =
     JE.object
         [ ( "isActive", JE.bool m.isActive )
-        , ( "hover", JEE.maybe JE.string m.hover )
         , ( "expanded_lines", JE.dict identity JE.bool m.expanded_lines )
         ]
 
@@ -60,7 +56,6 @@ encode m =
 decode : JD.Decoder (Maybe PersistentModel)
 decode =
     JD.maybe <|
-        JD.map3 PersistentModel
+        JD.map2 PersistentModel
             (JD.field "isActive" JD.bool)
-            (JD.maybe <| JD.field "hover" JD.string)
             (JD.field "expanded_lines" (JD.dict JD.bool))

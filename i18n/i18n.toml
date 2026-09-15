@@ -1737,6 +1737,14 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Collapse"
   fr="Réduire"
 
+[collapseAll]
+  en="Collapse all"
+  fr="Tout réduire"
+
+[expandAll]
+  en="Expand all"
+  fr="Tout déplier"
+
 [conversation]
   en="Conversation"
   fr="Conversation"

@@ -482,6 +482,15 @@ export const actions = {
         if (gp.pendingInit) gp.pendingInit = { ...gp.pendingInit, focusid };
         else gp.zoomToNode(focusid);
     },
+    // Highlight node(s) from outside the canvas (tree menu hover). An empty list clears it.
+    'HOVER_GRAPHPACK': (app, session, nameids) => {
+        var gp = session.gp;
+        if (!gp.isActive() || gp.isZooming || gp.isDragging || gp.isFrozen) return
+        var visible = gp.visibleNodes();
+        var nodes = nameids.map(id => gp.nodesDict?.[id]).filter(n => n && visible.includes(n));
+        if (nodes.length > 1) return gp.drawGroupHover(nodes)
+        gp.drawNodeHover(nodes[0] || gp.focusedNode, false);
+    },
     'FLUSH_GRAPHPACK': (app, session, focusid) => {
         var gp = session.gp;
         if (gp.isActive()) {
@@ -569,7 +578,11 @@ export const actions = {
             resizePage = true;
         } else if (data.key == "tree_menu") {
             app.ports.updateMenuTreeFromJs.send(data.val);
-            resizePage = true;
+            // Only opening/closing changes the menu width: folding lines must not
+            // trigger a canvas reflow (it clears the tooltip and resets the hover).
+            // Remembered here rather than re-read from storage: this is the only writer.
+            resizePage = data.val?.isActive !== session.treeMenuIsActive;
+            session.treeMenuIsActive = data.val?.isActive;
         }
 
         if (resizePage) {

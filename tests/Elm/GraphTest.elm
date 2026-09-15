@@ -19,7 +19,7 @@ import Schema.Enum.RoleType as RoleType
 import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Test exposing (Test, describe, test)
 import Test.Html.Query as Query
-import Test.Html.Selector exposing (class, id)
+import Test.Html.Selector exposing (class, id, text)
 import Time
 import Url
 
@@ -194,6 +194,36 @@ session =
     , scrollPosition = Ports.ScrollTop
     , file_server_url = ""
     }
+
+
+treeMenuCounterTest : Test
+treeMenuCounterTest =
+    test "node names, usernames and counters share inline flow rather than separate flex items" <|
+        \_ ->
+            let
+                node =
+                    { initNode
+                        | nameid = "org"
+                        , name = "Marketing/ Communication"
+                        , first_link = Just { username = "bob", name = Nothing }
+                        , n_open_tensions = 7
+                        , n_open_contracts = 2
+                    }
+
+                label =
+                    TreeMenu.init OverviewBaseUri Nothing (focusFromNameid "org")
+                        (Just { isActive = True, expanded_lines = Dict.empty })
+                        (Just (Dict.singleton "org" node))
+                        session
+                        |> TreeMenu.view {} False
+                        |> Query.fromHtml
+                        |> Query.find [ class "treeMenu-label" ]
+            in
+            Expect.all
+                [ Query.has [ text node.name, text "@bob", text "7", text "2" ]
+                , Query.findAll [ class "has-background-counter" ] >> Query.count (Expect.equal 2)
+                ]
+                label
 
 
 refreshTests : Test

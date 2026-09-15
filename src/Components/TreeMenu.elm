@@ -68,7 +68,7 @@ type alias Model =
     , tree_result : GqlData NodesDict
     , fetching : Bool -- True while a queryOrgaTree is in flight; gates OnLoad/OnRequireData to dedup
     , tree : Tree Node
-    , hover : Maybe String
+    , hover : Maybe (List String) -- nameid(s) highlighted, also sent to the canvas
     , expanded_lines : ExpandedLines
 
     -- Common
@@ -99,7 +99,6 @@ initModel baseUri uriQuery focus persistent tree session =
             persistent
                 |> withDefault
                     { isActive = False
-                    , hover = Nothing
                     , expanded_lines = Dict.empty
                     }
 
@@ -133,7 +132,7 @@ initModel baseUri uriQuery focus persistent tree session =
                         NotAsked
     , fetching = False
     , tree = Tree { node = initNode, children = [] }
-    , hover = m.hover
+    , hover = Nothing
     , expanded_lines = expanded_lines
 
     -- Common
@@ -283,8 +282,10 @@ type Msg
     | OnToggle
     | OnToggleHover Bool
     | SetIsActive2 Bool
-    | OnNodeHover (Maybe String)
+    | OnNodeHover (Maybe (List String))
     | OnToggleDropdowLine String
+    | OnCollapseAll
+    | OnExpandAll
       --
     | OnUpdateFocus NodeFocus
       -- Tree Data Edit
@@ -436,11 +437,10 @@ update_ apis message model =
                 ( { model | isActive2 = model.isActive }, noOut )
 
         OnNodeHover v ->
-            let
-                newModel =
-                    { model | hover = v }
-            in
-            ( newModel, out0 [ Ports.saveMenuTree (toPersistant newModel) ] )
+            -- Transient state: do not persist it. Saving here would bounce back through
+            -- updateMenuTreeFromJs (full re-render) and schedule a canvas resize that
+            -- resets the hover we just asked graphpack to draw.
+            ( { model | hover = v }, out0 [ Ports.hoverGraphPack (withDefault [] v) ] )
 
         OnToggleDropdowLine nid ->
             let
@@ -450,6 +450,33 @@ update_ apis message model =
 
                     else
                         { model | expanded_lines = Dict.insert nid False model.expanded_lines }
+            in
+            ( newModel, out0 [ Ports.saveMenuTree (toPersistant newModel) ] )
+
+        OnCollapseAll ->
+            -- Collapse every non-root circle and close every roles line.
+            let
+                newModel =
+                    { model
+                        | expanded_lines =
+                            withMaybeData model.tree_result
+                                |> withDefault Dict.empty
+                                |> Dict.filter (\_ n -> n.role_type == Nothing && n.parent /= Nothing)
+                                |> Dict.keys
+                                |> List.map (\nid -> ( "-/§circle§/" ++ nid, False ))
+                                |> Dict.fromList
+                    }
+            in
+            ( newModel, out0 [ Ports.saveMenuTree (toPersistant newModel) ] )
+
+        OnExpandAll ->
+            -- Expand every circle; only the root's roles line is open.
+            let
+                (Tree root) =
+                    model.tree
+
+                newModel =
+                    { model | expanded_lines = Dict.singleton ("-/§roles§/" ++ root.node.nameid) False }
             in
             ( newModel, out0 [ Ports.saveMenuTree (toPersistant newModel) ] )
 
@@ -689,6 +716,13 @@ view op isPanelOpen (State model) =
             -- An open action panel keeps the hovered menu open until it is closed.
             isActive =
                 model.isActive || model.isHover || isPanelOpen
+
+            -- Something to fold: a first-level circle with children (roles or circles).
+            (Tree root) =
+                model.tree
+
+            hasDepth2 =
+                List.any (\(Tree c) -> c.children /= []) root.children
         in
         div
             [ id "tree-menu"
@@ -698,6 +732,11 @@ view op isPanelOpen (State model) =
             ]
             [ viewTreeMenu isPanelOpen model
             , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+            , showIf hasDepth2 <|
+                div [ class "bottom-button is-above is-flex", classList [ ( "is-invisible", not isActive ) ] ]
+                    [ div [ class "button is-small", onClick OnCollapseAll ] [ A.icon1 "icon-chevrons-up" T.collapseAll ]
+                    , div [ class "button is-small", onClick OnExpandAll ] [ A.icon1 "icon-chevrons-down" T.expandAll ]
+                    ]
             , div
                 [ class "button is-small bottom-button"
                 , classList [ ( "is-invisible", not isActive ) ]
@@ -709,7 +748,7 @@ view op isPanelOpen (State model) =
                   else
                     A.icon1 "icon-chevrons-left" T.close
                 ]
-            , div [ class "pb-6 is-invisible" ] [ text "nop" ]
+            , div [ class "bottom-spacer", classList [ ( "is-double", hasDepth2 ) ] ] []
             ]
 
     else
@@ -762,7 +801,7 @@ viewTreeMenu isPanelOpen model =
         ]
 
 
-viewSubTree : Bool -> Int -> Maybe String -> NodeFocus -> Tree Node -> ExpandedLines -> Html Msg
+viewSubTree : Bool -> Int -> Maybe (List String) -> NodeFocus -> Tree Node -> ExpandedLines -> Html Msg
 viewSubTree isPanelOpen depth hover focus (Tree { node, children }) expanded_lines =
     let
         roles =
@@ -818,37 +857,44 @@ viewSubTree isPanelOpen depth hover focus (Tree { node, children }) expanded_lin
         ]
 
 
-viewCircleLine : Maybe String -> NodeFocus -> Bool -> Bool -> Node -> Html Msg
+viewCircleLine : Maybe (List String) -> NodeFocus -> Bool -> Bool -> Node -> Html Msg
 viewCircleLine hover focus collapsible isCollapsed node =
+    let
+        isHover =
+            hover == Just [ node.nameid ]
+    in
     a
         [ class "treeMenu"
         , id (prefixId node.nameid)
         , classList [ ( "is-active", focus.nameid == node.nameid ) ]
-        , onMouseEnter (OnNodeHover (Just node.nameid))
+        , onMouseEnter (OnNodeHover (Just [ node.nameid ]))
         , onClickPD (NavigateNode node)
         , target "_blank"
         ]
         [ div [ class "level is-mobile" ]
-            [ div [ class "level-left" ]
-                [ A.icon1_sm (nodeType2icon node.type_) node.name
-                , showMaybe node.first_link
-                    (\f -> span [ class "is-username is-size-7" ] [ text (space_ ++ "@" ++ f.username) ])
-                , case node.n_open_tensions of
-                    0 ->
-                        text ""
+            [ div [ class "level-left treeMenu-node" ]
+                [ A.icon (nodeType2icon node.type_ ++ " icon-sm mr-2")
+                , span [ class "treeMenu-label" ]
+                    [ text node.name
+                    , showMaybe node.first_link
+                        (\f -> span [ class "is-username is-size-7" ] [ text (space_ ++ "@" ++ f.username) ])
+                    , case node.n_open_tensions of
+                        0 ->
+                            text ""
 
-                    i ->
-                        counter i
-                , case node.n_open_contracts of
-                    0 ->
-                        text ""
+                        i ->
+                            counter i
+                    , case node.n_open_contracts of
+                        0 ->
+                            text ""
 
-                    i ->
-                        span [ class "is-contract-badge-bg" ] [ counter i ]
+                        i ->
+                            span [ class "is-contract-badge-bg" ] [ counter i ]
+                    ]
                 ]
-            , if hover == Just node.nameid || (collapsible && isCollapsed) then
+            , if isHover || (collapsible && isCollapsed) then
                 div [ class "level-right here" ]
-                    [ showIf (hover == Just node.nameid) <|
+                    [ showIf isHover <|
                         span
                             [ class "treeMenu-action mr-1"
                             , id "actionPanelHelper"
@@ -859,7 +905,7 @@ viewCircleLine hover focus collapsible isCollapsed node =
                         span [ class "treeMenu-action", onClickSafe (OnToggleDropdowLine (node.nameid |> (++) "-/§circle§/")) ]
                             [ A.icon "icon-chevron-right" ]
 
-                      else if collapsible && hover == Just node.nameid then
+                      else if collapsible && isHover then
                         span [ class "treeMenu-action", onClickSafe (OnToggleDropdowLine (node.nameid |> (++) "-/§circle§/")) ]
                             [ A.icon "icon-chevron-down" ]
 
@@ -873,16 +919,20 @@ viewCircleLine hover focus collapsible isCollapsed node =
         ]
 
 
-viewRolesLine : String -> Maybe String -> List Node -> String -> ExpandedLines -> Html Msg
+viewRolesLine : String -> Maybe (List String) -> List Node -> String -> ExpandedLines -> Html Msg
 viewRolesLine type_txt hover roles nid expanded_lines =
     let
         isExpanded =
             Dict.member nid expanded_lines
+
+        -- Hovering that line highlights every role collapsed behind it.
+        nameids =
+            List.map .nameid roles
     in
     a
         [ class "treeMenu pt-0 pr-1"
         , id nid
-        , onMouseEnter (OnNodeHover (Just nid))
+        , onMouseEnter (OnNodeHover (Just nameids))
         , onClickPD (OnToggleDropdowLine nid)
         , target "_blank"
         ]
@@ -907,7 +957,7 @@ viewRolesLine type_txt hover roles nid expanded_lines =
             , if isExpanded then
                 A.icon "icon-chevron-up"
 
-              else if hover == Just nid then
+              else if hover == Just nameids then
                 A.icon "icon-chevron-down"
 
               else

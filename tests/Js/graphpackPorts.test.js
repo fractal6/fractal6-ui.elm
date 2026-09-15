@@ -751,7 +751,7 @@ test.each([{ data: [] }, { data: [circle('cycle', parent('cycle'))] }])('unusabl
     gp.zoomToNode('org');
     const stale = gp.motionTimer;
     actions.DRAW_BUTTONS_GRAPHPACK(app, session);
-    actions.SAVE_SESSION_ITEM({ ports: { updateMenuTreeFromJs: { send: jest.fn() } } }, session, { key: 'tree_menu', val: {} });
+    actions.SAVE_SESSION_ITEM({ ports: { updateMenuTreeFromJs: { send: jest.fn() } } }, session, { key: 'tree_menu', val: { isActive: true } });
     actions.DRAW_GRAPHPACK(app, session, payload(data));
     expect(gp.graph).toBeNull();
     expect(gp.nodesDict).toBeNull();
@@ -764,6 +764,25 @@ test.each([{ data: [] }, { data: [circle('cycle', parent('cycle'))] }])('unusabl
     stale.tick(400);
     jest.advanceTimersByTime(500);
     expect(ctx.arc).not.toHaveBeenCalled();
+});
+
+test('only opening or closing the tree menu reflows the canvas, not folding its lines', () => {
+    const { gp, session } = graph();
+    const app = { ports: { updateMenuTreeFromJs: { send: jest.fn() } } };
+    const save = val => actions.SAVE_SESSION_ITEM(app, session, { key: 'tree_menu', val });
+
+    localStorage.removeItem('tree_menu');
+    save({ isActive: true, expanded_lines: {} });
+    expect(gp.resizeTimer).not.toBeNull();
+    jest.advanceTimersByTime(400);
+
+    // Folding/unfolding lines keeps the same width: no reflow scheduled
+    save({ isActive: true, expanded_lines: { 'org#a': false } });
+    expect(gp.resizeTimer).toBeNull();
+
+    save({ isActive: false, expanded_lines: { 'org#a': false } });
+    expect(gp.resizeTimer).not.toBeNull();
+    expect(app.ports.updateMenuTreeFromJs.send).toHaveBeenCalledTimes(3);
 });
 
 test('a disconnected snapshot without the old focus selects a current root rather than retaining old nodes', () => {
@@ -803,4 +822,21 @@ test('saving user context recolors after storage is updated, independent of Elm 
     actions.FLUSH_GRAPHPACK(app, session);
     actions.SAVE_USERCTX(app, session, { data: { username: 'alice' } });
     expect(gp.uctx.username).toBe('alice');
+});
+
+test('hovering the tree menu roles line highlights every role of the circle, and unhovering clears them', () => {
+    const { gp, app, session } = graph([...tree('org#a#role'), role('org#a#role2', parent('org#a'))], 'org');
+    const roles = [gp.nodesDict['org#a#role'], gp.nodesDict['org#a#role2']];
+    const arcs = () => gp.ctx2d.arc.mock.calls.filter(([x, y, r]) =>
+        roles.some(n => x === n.ctx.centerX && y === n.ctx.centerY && r > n.ctx.rayon)).length;
+
+    actions.HOVER_GRAPHPACK(app, session, roles.map(n => n.data.nameid));
+    expect(gp.hoverGroup).toEqual(roles);
+    expect(arcs()).toBe(2);
+
+    gp.ctx2d.arc.mockClear();
+    actions.HOVER_GRAPHPACK(app, session, []);
+    expect(gp.hoverGroup).toBeNull();
+    expect(arcs()).toBe(0);
+    expect(gp.hoveredNode).toBe(gp.focusedNode);
 });

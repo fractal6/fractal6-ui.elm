@@ -178,6 +178,7 @@ export const GraphPack = {
     focusedNode: null, // The node that has the active focus
     zoomedNode: null, // The node that has is centered
     hoveredNode: null, // The node that is curently hoovered
+    hoverGroup: null, // Several nodes highlighted at once (tree menu roles line)
     isFrozen: false, // Hover/tooltip locked on its node while its ActionPanel menu (or a modal from it) is open
     handlers: [],
 
@@ -627,6 +628,7 @@ export const GraphPack = {
 
     // Draw node border + eventually tooltip
     drawNodeHover(node, doDrawTooltip) {
+        if (this.hoverGroup) this.drawGroupHover(null);
         if (this.isFrozen) node = this.hoveredNode;
         if (this.isZooming || !node) return
         if (!node.ctx) {
@@ -669,6 +671,26 @@ export const GraphPack = {
         // Update global context
         this.hoveredNode = node; //@debug: use globCtx
         return
+    },
+
+    // Draw a border around several nodes at once (roles collapsed behind a tree menu line).
+    // Full repaint (instead of the incremental clearNodeHover) keeps the clearing trivial.
+    drawGroupHover(nodes) {
+        if (this.isZooming) return
+        this.hoveredNode = null;
+        this.hoverGroup = (nodes && nodes.length) ? nodes : null;
+        this.drawCanvas();
+        if (!this.hoverGroup) return
+        var ctx2d = this.ctx2d;
+        var w = this.hoverCircleWidth;
+        ctx2d.lineWidth = w;
+        ctx2d.strokeStyle = this.hoverCircleColor;
+        for (var n of this.hoverGroup) {
+            if (!n.ctx || n.ctx.rayon <= 0) continue
+            ctx2d.beginPath();
+            ctx2d.arc(n.ctx.centerX, n.ctx.centerY, n.ctx.rayon + 0.1 + w / 2, 0, 2 * Math.PI, true);
+            ctx2d.stroke();
+        }
     },
 
     // Redraw the graph with the drag ghost and the highlighted drop target
@@ -854,7 +876,7 @@ export const GraphPack = {
     startMotion(layout = false, immediate = false) {
         this.cancelMotion();
         this.endDrag();
-        this.hoveredNode = null;
+        this.hoveredNode = this.hoverGroup = null;
         this.clearContextMenu();
         this.clearNodeTooltip();
         this.clearCanvasCards();

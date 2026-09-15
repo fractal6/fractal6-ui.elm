@@ -68,7 +68,9 @@
 #tree-menu {
     z-index: 10;
     position: fixed;
-    height: 100%;
+    // Stop at the viewport bottom: with height:100% the scrolled content ended
+    // below it and its last lines were unreachable.
+    height: calc(100% - #{$navbar-height});
     width: $tree-menu-width;
     top: calc(#{$navbar-height});
     left: 0;
@@ -124,7 +126,31 @@
         height: 35px;
         position: fixed;
         bottom: 1px;
-        background-color: var(--tree-menu-background-color);
+        // No background here: it would override Bulma's .button:hover (same
+        // color anyway) and the close/lock button must keep its hover tint.
+
+        // Stacked row of buttons, just above the bottom button (add .is-flex)
+        &.is-above {
+            // Keep .bottom-spacer in sync when this height changes
+            bottom: 36px;
+            background-color: var(--tree-menu-background-color);
+
+            // Two equal halves
+            .button {
+                flex: 1;
+                min-width: 0;
+            }
+        }
+    }
+
+    // Keeps the last tree item reachable above the fixed bottom button(s)
+    .bottom-spacer {
+        height: 48px;
+
+        // Two stacked rows
+        &.is-double {
+            height: 84px;
+        }
     }
 }
 
@@ -183,6 +209,14 @@
 // Fix the mobile centering menu
 .treeMenu .level-left {
   flex-direction: row;
+}
+.treeMenu-node {
+    // Keep both hover actions clear without reflowing the name on hover.
+    padding-right: calc(5% + 3em);
+}
+.treeMenu-label {
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 
@@ -287,7 +321,7 @@
 
         .half-circle {
             position: absolute;
-            top: 35%;
+            top: 0;
             left: -24px;
             width: 50px;
             height: 72px;
@@ -312,7 +346,9 @@
     }
 
     .hinter-zone {
-        height: 100%;
+        position: absolute;
+        top: 35%;
+        height: 72px; // Matches the half-circle: hover only on the hinter itself
         width: 18px; // Reduced hover trigger zone (was 100% = 30px) @debug: do not change the half-circle trigger zone...?
         pointer-events: auto; // Only the zone captures hover events
     }
