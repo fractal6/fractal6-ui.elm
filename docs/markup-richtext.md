@@ -36,6 +36,12 @@ Beyond the pickers, the same handler also implements:
 - Auto-removal of an empty list marker on a second `Enter`.
 - Backspace on an empty list line dedents one level, then removes the marker.
 
+## Tab fallthrough
+
+When `markupRichText` doesn't consume the Tab (no selection, not in a list), it bubbles to the
+`.submitFocus` container, which focuses `.defaultSubmit` — unless that button is disabled, since a
+disabled element can't take focus and the Tab would be swallowed.
+
 ## Programmatic edits and undo (`replaceRange`)
 
 All textarea mutations in `markupRichText` go through the `replaceRange(el, start, end, text, caretStart, caretEnd)` helper exported from `assets/js/textutils.js`. It tries `document.execCommand('insertText', ...)` first so the browser's native Ctrl+Z stack survives the edit. `execCommand` is deprecated but remains the only cross-browser way to mutate a `<textarea>` without wiping undo, and every shipping browser still implements it (no spec'd replacement). If the call returns `false` or throws, the helper falls back to a direct `el.value = ...` assignment plus a manual `input` event — the edit still applies but is not undoable.

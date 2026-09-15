@@ -477,13 +477,14 @@ function submitFocus(e, el) {
     if (e.key == "Enter" && e.ctrlKey) {
         // submit focus.
         var s = el.querySelector(".defaultSubmit")
-        if (s) {
+        if (s && !s.disabled) {
             e.preventDefault(); // prevent a line break on the text area
             s.click();
         }
     } else if (e.key == "Tab" && !e.shiftKey && !e.ctrlKey) {
+        // A disabled button can't take focus: preventing the default would trap the Tab.
         var s = el.querySelector(".defaultSubmit")
-        if (s) {
+        if (s && !s.disabled) {
             var $active = document.activeElement;
             if ($active && $active.dataset.nextfocus) { return true }
             e.preventDefault();
