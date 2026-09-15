@@ -37,6 +37,52 @@ export function replaceRange(el, start, end, text, caretStart, caretEnd) {
     }
 }
 
+// Strip everything but letters/digits, so rendered text can be compared to its
+// markdown source (`**bold**`, `[text](url)`, `- item`, ...).
+function normalizeText(s) {
+    return s.replace(/[^\p{L}\p{N}]+/gu, '').toLowerCase();
+}
+
+function commonPrefixLen(a, b) {
+    var n = Math.min(a.length, b.length);
+    var i = 0;
+    while (i < n && a[i] === b[i]) i++;
+    return i;
+}
+
+// End of the source line in `value` that best matches `anchor` (the rendered
+// text of the block the user triple-clicked). Fallback: end of text.
+// Matching is textual — elm-markdown gives no source map.
+export function findAnchorPos(value, anchor) {
+    var needle = normalizeText(anchor.split('\n')[0]).slice(0, 60);
+    if (!needle) return value.length;
+    // Best common prefix wins: a rendered block can span several source lines,
+    // and the source holds text the render drops (link URLs, html attributes).
+    var minScore = Math.min(needle.length, 8);
+    var lines = value.split('\n');
+    var best = -1;
+    var bestScore = 0;
+    var offset = 0;
+    for (var i = 0; i < lines.length; i++) {
+        var hay = normalizeText(lines[i]);
+        var score = hay.indexOf(needle) > -1 ? needle.length : commonPrefixLen(hay, needle);
+        if (score >= minScore && score > bestScore) {
+            bestScore = score;
+            best = offset + lines[i].length;
+        }
+        offset += lines[i].length + 1;
+    }
+    return best > -1 ? best : value.length;
+}
+
+// Move the caret to the `anchor` line and scroll it into view.
+export function caretAtAnchor(el, anchor) {
+    var pos = findAnchorPos(el.value, anchor);
+    el.setSelectionRange(pos, pos);
+    const { y } = getCaretCoordinates(el, pos);
+    el.scrollTop = Math.max(0, y - el.offsetTop + el.scrollTop - el.clientHeight / 2);
+}
+
 /**
  * returns x, y coordinates for absolute positioning of a span within a given text input
  * at a given selection point

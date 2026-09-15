@@ -89,6 +89,14 @@
     gap: 0;
 }
 
+// Bulma's 1rem (3rem for links) is too airy for our menus.
+.dropdown-item,
+a.dropdown-item,
+button.dropdown-item {
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+}
+
 .dropdown-content {
     box-shadow: none;
     // @debug: the bulma color is not defined sometimes (when created on the fly in kb-board...?

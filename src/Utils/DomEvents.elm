@@ -52,6 +52,27 @@ onClickSP msg =
     stopPropagationOn "click" <| JD.succeed ( msg, True )
 
 
+{-| Ctrl (or Cmd) + double click. Leaves the native double/triple click
+selection alone. The msg receives the rendered text of the clicked element,
+read synchronously since the DOM may be swapped after.
+-}
+onCtrlDblClick : (String -> msg) -> Html.Attribute msg
+onCtrlDblClick message =
+    on "click" <|
+        JD.andThen
+            (\( detail, ctrlKey ) ->
+                if detail == 2 && ctrlKey then
+                    JD.map message (JD.at [ "target", "textContent" ] JD.string)
+
+                else
+                    JD.fail "not a ctrl double click"
+            )
+            (JD.map2 Tuple.pair
+                (JD.field "detail" JD.int)
+                (JD.map2 (||) (JD.field "ctrlKey" JD.bool) (JD.field "metaKey" JD.bool))
+            )
+
+
 onClickSafe : msg -> Html.Attribute msg
 onClickSafe message =
     custom "click" <|

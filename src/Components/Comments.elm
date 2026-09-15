@@ -420,7 +420,7 @@ type Msg
     | SubmitContractComment Time.Posix
     | ContractCommentAck (GqlData Comment)
       -- Edit comment
-    | OnUpdateComment Comment
+    | OnUpdateComment Comment String
     | OnCancelComment String
     | SubmitCommentPatch Time.Posix
     | CommentPatchAck (GqlData Comment)
@@ -730,13 +730,29 @@ update_ apis message model =
                 _ ->
                     ( { model | comment_result = result }, noOut )
 
-        OnUpdateComment c ->
+        -- anchor: rendered text of the triple-clicked block, empty from the edit menu
+        OnUpdateComment c anchor ->
             let
                 form =
                     model.comment_form
+
+                -- A triple click is also a plain text selection gesture: never let it
+                -- hijack the shared form from a checkbox submit in flight (OnCheckbox)
+                -- nor discard another comment being edited.
+                isUnsafe =
+                    anchor /= "" && (Dict.get "stealth" form.post == Just "true" || (form.id /= "" && form.id /= c.id))
             in
-            -- Show absolute file URLs in the editor so copied markdown is paste-anywhere
-            ( { model | comment_form = { form | id = c.id, post = Dict.insert "message" (expandFileUrls model.session.file_server_url c.message) form.post } }, out0 [ Ports.focusOn "updateCommentInput", Ports.bulma_driver c.createdAt ] )
+            if isUnsafe then
+                ( model, noOut )
+
+            else
+                -- Show absolute file URLs in the editor so copied markdown is paste-anywhere
+                ( { model | comment_form = { form | id = c.id, post = Dict.insert "message" (expandFileUrls model.session.file_server_url c.message) form.post } }
+                , out0
+                    [ ternary (anchor == "") (Ports.focusOn "updateCommentInput") (Ports.focusOnAnchor "updateCommentInput" anchor)
+                    , Ports.bulma_driver c.createdAt
+                    ]
+                )
 
         OnCancelComment createdAt ->
             let
@@ -1683,7 +1699,10 @@ viewComment session c form result delete_result highlightedCommentId userInput e
                                         ]
                                             ++ (if isAuthor then
                                                     [ hr [ class "dropdown-divider" ] []
-                                                    , div [ class "dropdown-item", onClick (OnUpdateComment c) ] [ A.icon1 "icon-edit-2" T.edit ]
+                                                    , div [ class "dropdown-item is-flex is-align-items-center", onClick (OnUpdateComment c "") ]
+                                                        [ A.icon1 "icon-edit-2" T.edit
+                                                        , span [ class "ml-auto pl-4 is-size-7 is-weak", style "white-space" "nowrap" ] [ text "ctrl+2click" ]
+                                                        ]
                                                     , div
                                                         [ class "dropdown-item button-light is-danger"
                                                         , onClick <|
@@ -1715,7 +1734,9 @@ viewComment session c form result delete_result highlightedCommentId userInput e
                                 div [ class "help is-italic" ] [ text T.noMessageProvided ]
 
                             message ->
-                                renderMarkdown session.file_server_url "is-human" message
+                                -- Ctrl + double click to edit, caret at the clicked line
+                                div (ternary isAuthor [ Dom.onCtrlDblClick (OnUpdateComment c) ] [])
+                                    [ renderMarkdown session.file_server_url "is-human" message ]
                         , viewSavedAttachments session c uploadBatch
                         , div [ class "emoji-reactions" ] <|
                             List.map

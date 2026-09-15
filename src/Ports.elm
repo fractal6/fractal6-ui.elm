@@ -657,6 +657,21 @@ focusOn target =
         }
 
 
+{-| Focus `target` and move the caret at the end of the line that best matches
+`anchor` (the rendered text of the block the user clicked).
+-}
+focusOnAnchor : String -> String -> Cmd msg
+focusOnAnchor target anchor =
+    outgoing
+        { action = "FOCUS_ON"
+        , data =
+            JE.object
+                [ ( "target", JE.string target )
+                , ( "anchor", JE.string anchor )
+                ]
+        }
+
+
 {-| Close `target` on an outside click. `hasEsc` also closes it on Escape,
 set it to False when the caller handles Escape itself (Elm subscription).
 -}

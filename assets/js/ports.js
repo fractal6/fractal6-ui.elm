@@ -20,7 +20,7 @@
 
 import MiniSearch from 'minisearch'
 import { InitBulma, catchEsc, getThemePref, updateLang, showSearchInput, hideSearchInput, showEmojiInput, hideEmojiInput } from './bulma_drivers'
-import { replaceRange } from './textutils'
+import { replaceRange, caretAtAnchor } from './textutils'
 import { GraphPack } from './graphpack_d3'
 import { sleep } from './custom.js'
 
@@ -637,10 +637,15 @@ export const actions = {
         });
 
     },
-    'FOCUS_ON' : (app, session, target) => {
+    // data: target id, or { target, anchor } to also position the caret.
+    'FOCUS_ON' : (app, session, data) => {
+        var target = (typeof data === 'string') ? data : data.target;
+        var anchor = (typeof data === 'string') ? null : data.anchor;
         setTimeout( () => {
             var $tt = document.getElementById(target);
-            if ($tt) { $tt.focus(); }
+            if (!$tt) return;
+            $tt.focus();
+            if (anchor) caretAtAnchor($tt, anchor);
         }, 100);
     },
     'OUTSIDE_CLICK_CLOSE' : (app, session, data) => {

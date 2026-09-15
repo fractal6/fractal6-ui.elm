@@ -53,7 +53,7 @@ The same helper is used by `ports.js` for `@`-mention and emoji picker insertion
 | File | Role |
 |------|------|
 | `assets/js/bulma_drivers.js` | `markupRichText`, `handlePickerKey`, `show/hideSearchInput`, `show/hideEmojiInput` |
-| `assets/js/textutils.js` | `replaceRange` (undo-preserving textarea edit), `getCaretCoordinates` |
+| `assets/js/textutils.js` | `replaceRange` (undo-preserving textarea edit), `getCaretCoordinates`, `caretAtAnchor` |
 | `src/Components/UserInput.elm` | Elm side of the `@` user picker |
 | `src/Components/EmojiPicker.elm` | Elm side of the `:` emoji picker |
 | `src/Ports.elm` | Port declarations used by both pickers |

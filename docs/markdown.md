@@ -61,6 +61,14 @@ Those checkboxes are clickable: `bulma_drivers.js` catches the click and sends
 `{ isChecked, position, cid }` over the `checkboxFromJs` port; `Comments.elm` toggles the
 source text with `Markdown.setMdCheckbox` and silently re-submits the comment.
 
+### Triple click to edit
+
+Ctrl (or Cmd) + double clicking a comment body (author only) opens the editor with the caret
+at the clicked line: `Dom.onCtrlDblClick` reads the rendered text, `findAnchorPos`
+(`assets/js/textutils.js`) matches it back to a source line. Being also a text selection
+gesture, it is ignored when the shared comment form is busy (checkbox submit, other comment
+being edited).
+
 ## Files
 
 | File | Role |
@@ -70,4 +78,4 @@ source text with `Markdown.setMdCheckbox` and silently re-submits the comment.
 | `src/Markdown.elm` | Rendering, checkbox utility |
 | `assets/js/ports.js` | `RICH_TEXT` handler, `toggleMarkup`, `pushLine`, `insertBlock` |
 | `assets/js/bulma_drivers.js` | Keyboard handling, checkbox clicks |
-| `assets/js/textutils.js` | `replaceRange`, `getCaretCoordinates` |
+| `assets/js/textutils.js` | `replaceRange`, `getCaretCoordinates`, `caretAtAnchor` |
