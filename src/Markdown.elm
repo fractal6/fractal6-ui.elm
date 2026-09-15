@@ -71,7 +71,19 @@ The list must stay in sync with the Markdown.Html.oneOf handlers in frac6Rendere
 -}
 htmlBlockTagRegex : Regex.Regex
 htmlBlockTagRegex =
-    regexFromString "<(/?(?:details|summary|div|span|u|i))\\b"
+    regexFromString "<(/?(?:details|summary|div|span|u|i|a))\\b"
+
+
+{-| Match `[label](url){attr="value" ...}` links with an attribute block.
+-}
+linkAttrRegex : Regex.Regex
+linkAttrRegex =
+    regexFromString "\\[([^\\[\\]]*)\\]\\(([^()\\s]*)\\)\\{([^{}]*)\\}"
+
+
+attrRegex : Regex.Regex
+attrRegex =
+    regexFromString "([a-zA-Z_-]+)\\s*=\\s*\"([^\"]*)\""
 
 
 {-| Renderer configuration. `fileServerUrl` is prepended to relative
@@ -178,26 +190,12 @@ frac6Renderer config =
         , link =
             -- Differential external and internal link
             \link content ->
-                let
-                    lk =
-                        toLower link.destination
-
-                    attrs =
-                        if
-                            not (startsWith "https://fractale.co" lk || startsWith "http://fractale.co" lk)
-                                && (startsWith "https://" lk || startsWith "http://" lk)
-                        then
-                            [ href link.destination, target "_blank", rel "noopener" ]
-
-                        else
-                            [ href link.destination, class "is-link" ]
-                in
                 case link.title of
                     Just t ->
-                        a (title t :: attrs) content
+                        a (title t :: linkAttrs link.destination) content
 
                     Nothing ->
-                        a attrs content
+                        a (linkAttrs link.destination) content
         , orderedList =
             \startingIndex items ->
                 ol
@@ -306,8 +304,41 @@ frac6Renderer config =
                     (\content ->
                         summary [] content
                     )
+
+                -- Produced by expandLinkAttributes: [label](url){target="_blank" ...}
+                , Markdown.Html.tag "a"
+                    (\dest target_ title_ cls content ->
+                        a
+                            (linkAttrs dest
+                                ++ List.filterMap identity
+                                    [ Maybe.map target target_, Maybe.map title title_, Maybe.map class cls ]
+                            )
+                            content
+                    )
+                    |> Markdown.Html.withAttribute "href"
+                    |> Markdown.Html.withOptionalAttribute "target"
+                    |> Markdown.Html.withOptionalAttribute "title"
+                    |> Markdown.Html.withOptionalAttribute "class"
                 ]
     }
+
+
+{-| Internal links get the app style, external ones open in a new tab.
+-}
+linkAttrs : String -> List (Html.Attribute msg)
+linkAttrs destination =
+    let
+        lk =
+            toLower destination
+    in
+    if
+        not (startsWith "https://fractale.co" lk || startsWith "http://fractale.co" lk)
+            && (startsWith "https://" lk || startsWith "http://" lk)
+    then
+        [ href destination, target "_blank", rel "noopener" ]
+
+    else
+        [ href destination, class "is-link" ]
 
 
 mardownRoutine : RendererConfig -> ( Regex.Regex, Regex.Match -> String -> String ) -> List ( Regex.Regex, Regex.Match -> String -> String ) -> String -> Html msg
@@ -393,6 +424,8 @@ frac6Parser content =
                     |> escapeLinks
                     -- Force line break (except for Table rows starting with |)
                     |> Regex.replace (regexFromString "\n[^\n|]") (\m -> "  " ++ m.match)
+                    -- Rewrite links carrying an attribute block into inline <a> tags
+                    |> expandLinkAttributes
             )
 
 
@@ -512,6 +545,52 @@ circleLink m full =
 --
 -- Parsing
 --
+
+
+{-| Rewrite `[label](url){target="_blank" title="..."}` into an inline <a> tag,
+the only way to carry extra attributes through the markdown renderer.
+Only target/title/class/rel are kept; links without any of them are left as-is.
+-}
+expandLinkAttributes : String -> String
+expandLinkAttributes input =
+    Regex.replace linkAttrRegex
+        (\m ->
+            case m.submatches of
+                [ Just label, Just dest, Just attrs ] ->
+                    let
+                        kept =
+                            Regex.find attrRegex attrs
+                                |> List.filterMap
+                                    (\a_ ->
+                                        case a_.submatches of
+                                            [ Just k, Just v ] ->
+                                                if List.member (toLower k) [ "target", "title", "class", "rel" ] then
+                                                    Just (toLower k ++ "=\"" ++ v ++ "\"")
+
+                                                else
+                                                    Nothing
+
+                                            _ ->
+                                                Nothing
+                                    )
+                    in
+                    if List.isEmpty kept then
+                        m.match
+
+                    else
+                        -- Undo escapeLinks inside the href, it would show up literally
+                        "<a href=\""
+                            ++ String.replace "\\_" "_" dest
+                            ++ "\" "
+                            ++ String.join " " kept
+                            ++ ">"
+                            ++ label
+                            ++ "</a>"
+
+                _ ->
+                    m.match
+        )
+        input
 
 
 {-| Escape \_ in link !

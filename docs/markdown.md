@@ -46,8 +46,16 @@ See `docs/markup-richtext.md`.
 
 `renderMarkdown` in `src/Markdown.elm` uses `elm-markdown` with the custom `frac6Renderer`:
 internal vs external links, a limited set of raw HTML tags (`<i> <u> <span> <div> <details>
-<summary>`), auto-linking of bare URLs, `@username` and `0x…` tension references, and
+<summary> <a>`), auto-linking of bare URLs, `@username` and `0x…` tension references, and
 checkboxes rendered with the `checkbox_readonly` class.
+
+### Link attributes
+
+`[Link](/path){target="_blank" title="More details"}` is supported. `expandLinkAttributes`
+(preprocessing, in `frac6Parser`) rewrites such links into an inline `<a>` tag handled by the
+renderer — elm-markdown has no way to carry extra attributes through its link AST node. Only
+`target`, `title`, `class` and `rel` are kept; anything else is dropped and a block with no
+valid attribute leaves the link untouched.
 
 Those checkboxes are clickable: `bulma_drivers.js` catches the click and sends
 `{ isChecked, position, cid }` over the `checkboxFromJs` port; `Comments.elm` toggles the

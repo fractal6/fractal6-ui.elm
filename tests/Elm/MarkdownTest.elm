@@ -510,3 +510,39 @@ imageRewriteTests =
                     |> Query.find [ Selector.tag "img" ]
                     |> Query.has [ Selector.attribute (Attr.title "tooltip") ]
         ]
+
+
+linkAttributeTests : Test
+linkAttributeTests =
+    describe "link attribute block [x](/url){...}"
+        [ test "target and title are applied" <|
+            \_ ->
+                renderMarkdown "" "" "[Link](/path){target=\"_blank\" title=\"More details\"}"
+                    |> Query.fromHtml
+                    |> Query.find [ Selector.tag "a" ]
+                    |> Expect.all
+                        [ Query.has [ Selector.attribute (Attr.href "/path") ]
+                        , Query.has [ Selector.attribute (Attr.target "_blank") ]
+                        , Query.has [ Selector.attribute (Attr.title "More details") ]
+                        , Query.has [ Selector.text "Link" ]
+                        ]
+        , test "unknown attributes are dropped" <|
+            \_ ->
+                renderMarkdown "" "" "[Link](/path){onclick=\"alert(1)\" class=\"x\"}"
+                    |> Query.fromHtml
+                    |> Query.find [ Selector.tag "a" ]
+                    |> Query.has [ Selector.class "x" ]
+        , test "no valid attribute leaves the link untouched" <|
+            \_ ->
+                renderMarkdown "" "" "[Link](/path){junk}"
+                    |> Query.fromHtml
+                    |> Query.find [ Selector.tag "a" ]
+                    |> Query.has [ Selector.attribute (Attr.href "/path") ]
+        , test "url with underscore is not escaped in href" <|
+            \_ ->
+                renderMarkdown "" "" "[Link](https://x.com/a_b){target=\"_blank\"}"
+                    |> Query.fromHtml
+                    |> Query.find [ Selector.tag "a" ]
+                    |> Query.has [ Selector.attribute (Attr.href "https://x.com/a_b") ]
+        , expectParseOk "plain link still parses" "[Link](/path)"
+        ]
