@@ -54,7 +54,7 @@ import Text as T
 import Utils.Bool exposing (ternary)
 import Utils.Bulma as B
 import Utils.Cmd exposing (send, sendSleep)
-import Utils.DomEvents as Dom exposing (onClickPD, onClickSP, onDragEnd, onDragEnter, onDragLeave, onDragOverPD, onDragStart, onMousedownPD)
+import Utils.DomEvents as Dom exposing (onClickMod, onClickPD, onClickSP, onDragEnd, onDragEnter, onDragLeave, onDragOverPD, onDragStart, onMousedownPD)
 import Utils.List exposing (insertAt)
 import Utils.Maybe exposing (unwrap)
 
@@ -85,6 +85,7 @@ type alias Model =
     , board_result : GqlData String -- track board remote result silently
     , cardEdit : String
     , activeCards : List String
+    , cardMoveQueue : List ProjectCard -- pending moves, sent one at a time to keep the backend position shifting consistent
     , colEdit : String
     , cardEditDropdown : Maybe ProjectCard
     , cardEditDropdownX : Float
@@ -136,6 +137,7 @@ initModel projectid focus session =
     , board_result = NotAsked
     , cardEdit = ""
     , activeCards = []
+    , cardMoveQueue = []
     , colEdit = ""
     , cardEditDropdown = Nothing
     , cardEditDropdownX = 0
@@ -196,9 +198,11 @@ type Msg
     | GotCardMoved (GqlData IdPayload)
     | GotColMoved (GqlData IdPayload)
     | OnCardClick (Maybe ProjectCard)
+    | OnCardToggle ProjectCard
+    | OnSelectCards (List String)
     | OnToggleCardEdit String
     | OnToggleColEdit String
-    | OnRemoveCard String
+    | OnRemoveCards (List String)
     | OnRemoveCardAck (GqlData (List String))
     | OnRemoveColItems String
     | OnDeleteColumn String
@@ -370,30 +374,62 @@ update_ apis message model =
             in
             Maybe.map3
                 (\card { pos, colid } c_hover ->
-                    if card.id == c_hover.cardid then
+                    let
+                        -- Dragging a selected card moves the whole selection, in board order.
+                        isMulti =
+                            List.length model.activeCards > 1 && List.member card.id model.activeCards
+
+                        cards =
+                            if isMulti then
+                                orderedCards model.activeCards model.project |> List.filter (\c -> c.colid /= colid)
+
+                            else
+                                [ card ]
+
+                        cardsToMove =
+                            cards
+                                |> List.indexedMap
+                                    (\i c ->
+                                        let
+                                            pos_fixed =
+                                                ternary (colid == c.colid && c_hover.pos > c.pos)
+                                                    (c_hover.pos - 1)
+                                                    c_hover.pos
+                                        in
+                                        { c | colid = colid, pos = pos_fixed + i }
+                                    )
+                    in
+                    if not isMulti && card.id == c_hover.cardid then
                         ( newModel, out0 [ sendSleep OnCancelHov 300 ] )
 
                     else
-                        -- Do not wait the query to success to move the column.
-                        let
-                            pos_fixed =
-                                ternary (colid == card.colid && c_hover.pos > card.pos)
-                                    (c_hover.pos - 1)
-                                    c_hover.pos
+                        case cardsToMove of
+                            c :: rest ->
+                                let
+                                    -- Do not wait the query to success to move the card.
+                                    pj =
+                                        model.project
+                                            -- Remove the cards from their old pos
+                                            |> (\d -> { d | columns = List.foldl removeCard d.columns cards })
+                                            -- Add the cards in their new pos
+                                            |> (\d -> { d | columns = List.foldl pushCard d.columns cardsToMove })
+                                in
+                                if model.cardMoveQueue /= [] then
+                                    -- A batch is still draining; queue this one as the backend shifts positions per move.
+                                    ( { newModel | project = pj, cardMoveQueue = model.cardMoveQueue ++ cardsToMove }
+                                    , out0 [ send OnCancelHov ]
+                                    )
 
-                            pj =
-                                model.project
-                                    -- Remove the card from old pos
-                                    |> (\d -> { d | columns = removeCard card d.columns })
-                                    -- Add the card in new pos tension to list
-                                    |> (\d -> { d | columns = pushCard { card | colid = colid, pos = pos_fixed } d.columns })
-                        in
-                        ( { newModel | project = pj, board_result = Loading }
-                        , out0
-                            [ moveProjectCard apis card.id pos_fixed colid GotCardMoved
-                            , send OnCancelHov
-                            ]
-                        )
+                                else
+                                    ( { newModel | project = pj, board_result = Loading, cardMoveQueue = rest }
+                                    , out0
+                                        [ moveProjectCard apis c.id c.pos colid GotCardMoved
+                                        , send OnCancelHov
+                                        ]
+                                    )
+
+                            [] ->
+                                ( newModel, out0 [ sendSleep OnCancelHov 300 ] )
                 )
                 model.movingCard
                 model.movingHoverCol
@@ -410,6 +446,21 @@ update_ apis message model =
 
                 Nothing ->
                     ( { model | movingCard = Nothing, cardEdit = "", activeCards = [] }, noOut )
+
+        OnCardToggle card ->
+            if List.member card.id model.activeCards then
+                ( { model
+                    | activeCards = LE.remove card.id model.activeCards
+                    , movingCard = ternary (Maybe.map .id model.movingCard == Just card.id) Nothing model.movingCard
+                  }
+                , noOut
+                )
+
+            else
+                ( { model | movingCard = Just card, activeCards = model.activeCards ++ [ card.id ] }, noOut )
+
+        OnSelectCards ids ->
+            ( { model | activeCards = model.activeCards ++ List.filter (\x -> not (List.member x model.activeCards)) ids }, noOut )
 
         OnCancelHov ->
             ( { model | movingHoverCol = Nothing, movingHoverT = Nothing }, noOut )
@@ -476,7 +527,12 @@ update_ apis message model =
             ( model, noOut )
 
         GotCardMoved result ->
-            ( { model | board_result = withMapData .id result }, noOut )
+            case ( result, model.cardMoveQueue ) of
+                ( Success _, c :: rest ) ->
+                    ( { model | cardMoveQueue = rest }, out0 [ moveProjectCard apis c.id c.pos c.colid GotCardMoved ] )
+
+                _ ->
+                    ( { model | board_result = withMapData .id result, cardMoveQueue = [] }, noOut )
 
         GotColMoved result ->
             ( { model | board_result = withMapData .id result }, noOut )
@@ -634,8 +690,8 @@ update_ apis message model =
         OnToggleColEdit colid ->
             ( { model | colEdit = ternary (model.colEdit == "") colid "" }, noOut )
 
-        OnRemoveCard cardid ->
-            ( { model | board_result = Loading }, out0 [ removeProjectCards apis [ cardid ] OnRemoveCardAck ] )
+        OnRemoveCards cardids ->
+            ( { model | board_result = Loading }, out0 [ removeProjectCards apis cardids OnRemoveCardAck ] )
 
         OnRemoveCardAck result ->
             case result of
@@ -862,17 +918,32 @@ subscriptions (State model) =
                 []
            )
         ++ (if model.cardEdit /= "" then
-                [ Events.onMouseUp (Dom.outsideClickClose "cardEditDropdown" (OnCardClick Nothing))
+                [ Events.onMouseUp (Dom.outsideClickCloseBy isCardMenu (OnCardClick Nothing))
                 , Events.onKeyUp (Dom.key "Escape" (OnCardClick Nothing))
                 ]
 
             else if model.movingCard /= Nothing || model.activeCards /= [] then
-                [ Events.onMouseUp (Dom.outsideClickClose "cardPanelContainer" (OnCardClick Nothing)) ]
+                -- Ctrl is guarded so that ctrl+click on another card extends the selection instead of clearing it.
+                [ Events.onMouseUp (Dom.withoutModifier (Dom.outsideClickCloseBy keepsSelection (OnCardClick Nothing))) ]
 
             else
                 []
            )
         ++ (ProjectColumnModal.subscriptions model.projectColumnModal |> List.map (\s -> Sub.map ProjectColumnModalMsg s))
+
+
+
+{-| Menus acting on the card selection must not clear it before their own click is handled: the
+card dropdown, the per-card ellipsis triggers and the column menu.
+-}
+isCardMenu : String -> Bool
+isCardMenu id_ =
+    id_ == "cardEditDropdown" || String.endsWith "-ellipsis" id_
+
+
+keepsSelection : String -> Bool
+keepsSelection id_ =
+    id_ == "cardPanelContainer" || isCardMenu id_
 
 
 
@@ -963,6 +1034,12 @@ viewBoard op model =
                     filteredCards =
                         List.filter (matchCard op) col.cards
 
+                    cardids =
+                        List.map .id filteredCards
+
+                    selectedids =
+                        List.filter (\x -> List.member x model.activeCards) cardids
+
                     cards_len =
                         List.length filteredCards
 
@@ -992,7 +1069,7 @@ viewBoard op model =
                         -- @debug: allow move card in empty collumn
                         , onDragEnter <| OnMoveEnterT { pos = 0, cardid = unwrap "" .id c1, colid = colid }
                         ]
-                        [ viewHeader model.session.lexicon model.isProjectAdmin (model.colEdit == colid) col ]
+                        [ viewHeader model.session.lexicon model.isProjectAdmin (model.colEdit == colid) cardids selectedids col ]
                     , filteredCards
                         --|> List.sortBy .createdAt
                         --|> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l))
@@ -1016,7 +1093,7 @@ viewBoard op model =
                                                 [ ( "is-dragging", model.draging && Maybe.map .id model.movingCard == Just card.id )
                                                 , ( "is-focusing", Maybe.map .id model.movingCard == Just card.id || List.member card.id model.activeCards )
                                                 ]
-                                            , onClick (OnCardClick (Just card))
+                                            , onClickMod (\ctrl -> ternary ctrl (OnCardToggle card) (OnCardClick (Just card)))
                                             , attribute "draggable" "true"
                                             , onDragStart <| OnMove { pos = i, colid = colid, length = cards_len } card
                                             , onDragEnd <| OnMoveEnd
@@ -1110,8 +1187,8 @@ viewBoard op model =
             ]
 
 
-viewHeader : Dict.Dict String String -> Bool -> Bool -> ProjectColumn -> Html Msg
-viewHeader lexicon isAdmin isEdited col =
+viewHeader : Dict.Dict String String -> Bool -> Bool -> List String -> List String -> ProjectColumn -> Html Msg
+viewHeader lexicon isAdmin isEdited cardids selectedids col =
     span []
         [ div [ class "level" ]
             [ div [ class "level-left ml-3" ]
@@ -1134,7 +1211,8 @@ viewHeader lexicon isAdmin isEdited col =
                         , isOpen = isEdited
                         , dropdown_cls = "mx-2 is-align-self-baseline is-right"
                         , button_cls = ""
-                        , button_html = A.icon "button-light icon-more-horizontal icon-lg"
+                        -- the id is what keepsSelection matches, dropdown_id only lands on the menu
+                        , button_html = span [ id "col-menu-ellipsis" ] [ A.icon "button-light icon-more-horizontal icon-lg" ]
                         , msg = OnToggleColEdit (ternary isEdited "" col.id)
                         , menu_cls = ""
                         , content_cls = ""
@@ -1150,11 +1228,22 @@ viewHeader lexicon isAdmin isEdited col =
                                     , onClick (OpenTensionPane (Just { id = col.id, cards_len = List.length col.cards }))
                                     ]
                                     [ A.icon1 "icon-plus" (T.addTensionColumn lexicon) ]
+                                , div
+                                    [ class "dropdown-item button-light"
+                                    , onClick (OnSelectCards cardids)
+                                    ]
+                                    [ A.icon1 "icon-check-square" T.selectAllCards ]
                                 , hr [ class "dropdown-divider my-2" ] []
                                 , div [ class "dropdown-item button-light", onClick (OnDeleteColumn col.id) ]
                                     [ A.icon1 "icon-trash" T.deleteColumn ]
                                 , div [ class "dropdown-item button-light is-danger", onClick (OnRemoveColItems col.id) ]
                                     [ A.icon1 "icon-trash" T.removeItemsColumn ]
+                                , if selectedids == [] then
+                                    text ""
+
+                                  else
+                                    div [ class "dropdown-item button-light is-danger", onClick (OnRemoveCards selectedids) ]
+                                        [ A.icon1 "icon-trash" T.removeSelectedItemsColumn ]
                                 ]
                         }
 
@@ -1378,6 +1467,14 @@ viewCardDropdown : Model -> Html Msg
 viewCardDropdown model =
     case model.cardEditDropdown of
         Just card ->
+            let
+                removeSelected =
+                    if List.length model.activeCards > 1 && List.member card.id model.activeCards then
+                        div [ class "dropdown-item button-light is-danger", onClick (OnRemoveCards model.activeCards) ] [ A.icon1 "icon-trash" T.removeSelectedFromProject ]
+
+                    else
+                        text ""
+            in
             div
                 [ id "cardEditDropdown"
                 , class "dropdown-menu is-block"
@@ -1395,14 +1492,16 @@ viewCardDropdown model =
                                 ]
                                 [ A.icon1 "icon-external-link" T.openNewTab ]
                             , hr [ class "dropdown-divider" ] []
-                            , div [ class "dropdown-item button-light", onClick (OnRemoveCard card.id) ] [ A.icon1 "icon-x" T.removeFromProject ]
+                            , div [ class "dropdown-item button-light", onClick (OnRemoveCards [ card.id ]) ] [ A.icon1 "icon-x" T.removeFromProject ]
+                            , removeSelected
                             ]
 
                     CardDraft d ->
                         div [ class "dropdown-content p-0", onClick (OnCardClick Nothing) ]
                             [ div [ class "dropdown-item button-light", onClick (OnConvertDraft card.id d) ] [ A.icon1 "icon-exchange" (T.convertDraft model.session.lexicon) ]
                             , hr [ class "dropdown-divider" ] []
-                            , div [ class "dropdown-item button-light is-danger", onClick (OnRemoveCard card.id) ] [ A.icon1 "icon-trash" T.deleteDraft ]
+                            , div [ class "dropdown-item button-light is-danger", onClick (OnRemoveCards [ card.id ]) ] [ A.icon1 "icon-trash" T.deleteDraft ]
+                            , removeSelected
                             ]
                 ]
 
@@ -1458,6 +1557,15 @@ toTensionProject colid pos pj =
                     }
                 }
             )
+
+
+{-| Given card ids, return the cards in board order: left-to-right column, top-to-bottom card.
+-}
+orderedCards : List String -> ProjectData -> List ProjectCard
+orderedCards ids data =
+    data.columns
+        |> List.concatMap .cards
+        |> List.filter (\c -> List.member c.id ids)
 
 
 getCol : String -> ProjectData -> Maybe ProjectColumn

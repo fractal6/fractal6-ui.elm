@@ -2615,9 +2615,21 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Remove from project"
   fr="Retirer du projet"
 
+[removeSelectedFromProject]
+  en="Remove selected from project"
+  fr="Retirer la sélection du projet"
+
 [removeItemsColumn]
   en="Remove items from this column"
   fr="Retirer les éléments de cette colonne"
+
+[removeSelectedItemsColumn]
+  en="Remove selected items from this column"
+  fr="Retirer les éléments sélectionnés de cette colonne"
+
+[selectAllCards]
+  en="Select all cards"
+  fr="Sélectionner toutes les cartes"
 
 [openNewTab]
   en="Open in a new tab"

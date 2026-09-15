@@ -69,8 +69,28 @@ onCtrlDblClick message =
             )
             (JD.map2 Tuple.pair
                 (JD.field "detail" JD.int)
-                (JD.map2 (||) (JD.field "ctrlKey" JD.bool) (JD.field "metaKey" JD.bool))
+                ctrlOrMeta
             )
+
+
+{-| Click that tells whether Ctrl (or Cmd) was held.
+-}
+onClickMod : (Bool -> msg) -> Html.Attribute msg
+onClickMod message =
+    on "click" <| JD.map message ctrlOrMeta
+
+
+{-| Make a decoder fail when Ctrl (or Cmd) is held, e.g. to keep a multi-selection alive.
+-}
+withoutModifier : JD.Decoder msg -> JD.Decoder msg
+withoutModifier dec =
+    ctrlOrMeta
+        |> JD.andThen (\mod -> ternary mod (JD.fail "modifier held") dec)
+
+
+ctrlOrMeta : JD.Decoder Bool
+ctrlOrMeta =
+    JD.map2 (||) (JD.field "ctrlKey" JD.bool) (JD.field "metaKey" JD.bool)
 
 
 onClickSafe : msg -> Html.Attribute msg
@@ -285,7 +305,14 @@ key k msg =
 -}
 outsideClickClose : String -> msg -> JD.Decoder msg
 outsideClickClose targetId msg =
-    JD.field "target" (isOutside targetId)
+    outsideClickCloseBy ((==) targetId) msg
+
+
+{-| Detect click outside every object whose ID matches the given predicate
+-}
+outsideClickCloseBy : (String -> Bool) -> msg -> JD.Decoder msg
+outsideClickCloseBy isInside msg =
+    JD.field "target" (isOutsideBy isInside)
         |> JD.andThen
             (\isOut ->
                 if isOut then
@@ -306,17 +333,17 @@ outsideClickClose targetId msg =
             )
 
 
-isOutside : String -> JD.Decoder Bool
-isOutside targetId =
+isOutsideBy : (String -> Bool) -> JD.Decoder Bool
+isOutsideBy isInside =
     JD.oneOf
         [ JD.field "id" JD.string
             |> JD.andThen
                 (\id ->
-                    ternary (targetId == id)
+                    ternary (isInside id)
                         (JD.succeed False)
                         (JD.fail "continue")
                 )
-        , JD.lazy (\_ -> isOutside targetId |> JD.field "parentNode")
+        , JD.lazy (\_ -> isOutsideBy isInside |> JD.field "parentNode")
 
         -- fallback if all previous decoders failed
         , JD.succeed True

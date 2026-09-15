@@ -799,7 +799,7 @@ update global message model =
                             Cmd.map BoardMsg (send <| Board.OnConvertDraft cardid d)
 
                         Just (DeleteDraft cardid) ->
-                            Cmd.map BoardMsg (send <| Board.OnRemoveCard cardid)
+                            Cmd.map BoardMsg (send <| Board.OnRemoveCards [ cardid ])
 
                         Nothing ->
                             send NoMsg
