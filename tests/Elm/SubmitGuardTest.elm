@@ -108,7 +108,7 @@ editingComment =
     List.foldl commentsStep
         (Comments.init "org" tension.id session)
         [ Comments.SetComments [ comment, { comment | id = "0xedit" } ]
-        , Comments.OnUpdateComment { comment | id = "0xedit" }
+        , Comments.OnUpdateComment { comment | id = "0xedit" } ""
         , Comments.OnChangePatchComment "message" "Editor draft"
         ]
 

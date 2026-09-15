@@ -384,7 +384,7 @@
 
     top: calc(#{$navbar-height});
     right: 0;
-    transition: all .33s ease-out;
+    transition: all .45s ease-out;
     background-color: var(--orga-menu-background-color);
     border-left: $border-size solid var(--border-color);
 
@@ -429,6 +429,8 @@
 }
 
 .side-menu.is-small {
+    // Shorter travel distance, shorter duration to keep the same perceived speed
+    transition-duration: .3s;
     @include tablet {
         width: 480px;
     }
