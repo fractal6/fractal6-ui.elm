@@ -22,13 +22,13 @@
 port module Components.EmojiPicker exposing (Msg(..), State, init, isOpen_, subscriptions, update, viewEmojiSeeker)
 
 import Components.EmojiData exposing (Emoji, searchEmojis)
-import Utils.DomEvents exposing (onMousedownPD)
 import Html exposing (Html, div, p, span, text)
 import Html.Attributes exposing (attribute, class, classList, title)
 import List.Extra as LE
 import Ports
 import Session exposing (GlobalCmd(..))
 import Text as T
+import Utils.DomEvents exposing (onMousedownPD)
 
 
 type State

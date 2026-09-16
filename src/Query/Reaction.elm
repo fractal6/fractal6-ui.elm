@@ -24,6 +24,12 @@ module Query.Reaction exposing
     , deleteReaction
     )
 
+import GqlClient exposing (..)
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet)
+import Maybe
+import ModelSchema exposing (IdPayload, ReactionResponse, decodeResponse, decodedId, encodeId)
+import RemoteData exposing (RemoteData)
 import Schema.InputObject as Input
 import Schema.Mutation as Mutation
 import Schema.Object
@@ -31,12 +37,6 @@ import Schema.Object.AddReactionPayload
 import Schema.Object.Comment
 import Schema.Object.DeleteReactionPayload
 import Schema.Object.Reaction
-import GqlClient exposing (..)
-import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet)
-import Maybe
-import ModelSchema exposing (IdPayload, ReactionResponse, decodeResponse, decodedId, encodeId)
-import RemoteData exposing (RemoteData)
 
 
 

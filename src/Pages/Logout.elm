@@ -22,13 +22,13 @@
 module Pages.Logout exposing (Flags, Model, Msg, page)
 
 import Fractale.User exposing (UserState(..))
-import Utils.Cmd exposing (send, sendSleep)
 import Generated.Route as Route exposing (Route)
 import Global exposing (Msg(..))
 import Html
 import Http
 import Page exposing (Document, Page)
 import Requests exposing (logout)
+import Utils.Cmd exposing (send, sendSleep)
 
 
 type alias Flags =

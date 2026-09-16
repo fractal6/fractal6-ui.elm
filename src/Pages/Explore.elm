@@ -24,18 +24,14 @@ module Pages.Explore exposing (Flags, Model, Msg, page)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
-import Fractale.Codecs exposing (FractalBaseRoute(..), toLink)
-import Fractale.Error exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors)
-import Fractale.View exposing (mediaOrga)
 import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
 import Dict exposing (Dict)
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendSleep)
-import Utils.Html exposing (textH)
-import Utils.String exposing (upH)
 import Form exposing (isPostSendable)
 import Form.Help as Help
+import Fractale.Codecs exposing (FractalBaseRoute(..), toLink)
+import Fractale.Error exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors)
+import Fractale.View exposing (mediaOrga)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
@@ -54,6 +50,10 @@ import Task
 import Text as T
 import Time
 import Url
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendSleep)
+import Utils.Html exposing (textH)
+import Utils.String exposing (upH)
 
 
 

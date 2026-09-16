@@ -21,16 +21,8 @@
 
 module Query.AddContract exposing (addOneContract, deleteOneContract)
 
-import Fractale.Form exposing (ContractForm)
 import Dict
-import Utils.List exposing (listToMaybe)
-import Utils.Maybe exposing (mor)
-import Schema.InputObject as Input
-import Schema.Mutation as Mutation
-import Schema.Object
-import Schema.Object.AddContractPayload
-import Schema.Object.DeleteContractPayload
-import Schema.Scalar
+import Fractale.Form exposing (ContractForm)
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet
@@ -39,6 +31,14 @@ import ModelSchema exposing (..)
 import Query.AddTension exposing (buildComment)
 import Query.QueryContract exposing (cidPayload)
 import RemoteData exposing (RemoteData)
+import Schema.InputObject as Input
+import Schema.Mutation as Mutation
+import Schema.Object
+import Schema.Object.AddContractPayload
+import Schema.Object.DeleteContractPayload
+import Schema.Scalar
+import Utils.List exposing (listToMaybe)
+import Utils.Maybe exposing (mor)
 
 
 

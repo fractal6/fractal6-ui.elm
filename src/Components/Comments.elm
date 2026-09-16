@@ -276,7 +276,6 @@ initWithDraft nameid tensionid session maybeDraft =
     State { model | tension_form = tension_form }
 
 
-
 {-| Editor ids of a tension thread (default) and of the new tension modal.
 -}
 threadEditors : List String

@@ -847,7 +847,10 @@ nodeType2str x =
             T.role
 
 
+
 -- Localized node label, root node being an organisation.
+
+
 node2str : Node -> String
 node2str node =
     if nid2rootid node.nameid == node.nameid then

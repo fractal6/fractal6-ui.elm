@@ -21,17 +21,9 @@
 
 module Query.PatchContract exposing (pushContractComment, sendVote)
 
-import Fractale.Form exposing (CommentPatchForm)
-import Fractale.Codecs exposing (memberIdCodec)
 import Dict
-import Schema.InputObject as Input
-import Schema.Mutation as Mutation
-import Schema.Object
-import Schema.Object.AddVotePayload
-import Schema.Object.Contract
-import Schema.Object.UpdateContractPayload
-import Schema.Object.Vote
-import Schema.Scalar
+import Fractale.Codecs exposing (memberIdCodec)
+import Fractale.Form exposing (CommentPatchForm)
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet)
@@ -41,6 +33,14 @@ import Query.AddTension exposing (buildComment)
 import Query.PatchTension exposing (pushCommentFilter)
 import Query.QueryTension exposing (commentPayload)
 import RemoteData exposing (RemoteData)
+import Schema.InputObject as Input
+import Schema.Mutation as Mutation
+import Schema.Object
+import Schema.Object.AddVotePayload
+import Schema.Object.Contract
+import Schema.Object.UpdateContractPayload
+import Schema.Object.Vote
+import Schema.Scalar
 
 
 

@@ -22,7 +22,6 @@
 module Markdown exposing (escapeAmpersandsInHtmlBlocks, frac6Parser, parseMarkdown, processOutsideCodeBlocks, renderMarkdown, setMdCheckbox)
 
 import Fractale.Codecs exposing (FractalBaseRoute(..), toLink)
-import Utils.String exposing (regexContains, regexFromString, regexfirstMatchLength)
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, details, div, i, img, input, label, li, ol, span, summary, table, text, u, ul)
 import Html.Attributes as Attr exposing (alt, attribute, checked, class, disabled, href, rel, src, target, title, type_)
@@ -36,6 +35,7 @@ import Maybe exposing (withDefault)
 import Regex
 import String exposing (startsWith, toLower)
 import Url exposing (percentDecode)
+import Utils.String exposing (regexContains, regexFromString, regexfirstMatchLength)
 
 
 urlRegex : Regex.Regex

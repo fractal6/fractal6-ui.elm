@@ -24,30 +24,17 @@ module Pages.New.Orga exposing (Flags, Model, Msg, page)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr2)
 import Browser.Navigation as Nav
-import Fractale.Form exposing (OrgaForm)
-import Fractale.User exposing (UserState(..), uctxFromUser)
-import Utils.Bulma exposing (dropdownLight)
-import Fractale.Codecs exposing (FractalBaseRoute(..), nameidEncoder, toLink)
-import Fractale.Error exposing (viewHttpErrors)
-import Fractale.View exposing (helperButton, viewUrlForm, visibility2descr, visibility2extra, visibility2icon)
 import Components.AuthModal as AuthModal
 import Dict exposing (Dict)
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendSleep)
-import Utils.Html exposing (textH)
-import Utils.String exposing (upH)
-import Utils.DomEvents exposing (onClickPD, onDragOverPD, onKeydown)
-import Utils.Update as Update
-import Utils.Url exposing (queryBuilder, queryParser)
 import File exposing (File)
 import File.Select as Select
 import Form exposing (isLoginSendable, isPostSendable)
 import Form.Help as Help
-import Schema.Enum.NodeType as NodeType
-import Schema.Enum.NodeVisibility as NodeVisibility
-import Schema.Enum.TensionEvent as TensionEvent
-import Schema.Enum.TensionStatus as TensionStatus
-import Schema.Enum.TensionType as TensionType
+import Fractale.Codecs exposing (FractalBaseRoute(..), nameidEncoder, toLink)
+import Fractale.Error exposing (viewHttpErrors)
+import Fractale.Form exposing (OrgaForm)
+import Fractale.User exposing (UserState(..), uctxFromUser)
+import Fractale.View exposing (helperButton, viewUrlForm, visibility2descr, visibility2extra, visibility2icon)
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
@@ -66,12 +53,25 @@ import Ports
 import Query.QueryNode exposing (getNodeId)
 import RemoteData exposing (RemoteData)
 import Requests exposing (createOrga, importOrgaSpreadsheet)
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.NodeVisibility as NodeVisibility
+import Schema.Enum.TensionEvent as TensionEvent
+import Schema.Enum.TensionStatus as TensionStatus
+import Schema.Enum.TensionType as TensionType
 import Session exposing (GlobalCmd(..), Session)
 import String.Format as Format
 import Task exposing (Task)
 import Text as T
 import Time
 import Url exposing (Url)
+import Utils.Bool exposing (ternary)
+import Utils.Bulma exposing (dropdownLight)
+import Utils.Cmd exposing (send, sendSleep)
+import Utils.DomEvents exposing (onClickPD, onDragOverPD, onKeydown)
+import Utils.Html exposing (textH)
+import Utils.String exposing (upH)
+import Utils.Update as Update
+import Utils.Url exposing (queryBuilder, queryParser)
 
 
 page : Page Flags Model Msg

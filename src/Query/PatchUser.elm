@@ -27,9 +27,15 @@ module Query.PatchUser exposing
     , toggleTensionSubscription
     )
 
-import Fractale.Form exposing (UserProfileForm)
 import Dict
-import Utils.Bool exposing (ternary)
+import Fractale.Form exposing (UserProfileForm)
+import GqlClient exposing (..)
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet)
+import Maybe exposing (withDefault)
+import ModelSchema exposing (..)
+import Query.QueryUser exposing (IsSubscribe, isSubscribePayload, userFullPayload)
+import RemoteData
 import Schema.InputObject as Input
 import Schema.Mutation as Mutation
 import Schema.Object
@@ -38,14 +44,8 @@ import Schema.Object.UpdateUserEventPayload
 import Schema.Object.UpdateUserPayload
 import Schema.Object.User
 import Schema.Object.UserEvent
-import GqlClient exposing (..)
-import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet)
-import Maybe exposing (withDefault)
-import ModelSchema exposing (..)
-import Query.QueryUser exposing (IsSubscribe, isSubscribePayload, userFullPayload)
-import RemoteData
 import String.Extra as SE
+import Utils.Bool exposing (ternary)
 
 
 

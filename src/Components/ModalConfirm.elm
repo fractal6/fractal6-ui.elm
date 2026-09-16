@@ -22,13 +22,13 @@
 module Components.ModalConfirm exposing (..)
 
 import Fractale.User exposing (UserState(..))
-import Utils.Html exposing (showMsg)
 import Html exposing (Html, button, div, span, text)
 import Html.Attributes exposing (attribute, class, classList, id)
 import Html.Events exposing (onClick)
 import Loading exposing (ModalData, RequestResult(..))
 import ModelSchema exposing (..)
 import Text as T
+import Utils.Html exposing (showMsg)
 
 
 type alias ModalConfirm msg =

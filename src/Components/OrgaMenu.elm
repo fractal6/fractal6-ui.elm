@@ -24,11 +24,10 @@ module Components.OrgaMenu exposing (Msg(..), State, init, subscriptions, update
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Dom as Dom
-import Fractale.User exposing (UserState(..), uctxFromUser)
-import Fractale.Codecs exposing (NodeFocus, getRootids)
-import Fractale.View exposing (viewOrga0)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Utils.Cmd exposing (send, sendSleep)
+import Fractale.Codecs exposing (NodeFocus, getRootids)
+import Fractale.User exposing (UserState(..), uctxFromUser)
+import Fractale.View exposing (viewOrga0)
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, div, i, span, text)
 import Html.Attributes exposing (class, classList, href, id, style, title)
@@ -41,6 +40,7 @@ import Ports
 import Query.QueryNode exposing (queryOrgaNode)
 import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Task
+import Utils.Cmd exposing (send, sendSleep)
 
 
 type State

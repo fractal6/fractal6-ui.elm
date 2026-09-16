@@ -38,9 +38,17 @@ module Query.PatchNode exposing
     )
 
 import Codecs exposing (encodeColumnsJson)
-import Fractale.Form exposing (ArtefactNodeForm, ProjectForm, ProjectTemplateForm, TensionTemplateForm)
-import Fractale.Codecs exposing (nid2rootid)
 import Dict
+import Fractale.Codecs exposing (nid2rootid)
+import Fractale.Form exposing (ArtefactNodeForm, ProjectForm, ProjectTemplateForm, TensionTemplateForm)
+import GqlClient exposing (..)
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
+import Graphql.SelectionSet as SelectionSet
+import Maybe exposing (withDefault)
+import ModelSchema exposing (..)
+import Query.AddTension exposing (buildMandate)
+import Query.QueryNode exposing (labelFullPayload, projectFullPayload, projectTemplateFullPayload, roleFullPayload, tensionTemplateFullPayload)
+import RemoteData exposing (RemoteData)
 import Schema.Enum.ProjectColumnType as ProjectColumnType
 import Schema.Enum.ProjectStatus as ProjectStatus
 import Schema.InputObject as Input
@@ -57,14 +65,6 @@ import Schema.Object.UpdateProjectTemplatePayload
 import Schema.Object.UpdateRoleExtPayload
 import Schema.Object.UpdateTensionTemplatePayload
 import Schema.Scalar
-import GqlClient exposing (..)
-import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
-import Graphql.SelectionSet as SelectionSet
-import Maybe exposing (withDefault)
-import ModelSchema exposing (..)
-import Query.AddTension exposing (buildMandate)
-import Query.QueryNode exposing (labelFullPayload, projectFullPayload, projectTemplateFullPayload, roleFullPayload, tensionTemplateFullPayload)
-import RemoteData exposing (RemoteData)
 
 
 

@@ -21,9 +21,10 @@
 
 module Utils.Maybe exposing (mor, morElse, unwrap, unwrap2)
 
-
 {-| Returns the first value that is present, like the boolean `||`.
 -}
+
+
 mor : Maybe a -> Maybe a -> Maybe a
 mor ma mb =
     case ma of

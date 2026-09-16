@@ -23,23 +23,15 @@ module Form.Help exposing (Model, Msg(..), State, init, subscriptions, update, v
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Fractale.Form exposing (Ev)
-import Fractale.User exposing (UserState(..))
-import Fractale.Codecs exposing (nid2rootid)
-import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
 import Codecs exposing (QuickDoc)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.Html exposing (textH, textT)
-import Utils.String exposing (space_, upH)
-import Utils.DomEvents exposing (onClickPD)
 import Form exposing (isPostSendable)
 import Form.NewTension as NT
-import Schema.Enum.Lang as Lang
-import Schema.Enum.TensionEvent as TensionEvent
-import Schema.Enum.TensionType as TensionType
+import Fractale.Codecs exposing (nid2rootid)
+import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
+import Fractale.Form exposing (Ev)
+import Fractale.User exposing (UserState(..))
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, button, div, h2, header, i, input, label, li, nav, p, section, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, name, placeholder, required, rows, target, type_, value)
@@ -53,9 +45,17 @@ import Ports
 import Query.AddTension exposing (AddedTension, addOneTension)
 import RemoteData
 import Requests exposing (getQuickDoc)
+import Schema.Enum.Lang as Lang
+import Schema.Enum.TensionEvent as TensionEvent
+import Schema.Enum.TensionType as TensionType
 import Session exposing (Apis, GlobalCmd(..), SessionCommon, isMobile)
 import Text as T
 import Time
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.DomEvents exposing (onClickPD)
+import Utils.Html exposing (textH, textT)
+import Utils.String exposing (space_, upH)
 
 
 

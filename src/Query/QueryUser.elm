@@ -33,6 +33,13 @@ module Query.QueryUser exposing
     , usernamesFilter
     )
 
+import GqlClient exposing (..)
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
+import Maybe exposing (withDefault)
+import ModelSchema exposing (..)
+import Query.QueryNode exposing (nodeIdPayload, nodeOrgaFilter, searchUserFilter)
+import RemoteData
 import Schema.Enum.RoleType as RoleType
 import Schema.InputObject as Input
 import Schema.Object
@@ -41,13 +48,6 @@ import Schema.Object.Tension
 import Schema.Object.User
 import Schema.Object.UserRights
 import Schema.Query as Query
-import GqlClient exposing (..)
-import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
-import Maybe exposing (withDefault)
-import ModelSchema exposing (..)
-import Query.QueryNode exposing (nodeIdPayload, nodeOrgaFilter, searchUserFilter)
-import RemoteData
 import String.Extra as SE
 
 

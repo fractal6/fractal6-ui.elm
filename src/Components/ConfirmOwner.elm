@@ -23,19 +23,12 @@ module Components.ConfirmOwner exposing (Msg(..), State, init, subscriptions, up
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Fractale.User exposing (UserState(..), uctxFromUser)
-import Fractale.Codecs exposing (NodeFocus)
-import Fractale.Error exposing (viewGqlErrors)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.Html exposing (textH)
-import Utils.Maybe exposing (unwrap, unwrap2)
-import Utils.String exposing (space_)
-import Utils.DomEvents exposing (onClickPD)
-import Utils.Html exposing (showMsg)
 import Form exposing (isPostEmpty)
+import Fractale.Codecs exposing (NodeFocus)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.User exposing (UserState(..), uctxFromUser)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
@@ -50,6 +43,12 @@ import Requests exposing (makeOwner)
 import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.DomEvents exposing (onClickPD)
+import Utils.Html exposing (showMsg, textH)
+import Utils.Maybe exposing (unwrap, unwrap2)
+import Utils.String exposing (space_)
 
 
 

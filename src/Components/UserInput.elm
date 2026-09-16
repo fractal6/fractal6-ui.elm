@@ -23,16 +23,12 @@ port module Components.UserInput exposing (Msg(..), State, init, isOpen_, subscr
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Fractale.Form exposing (UserForm, initUserForm)
-import Fractale.User exposing (UserState(..), uctxFromUser)
-import Fractale.Error exposing (viewGqlErrors)
-import Fractale.View exposing (viewUserFull)
 import Codecs exposing (userDecoder)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendSleep)
-import Utils.String exposing (space_)
-import Utils.DomEvents exposing (onMousedownPD)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.Form exposing (UserForm, initUserForm)
+import Fractale.User exposing (UserState(..), uctxFromUser)
+import Fractale.View exposing (viewUserFull)
 import Html exposing (Html, a, div, i, label, p, span, text, textarea)
 import Html.Attributes exposing (attribute, class, classList, id, name, placeholder, rows, style, value)
 import Html.Events exposing (onClick, onInput)
@@ -47,6 +43,10 @@ import Query.QueryUser exposing (queryUser)
 import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendSleep)
+import Utils.DomEvents exposing (onMousedownPD)
+import Utils.String exposing (space_)
 
 
 type State

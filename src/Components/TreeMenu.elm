@@ -23,22 +23,15 @@ module Components.TreeMenu exposing (Msg(..), State, getList, getList_, getOrgaD
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Fractale.Graph exposing (getNode, getParentId, localGraphFromOrga, withDescendants)
-import Fractale.HotUpdate exposing (hotNodeInsert, hotNodeMove, hotNodePull, hotNodePush)
-import Fractale.User exposing (UserState(..), uctxFromUser)
-import Fractale.Codecs exposing (FractalBaseRoute(..), NodeFocus, focusFromNameid, getRootids, isRole, nearestCircleid, toLink)
-import Fractale.Error exposing (viewGqlErrors)
-import Fractale.View exposing (counter, nodeType2icon)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Dict.Extra as DE
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendSleep)
-import Utils.Html exposing (showIf, showMaybe)
-import Utils.Maybe exposing (unwrap)
-import Utils.String exposing (space_)
-import Utils.DomEvents exposing (onClickPD, onClickPosSafe, onClickSafe)
-import Schema.Enum.RoleType as RoleType
+import Fractale.Codecs exposing (FractalBaseRoute(..), NodeFocus, focusFromNameid, getRootids, isRole, nearestCircleid, toLink)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.Graph exposing (getNode, getParentId, localGraphFromOrga, withDescendants)
+import Fractale.HotUpdate exposing (hotNodeInsert, hotNodeMove, hotNodePull, hotNodePush)
+import Fractale.User exposing (UserState(..), uctxFromUser)
+import Fractale.View exposing (counter, nodeType2icon)
 import Html exposing (Html, a, div, i, li, span, text, ul)
 import Html.Attributes exposing (attribute, class, classList, id, selected, target)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
@@ -48,11 +41,18 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.QueryNode exposing (queryNodesSub, queryOrgaTree)
+import Schema.Enum.RoleType as RoleType
 import Schemas.TreeMenu exposing (ExpandedLines, PersistentModel, toPersistant)
 import Scroll
 import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import String
 import Text as T
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendSleep)
+import Utils.DomEvents exposing (onClickPD, onClickPosSafe, onClickSafe)
+import Utils.Html exposing (showIf, showMaybe)
+import Utils.Maybe exposing (unwrap)
+import Utils.String exposing (space_)
 
 
 type State

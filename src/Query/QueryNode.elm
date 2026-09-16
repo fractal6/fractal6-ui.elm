@@ -34,13 +34,11 @@ module Query.QueryNode exposing
     , getNodeId
     , getOpenProjectsForPanel
     , getOrgaInfo
-    , getProjects
-    , getServerVersion
-    , getRoles
-    , projectColumnLitePayload
-    , projectWithColumnsPayload
     , getProjectTemplateById
     , getProjectTemplates
+    , getProjects
+    , getRoles
+    , getServerVersion
     , getTensionTemplateById
     , getTensionTemplates
     , labelFullPayload
@@ -55,7 +53,11 @@ module Query.QueryNode exposing
     , notifEventPayload
     , pNodePayload
     , pinPayload
+    , projectColumnLitePayload
     , projectFullPayload
+    , projectTemplateFullPayload
+    , projectTemplateLitePayload
+    , projectWithColumnsPayload
     , queryJournal
     , queryLabels
     , queryLabelsDown
@@ -65,15 +67,13 @@ module Query.QueryNode exposing
     , queryNodeExt
     , queryNodesSub
     , queryOrgaNode
-    , queryPinnedTensionsSub
     , queryOrgaTree
+    , queryPinnedTensionsSub
     , queryProjects
     , queryPublicOrga
     , queryRolesFull
     , roleFullPayload
     , searchUserFilter
-    , projectTemplateFullPayload
-    , projectTemplateLitePayload
     , tensionEventPayload
     , tensionTemplateFullPayload
     , tensionTemplateLitePayload
@@ -82,12 +82,17 @@ module Query.QueryNode exposing
     )
 
 import Codecs exposing (decodeColumnsJson)
-import Fractale.Graph exposing (maxPinnedTensions)
-import Fractale.Codecs exposing (activeMembershipRoleTypes, membershipRoleTypes, nid2rootid)
 import Dict exposing (Dict)
-import Utils.Bool exposing (ternary)
-import Utils.Maybe exposing (unwrap, unwrap2)
-import Utils.String exposing (parseSearchPattern)
+import Fractale.Codecs exposing (activeMembershipRoleTypes, membershipRoleTypes, nid2rootid)
+import Fractale.Graph exposing (maxPinnedTensions)
+import GqlClient exposing (..)
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
+import List.Extra as LE
+import Loading exposing (RequestResult(..))
+import Maybe exposing (withDefault)
+import ModelSchema exposing (..)
+import RemoteData
 import Schema.Enum.ContractStatus as ContractStatus
 import Schema.Enum.LabelOrderable as LabelOrderable
 import Schema.Enum.NodeMode as NodeMode
@@ -128,15 +133,10 @@ import Schema.Object.TensionTemplateAggregateResult
 import Schema.Object.User
 import Schema.Object.UserAggregateResult
 import Schema.Query as Query
-import GqlClient exposing (..)
-import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
-import List.Extra as LE
-import Loading exposing (RequestResult(..))
-import Maybe exposing (withDefault)
-import ModelSchema exposing (..)
-import RemoteData
 import String.Extra as SE
+import Utils.Bool exposing (ternary)
+import Utils.Maybe exposing (unwrap, unwrap2)
+import Utils.String exposing (parseSearchPattern)
 
 
 
@@ -846,7 +846,7 @@ pinPayload =
 
 {-| Hard cap on the number of descendant circles inspected per recursive pinned
 fetch. Combined with maxPinnedTensions per node, the worst-case response is
-bounded at subNodesCap * maxPinnedTensions tension entries.
+bounded at subNodesCap \* maxPinnedTensions tension entries.
 -}
 subNodesCap : Int
 subNodesCap =
@@ -1901,6 +1901,7 @@ getOrgaInfo url username nameid msg =
             )
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
+
 
 
 -- Standalone so the version banner fires on non-org pages.

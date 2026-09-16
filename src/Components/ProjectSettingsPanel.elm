@@ -23,14 +23,13 @@ port module Components.ProjectSettingsPanel exposing (Msg(..), State, init, subs
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Fractale.Form exposing (ProjectForm, initProjectForm)
-import Fractale.User exposing (uctxFromUser)
-import Fractale.Error exposing (viewGqlErrors)
-import Fractale.View exposing (viewUserFull)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserInput as UserInput
 import Dict
-import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.Form exposing (ProjectForm, initProjectForm)
+import Fractale.User exposing (uctxFromUser)
+import Fractale.View exposing (viewUserFull)
 import Html exposing (Html, button, div, hr, input, p, span, text, textarea)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, id, placeholder, rows, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -44,6 +43,7 @@ import Query.PatchNode exposing (updateOneProject)
 import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
+import Utils.Cmd exposing (send, sendNow, sendSleep)
 
 
 

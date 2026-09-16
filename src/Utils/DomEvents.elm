@@ -282,9 +282,6 @@ onDragOverPD msg =
 --    Drag.eventDecoder
 --        |> JD.map (\ev -> { message = tag ev, stopPropagation = True, preventDefault = True })
 --        |> Html.Events.custom "dragleave"
-
-
-
 --
 -- DOM event decoders (formerly Dom.elm)
 --

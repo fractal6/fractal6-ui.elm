@@ -24,6 +24,14 @@ module Query.QueryNotifications exposing
     , queryNotifications
     )
 
+import GqlClient exposing (..)
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
+import Maybe exposing (withDefault)
+import ModelSchema exposing (..)
+import Query.QueryNode exposing (contractEventPayload, notifEventPayload, tensionEventPayload)
+import Query.QueryUser exposing (usernameFilter)
+import RemoteData exposing (RemoteData)
 import Schema.Enum.ContractStatus as ContractStatus
 import Schema.Enum.UserEventOrderable as UserEventOrderable
 import Schema.InputObject as Input
@@ -34,14 +42,6 @@ import Schema.Object.UserEvent
 import Schema.Query as Query
 import Schema.Union
 import Schema.Union.EventKind
-import GqlClient exposing (..)
-import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
-import Maybe exposing (withDefault)
-import ModelSchema exposing (..)
-import Query.QueryNode exposing (contractEventPayload, notifEventPayload, tensionEventPayload)
-import Query.QueryUser exposing (usernameFilter)
-import RemoteData exposing (RemoteData)
 
 
 

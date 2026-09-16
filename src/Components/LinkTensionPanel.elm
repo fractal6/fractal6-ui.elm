@@ -23,25 +23,15 @@ port module Components.LinkTensionPanel exposing (ColTarget, Msg(..), State, has
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Fractale.Graph exposing (getPathWithChildren)
-import Fractale.User exposing (UserState(..), uctxFromUser)
-import Utils.Bulma as B
-import Fractale.Error exposing (viewGqlErrors)
-import Fractale.View exposing (nodeType2icon, tensionIcon3, viewTensionLight)
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.TreeMenu as TreeMenu exposing (viewSelectorTree)
 import Dict exposing (Dict)
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.Html exposing (textH)
-import Utils.Maybe exposing (unwrap, unwrap2)
-import Utils.String exposing (upH)
-import Utils.DomEvents exposing (onClickPD, onClickSP, onKeydown)
 import Form exposing (isPostEmpty)
-import Schema.Enum.ProjectColumnType as ProjectColumnType
-import Schema.Enum.TensionStatus as TensionStatus
-import Schema.Enum.TensionType as TensionType
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.Graph exposing (getPathWithChildren)
+import Fractale.User exposing (UserState(..), uctxFromUser)
+import Fractale.View exposing (nodeType2icon, tensionIcon3, viewTensionLight)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autofocus, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, style, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
@@ -55,10 +45,20 @@ import Org.Tensions exposing (TypeFilter(..), defaultTypeFilter, typeDecoder, ty
 import Ports
 import Query.QueryProject exposing (addProjectCard, addProjectColumn, getNoStatusCol, updateProjectColumn)
 import Requests exposing (TensionQuery, fetchTensionsLight, initTensionQuery)
+import Schema.Enum.ProjectColumnType as ProjectColumnType
+import Schema.Enum.TensionStatus as TensionStatus
+import Schema.Enum.TensionType as TensionType
 import Schemas.TreeMenu exposing (ExpandedLines)
 import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
+import Utils.Bool exposing (ternary)
+import Utils.Bulma as B
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.DomEvents exposing (onClickPD, onClickSP, onKeydown)
+import Utils.Html exposing (textH)
+import Utils.Maybe exposing (unwrap, unwrap2)
+import Utils.String exposing (upH)
 
 
 

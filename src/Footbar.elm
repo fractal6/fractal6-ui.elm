@@ -23,12 +23,12 @@ module Footbar exposing (view)
 
 import Assets as A
 import Dict
-import Utils.Url exposing (queryFullBuilder)
 import Html exposing (Html, a, div, small, span, text)
 import Html.Attributes exposing (attribute, class, href, id, target, title)
 import Session exposing (SessionCommon, ViewMode(..))
 import Text as T
 import Url
+import Utils.Url exposing (queryFullBuilder)
 
 
 logo_footer : Html msg

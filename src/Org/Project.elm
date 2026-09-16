@@ -24,13 +24,6 @@ module Org.Project exposing (Flags, Model, Msg, init, page, subscriptions, updat
 import Assets as A
 import Auth exposing (ErrState(..), getProjectRights)
 import Browser.Navigation as Nav
-import Fractale.Form exposing (..)
-import Fractale.User exposing (..)
-import Fractale.Graph exposing (..)
-import Fractale.HotUpdate exposing (..)
-import Fractale.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, id3Changed, nameidFromFlags, nearestCircleid, toLink)
-import Fractale.Error exposing (viewGqlErrors, viewGqlErrorsLight)
-import Fractale.View exposing (viewCircleTarget, viewRole, viewUserFull)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.Board as Board
@@ -45,19 +38,16 @@ import Components.ProjectSettingsPanel as ProjectSettingsPanel
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.List exposing (insertAt)
-import Utils.Maybe exposing (unwrap)
-import Utils.DomEvents exposing (onKeydown, onMousedownPD)
-import Utils.Url exposing (queryBuilder, queryParser)
 import Fifo exposing (Fifo)
 import Form.Help as Help
 import Form.NewTension as NTF
-import Schema.Enum.NodeType as NodeType
-import Schema.Enum.ProjectColumnType as ProjectColumnType
-import Schema.Enum.ProjectStatus as ProjectStatus
-import Schema.Enum.TensionEvent as TensionEvent
+import Fractale.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, id3Changed, nameidFromFlags, nearestCircleid, toLink)
+import Fractale.Error exposing (viewGqlErrors, viewGqlErrorsLight)
+import Fractale.Form exposing (..)
+import Fractale.Graph exposing (..)
+import Fractale.HotUpdate exposing (..)
+import Fractale.User exposing (..)
+import Fractale.View exposing (viewCircleTarget, viewRole, viewUserFull)
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), viewNotif)
 import Html exposing (Html, a, button, div, h2, hr, i, input, span, tbody, td, text, th, thead, tr)
@@ -72,10 +62,20 @@ import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryProject exposing (getProject)
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.ProjectColumnType as ProjectColumnType
+import Schema.Enum.ProjectStatus as ProjectStatus
+import Schema.Enum.TensionEvent as TensionEvent
 import Session exposing (CommonMsg, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
 import Url
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.DomEvents exposing (onKeydown, onMousedownPD)
+import Utils.List exposing (insertAt)
+import Utils.Maybe exposing (unwrap)
+import Utils.Url exposing (queryBuilder, queryParser)
 
 
 page : Page Flags Model Msg
@@ -178,7 +178,6 @@ mapGlobalOutcmds gcmds =
             )
         |> List.unzip
         |> Tuple.mapFirst List.concat
-
 
 
 {-| Recompute project admin rights once both `path_data` and `project_data`

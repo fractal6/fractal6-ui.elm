@@ -21,12 +21,12 @@
 
 module Pages.Help exposing (Flags, Model, Msg, page)
 
-import Utils.Cmd exposing (send, sendSleep)
 import Form.Help as Help
 import Global exposing (Msg(..))
 import Html
 import Page exposing (Document, Page)
 import Session exposing (GlobalCmd(..))
+import Utils.Cmd exposing (send, sendSleep)
 
 
 type alias Flags =

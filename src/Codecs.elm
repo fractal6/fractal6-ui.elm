@@ -22,13 +22,6 @@
 module Codecs exposing (..)
 
 import Dict
-import Schema.Enum.Lang as Lang
-import Schema.Enum.NodeMode as NodeMode
-import Schema.Enum.NodeType as NodeType
-import Schema.Enum.NodeVisibility as NodeVisibility
-import Schema.Enum.ProjectColumnType as ProjectColumnType
-import Schema.Enum.RoleType as RoleType
-import Schema.Enum.UserType as UserType
 import Json.Decode as JD
 import Json.Decode.Extra as JDE
 import Json.Encode as JE
@@ -55,6 +48,13 @@ import ModelSchema
         , UserRole
         , Username
         )
+import Schema.Enum.Lang as Lang
+import Schema.Enum.NodeMode as NodeMode
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.NodeVisibility as NodeVisibility
+import Schema.Enum.ProjectColumnType as ProjectColumnType
+import Schema.Enum.RoleType as RoleType
+import Schema.Enum.UserType as UserType
 
 
 

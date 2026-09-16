@@ -23,23 +23,16 @@ module Components.JoinOrga exposing (JoinStep(..), Msg(..), State, init, setCurr
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Fractale.Form exposing (ActionForm, Ev, form2cid, initActionForm, makeCandidateContractForm)
-import Fractale.User exposing (UserState(..), uctxFromUser)
-import Fractale.Codecs exposing (isMember, isPending, nid2rootid)
-import Fractale.Error exposing (viewAuthNeeded, viewGqlErrors)
 import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.Comments as Comments
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserInput as UserInput
 import Dict
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.Html exposing (textH)
-import Utils.Maybe exposing (unwrap, unwrap2)
-import Utils.String exposing (space_)
-import Utils.DomEvents exposing (onClickPD)
 import Form exposing (isPostEmpty)
-import Schema.Enum.TensionEvent as TensionEvent
+import Fractale.Codecs exposing (isMember, isPending, nid2rootid)
+import Fractale.Error exposing (viewAuthNeeded, viewGqlErrors)
+import Fractale.Form exposing (ActionForm, Ev, form2cid, initActionForm, makeCandidateContractForm)
+import Fractale.User exposing (UserState(..), uctxFromUser)
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, button, div, i, p, span, strong, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, target)
@@ -53,9 +46,16 @@ import Ports
 import Query.AddContract exposing (addOneContract)
 import Query.QueryContract exposing (getContractId)
 import Query.QueryNode exposing (fetchNode)
+import Schema.Enum.TensionEvent as TensionEvent
 import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.DomEvents exposing (onClickPD)
+import Utils.Html exposing (textH)
+import Utils.Maybe exposing (unwrap, unwrap2)
+import Utils.String exposing (space_)
 
 
 type State

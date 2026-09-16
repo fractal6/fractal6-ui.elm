@@ -24,18 +24,12 @@ module Components.LabelSearchPanel exposing (..)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
-import Fractale.Form exposing (Ev, LabelForm, encodeLabel, initLabelForm)
-import Fractale.User exposing (UserState(..))
-import Fractale.Codecs exposing (FractalBaseRoute(..), toLink)
-import Fractale.Error exposing (viewGqlErrors)
 import Codecs exposing (labelDecoder)
 import Dict
-import Utils.DomEvents as Dom
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.Color exposing (colorAttr)
-import Utils.DomEvents exposing (onMousedownPD)
-import Schema.Enum.TensionEvent as TensionEvent
+import Fractale.Codecs exposing (FractalBaseRoute(..), toLink)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.Form exposing (Ev, LabelForm, encodeLabel, initLabelForm)
+import Fractale.User exposing (UserState(..))
 import Html exposing (Html, a, div, i, input, label, nav, p, span, text)
 import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -49,9 +43,14 @@ import Ports
 import Query.PatchTension exposing (setLabel)
 import Query.QueryNode exposing (queryLabels, queryLabelsDown)
 import Query.QueryProject exposing (setProjectDraftLabel)
+import Schema.Enum.TensionEvent as TensionEvent
 import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
 import Text as T
 import Time
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Color exposing (colorAttr)
+import Utils.DomEvents as Dom exposing (onMousedownPD)
 
 
 

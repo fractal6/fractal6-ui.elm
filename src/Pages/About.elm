@@ -23,19 +23,13 @@ module Pages.About exposing (Flags, Model, Msg, init, page, subscriptions, updat
 
 import Assets as A
 import Browser.Navigation as Nav
-import Fractale.User exposing (UserState(..))
-import Fractale.Codecs exposing (FractalBaseRoute(..), toLink)
-import Fractale.Error exposing (viewHttpErrors)
 import Components.AuthModal exposing (UserAuthForm)
 import Dict exposing (Dict)
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendSleep)
-import Utils.Html exposing (textH)
-import Utils.String exposing (upH)
-import Utils.DomEvents exposing (onClickPD, onKeydown)
 import Form exposing (isLoginSendable, isSignupSendable)
 import Form.Help as Help
-import Schema.Enum.Lang as Lang
+import Fractale.Codecs exposing (FractalBaseRoute(..), toLink)
+import Fractale.Error exposing (viewHttpErrors)
+import Fractale.User exposing (UserState(..))
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, dd, div, dl, dt, figcaption, figure, h1, h2, hr, i, iframe, img, input, label, li, nav, p, span, strong, text, textarea, ul)
@@ -50,8 +44,14 @@ import Page exposing (Document, Page)
 import Ports
 import RemoteData exposing (RemoteData)
 import Requests exposing (fetchStaticPage, login, signup)
+import Schema.Enum.Lang as Lang
 import Session exposing (GlobalCmd(..))
 import Text as T
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendSleep)
+import Utils.DomEvents exposing (onClickPD, onKeydown)
+import Utils.Html exposing (textH)
+import Utils.String exposing (upH)
 
 
 

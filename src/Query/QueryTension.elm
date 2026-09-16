@@ -32,13 +32,13 @@ module Query.QueryTension exposing
     , governedNodePayload
     , nodeFragmentLightPayload
     , nodeFragmentPayload
+    , orgNodesFilter
+    , orgTensionPayload
     , queryAllTension
     , queryAssignedTensions
     , queryCircleTension
     , queryExtTension
     , queryIntTension
-    , orgNodesFilter
-    , orgTensionPayload
     , queryOrgTensions
     , queryPinnedTensions
     , tensionPayload
@@ -808,7 +808,7 @@ orgNodesFilter q a =
 
 
 {-| Membership nodes (and Owner) have no source tension. Open roles also drop
-nodes that already have a first_link — `not: { or: [role_type, has] }`.
+nodes that already have a first\_link — `not: { or: [role_type, has] }`.
 -}
 orgNodesNot : Bool -> Input.NodeFilter
 orgNodesNot noFirstLink =

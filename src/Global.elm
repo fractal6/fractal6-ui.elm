@@ -35,20 +35,15 @@ module Global exposing
 import Auth exposing (ErrState(..), parseErr, parseErr2)
 import Browser exposing (Document)
 import Browser.Navigation as Nav
-import Fractale.Form exposing (OrgaForm)
-import Fractale.Graph exposing (countOpenTensions, getNode, treeMatchesFocus)
-import Fractale.User exposing (UserState(..), uctxFromUser)
-import Fractale.Codecs exposing (FractalBaseRoute(..), NodeFocus, toLink, urlToFractalRoute)
-import Fractale.Error exposing (viewGqlErrorsLight)
 import Codecs exposing (CommentDraft, DraftStore, DraftUpdate(..), RecentActivityTab, TensionDraft, WindowPos, maxCommentDrafts)
 import Components.Navbar as Navbar
 import Dict
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendSleep)
-import Utils.Html exposing (showIf, showMaybe)
-import Utils.Maybe exposing (morElse, unwrap2)
 import Footbar
-import Schema.Enum.Lang as Lang
+import Fractale.Codecs exposing (FractalBaseRoute(..), NodeFocus, toLink, urlToFractalRoute)
+import Fractale.Error exposing (viewGqlErrorsLight)
+import Fractale.Form exposing (OrgaForm)
+import Fractale.Graph exposing (countOpenTensions, getNode, treeMatchesFocus)
+import Fractale.User exposing (UserState(..), uctxFromUser)
 import Generated.Route as Route exposing (Route)
 import Html exposing (Html, a, button, div, p, text)
 import Html.Attributes exposing (class, classList, id)
@@ -67,12 +62,17 @@ import Query.QueryNotifications exposing (queryNotifCount)
 import Query.QueryTension exposing (queryPinnedTensions)
 import RemoteData
 import Requests exposing (fetchTensionTemplatesTop, tokenack)
+import Schema.Enum.Lang as Lang
 import Schemas.TreeMenu as TreeMenuSchema
 import Scroll
 import Session exposing (LabelSearchPanelModel, Screen, Session, SessionFlags, SystemNotification, Theme(..), UserSearchPanelModel, ViewMode(..), fromLocalSession, resetSession)
 import Task
 import Time
 import Url exposing (Url)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendSleep)
+import Utils.Html exposing (showIf, showMaybe)
+import Utils.Maybe exposing (morElse, unwrap2)
 
 
 

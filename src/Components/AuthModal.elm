@@ -23,14 +23,11 @@ module Components.AuthModal exposing (Msg(..), State, UserAuthForm, init, subscr
 
 import Assets as A
 import Auth exposing (ErrState(..))
+import Dict exposing (Dict)
+import Form exposing (isPostSendable)
+import Fractale.Error exposing (viewAuthNeeded, viewHttpErrors)
 import Fractale.User exposing (UserState(..))
 import Fractale.Welcome as Welcome
-import Fractale.Error exposing (viewAuthNeeded, viewHttpErrors)
-import Dict exposing (Dict)
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send)
-import Utils.DomEvents exposing (onClickPD, onClickSafe, onKeydown)
-import Form exposing (isPostSendable)
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, button, div, input, p, span, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, target, type_, value)
@@ -45,6 +42,9 @@ import RemoteData
 import Requests exposing (login, signupValidate)
 import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send)
+import Utils.DomEvents exposing (onClickPD, onClickSafe, onKeydown)
 
 
 type State

@@ -23,18 +23,12 @@ module Pages.Login exposing (Flags, Model, Msg, page)
 
 import Assets as A
 import Browser.Navigation as Nav
-import Fractale.User exposing (UserState(..))
-import Fractale.Codecs exposing (FractalBaseRoute(..), toLink)
-import Fractale.Error exposing (viewHttpErrors)
 import Components.AuthModal exposing (UserAuthForm)
 import Dict exposing (Dict)
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendSleep)
-import Utils.Html exposing (textH)
-import Utils.String exposing (upH)
-import Utils.DomEvents exposing (onKeydown)
 import Form exposing (isLoginSendable)
-import Schema.Enum.Lang as Lang
+import Fractale.Codecs exposing (FractalBaseRoute(..), toLink)
+import Fractale.Error exposing (viewHttpErrors)
+import Fractale.User exposing (UserState(..))
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
@@ -47,8 +41,14 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import RemoteData exposing (RemoteData)
 import Requests exposing (login)
+import Schema.Enum.Lang as Lang
 import Task
 import Text as T
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendSleep)
+import Utils.DomEvents exposing (onKeydown)
+import Utils.Html exposing (textH)
+import Utils.String exposing (upH)
 
 
 page : Page Flags Model Msg

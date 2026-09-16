@@ -537,13 +537,13 @@ allEmojis =
     , { unicode = "🎃", name = "jack-o-lantern", keywords = "halloween pumpkin" }
     , { unicode = "🎄", name = "christmas-tree", keywords = "holiday xmas" }
     , { unicode = "🎅", name = "santa", keywords = "christmas" }
-    , { unicode = "🧑‍💻", name = "technologist", keywords = "developer coder programmer" }
-    , { unicode = "👨‍💻", name = "man-technologist", keywords = "developer coder" }
-    , { unicode = "👩‍💻", name = "woman-technologist", keywords = "developer coder" }
-    , { unicode = "🧑‍🔬", name = "scientist", keywords = "research" }
-    , { unicode = "👨‍🎓", name = "man-student", keywords = "graduate school" }
-    , { unicode = "👩‍🎓", name = "woman-student", keywords = "graduate school" }
-    , { unicode = "🧑‍🏫", name = "teacher", keywords = "education" }
+    , { unicode = "🧑\u{200D}💻", name = "technologist", keywords = "developer coder programmer" }
+    , { unicode = "👨\u{200D}💻", name = "man-technologist", keywords = "developer coder" }
+    , { unicode = "👩\u{200D}💻", name = "woman-technologist", keywords = "developer coder" }
+    , { unicode = "🧑\u{200D}🔬", name = "scientist", keywords = "research" }
+    , { unicode = "👨\u{200D}🎓", name = "man-student", keywords = "graduate school" }
+    , { unicode = "👩\u{200D}🎓", name = "woman-student", keywords = "graduate school" }
+    , { unicode = "🧑\u{200D}🏫", name = "teacher", keywords = "education" }
     , { unicode = "🦸", name = "superhero", keywords = "hero" }
     , { unicode = "🦹", name = "supervillain", keywords = "villain evil" }
     , { unicode = "💪🏽", name = "muscle-medium", keywords = "strong flex" }

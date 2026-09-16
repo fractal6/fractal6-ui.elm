@@ -24,8 +24,6 @@ module Main exposing (main)
 import Browser exposing (Document)
 import Browser.Navigation as Nav exposing (Key)
 import Components.Navbar as Navbar
-import Utils.Cmd exposing (send)
-import Utils.Url exposing (getUrlQueryParam, queryParser)
 import Generated.Pages as Pages
 import Generated.Route as Route exposing (Route(..))
 import Global exposing (Msg(..))
@@ -34,6 +32,8 @@ import Ports
 import Session exposing (encodeViewMode)
 import Url exposing (Url)
 import Url.Parser.Query
+import Utils.Cmd exposing (send)
+import Utils.Url exposing (getUrlQueryParam, queryParser)
 
 
 main : Program Flags Model Msg

@@ -30,23 +30,23 @@ module Auth exposing
     , parseErr2
     )
 
-import Fractale.Graph exposing (getChildren)
-import Fractale.Codecs exposing (getCircleRoles, getCoordoRoles, getOrgaRoles, isOwner, nearestCircleid, nid2rootid)
 import Dict
-import Utils.Bool exposing (ternary)
-import Utils.Html exposing (textH)
-import Utils.String exposing (upH)
-import Schema.Enum.NodeMode as NodeMode
-import Schema.Enum.NodeType as NodeType
-import Schema.Enum.RoleType as RoleType
+import Fractale.Codecs exposing (getCircleRoles, getCoordoRoles, getOrgaRoles, isOwner, nearestCircleid, nid2rootid)
+import Fractale.Graph exposing (getChildren)
 import Json.Decode as JD
 import Loading exposing (GqlData, RequestResult(..), RestData, errorsDecoder, toErrorData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (LocalGraph, Node, NodesDict, TensionAuth, TensionHead, UserCtx, UserRole, initNode)
 import RemoteData
+import Schema.Enum.NodeMode as NodeMode
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.RoleType as RoleType
 import String exposing (contains, startsWith)
 import String.Extra as SE
 import Text as T
+import Utils.Bool exposing (ternary)
+import Utils.Html exposing (textH)
+import Utils.String exposing (upH)
 
 
 

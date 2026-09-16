@@ -22,17 +22,11 @@
 module Pages.PasswordReset exposing (Flags, Model, Msg, page)
 
 import Assets as A exposing (almostThere)
-import Fractale.Error exposing (viewHttpErrors)
 import Components.AuthModal exposing (UserAuthForm)
 import Dict
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendSleep)
-import Utils.Html exposing (textH)
-import Utils.String exposing (upH)
-import Utils.DomEvents exposing (onKeydown)
-import Utils.Url exposing (queryParser)
 import Form exposing (isPasswordReset2Sendable, isPasswordResetSendable)
 import Form.Help as Help
+import Fractale.Error exposing (viewHttpErrors)
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, img, input, label, li, nav, p, small, span, text, textarea, ul)
@@ -49,6 +43,12 @@ import Requests exposing (resetPassword, resetPassword2, resetPasswordChallenge,
 import Session exposing (GlobalCmd(..))
 import Task
 import Text as T
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendSleep)
+import Utils.DomEvents exposing (onKeydown)
+import Utils.Html exposing (textH)
+import Utils.String exposing (upH)
+import Utils.Url exposing (queryParser)
 
 
 page : Page Flags Model Msg

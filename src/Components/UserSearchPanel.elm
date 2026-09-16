@@ -24,18 +24,13 @@ module Components.UserSearchPanel exposing (..)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
-import Fractale.Form exposing (AssigneeForm, Ev, initAssigneeForm)
-import Fractale.User exposing (UserState(..))
-import Fractale.Codecs exposing (FractalBaseRoute(..), toLink)
-import Fractale.Error exposing (viewGqlErrors)
-import Fractale.View exposing (getAvatar1, viewUserFull)
 import Codecs exposing (userDecoder)
 import Dict
-import Utils.DomEvents as Dom
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.DomEvents exposing (onMousedownPD)
-import Schema.Enum.TensionEvent as TensionEvent
+import Fractale.Codecs exposing (FractalBaseRoute(..), toLink)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.Form exposing (AssigneeForm, Ev, initAssigneeForm)
+import Fractale.User exposing (UserState(..))
+import Fractale.View exposing (getAvatar1, viewUserFull)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, div, i, input, nav, p, span, text)
 import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, title, type_, value)
@@ -50,9 +45,13 @@ import Ports
 import Query.PatchTension exposing (setAssignee)
 import Query.QueryNode exposing (queryMembers)
 import Query.QueryProject exposing (setProjectDraftAssignee)
+import Schema.Enum.TensionEvent as TensionEvent
 import Session exposing (Apis, GlobalCmd(..), UserSearchPanelOnClickAction(..))
 import Text as T
 import Time
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.DomEvents as Dom exposing (onMousedownPD)
 
 
 

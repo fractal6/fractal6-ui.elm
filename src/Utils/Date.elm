@@ -22,8 +22,8 @@
 module Utils.Date exposing (diffTime, formatDate)
 
 import Date
-import Schema.Enum.Lang as Lang
 import Iso8601 exposing (toTime)
+import Schema.Enum.Lang as Lang
 import Text as T
 import Time exposing (Posix, posixToMillis, utc)
 import Time.Distance as Distance

@@ -23,22 +23,15 @@ module Components.ConfirmContract exposing (Msg(..), State, init, subscriptions,
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Fractale.Form exposing (ContractForm, initContractForm)
-import Fractale.User exposing (UserState(..))
+import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
+import Dict
+import Form exposing (isPostEmpty)
 import Fractale.Codecs exposing (contractIdCodec, nid2eor, nid2rootid)
 import Fractale.Error exposing (viewGqlErrors)
 import Fractale.Event exposing (contractEventToText, contractTypeToText)
+import Fractale.Form exposing (ContractForm, initContractForm)
+import Fractale.User exposing (UserState(..))
 import Fractale.View exposing (viewTensionArrow)
-import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Dict
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.Maybe exposing (unwrap)
-import Utils.String exposing (space_)
-import Utils.DomEvents exposing (onClickPD)
-import Utils.Html exposing (showMsg)
-import Form exposing (isPostEmpty)
-import Schema.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, button, div, form, i, input, label, p, text, textarea)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, target, value)
@@ -49,9 +42,16 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)
+import Schema.Enum.TensionEvent as TensionEvent
 import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.DomEvents exposing (onClickPD)
+import Utils.Html exposing (showMsg)
+import Utils.Maybe exposing (unwrap)
+import Utils.String exposing (space_)
 
 
 type State

@@ -22,12 +22,12 @@
 module Assets exposing (..)
 
 import Assets.Logo as Logo
-import Utils.String exposing (space_)
 import Html exposing (Html, a, div, h1, h2, hr, i, img, p, small, span, text)
 import Html.Attributes exposing (alt, attribute, class, classList, height, href, src, style, width)
 import Html.Lazy as Lazy
 import String.Format as Format
 import Text as T
+import Utils.String exposing (space_)
 
 
 {-| Assets, such as images, videos, and audio. (We only have images for now.)

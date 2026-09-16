@@ -30,6 +30,14 @@ module Query.QueryContract exposing
     )
 
 import Fractale.Codecs exposing (nid2rootid)
+import GqlClient exposing (..)
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
+import Maybe exposing (withDefault)
+import ModelSchema exposing (..)
+import Query.QueryNode exposing (emiterOrReceiverPayload, tidPayload)
+import Query.QueryTension exposing (commentPayload, nodeFragmentLightPayload, nodeFragmentPayload)
+import RemoteData
 import Schema.Enum.BlobHasFilter as BlobHasFilter
 import Schema.Enum.BlobOrderable as BlobOrderable
 import Schema.Enum.ContractOrderable as ContractOrderable
@@ -46,14 +54,6 @@ import Schema.Object.Tension
 import Schema.Object.User
 import Schema.Object.Vote
 import Schema.Query as Query
-import GqlClient exposing (..)
-import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
-import Maybe exposing (withDefault)
-import ModelSchema exposing (..)
-import Query.QueryNode exposing (emiterOrReceiverPayload, tidPayload)
-import Query.QueryTension exposing (commentPayload, nodeFragmentLightPayload, nodeFragmentPayload)
-import RemoteData
 
 
 nCommentPerContract : Int

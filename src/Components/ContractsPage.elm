@@ -23,27 +23,18 @@ module Components.ContractsPage exposing (Msg(..), State, init, subscriptions, u
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
+import Components.Comments as Comments
+import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
+import Dict
+import Form exposing (isPostEmpty)
+import Fractale.Codecs exposing (FractalBaseRoute(..), contractIdCodec, memberIdDecodec, nid2eor, nid2rootid, nodeIdCodec, toLink)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.Event exposing (cev2c, cev2p, contractEventToText, contractEventToValue, contractTypeToText)
 import Fractale.Form exposing (CommentPatchForm, InputViewMode(..), initCommentPatchForm)
 import Fractale.Graph exposing (nodeFromTension)
 import Fractale.HotUpdate exposing (pushCommentReaction, removeCommentReaction)
 import Fractale.User exposing (UserState(..), uctxFromUser)
-import Fractale.Codecs exposing (FractalBaseRoute(..), contractIdCodec, memberIdDecodec, nid2eor, nid2rootid, nodeIdCodec, toLink)
-import Fractale.Error exposing (viewGqlErrors)
-import Fractale.Event exposing (cev2c, cev2p, contractEventToText, contractEventToValue, contractTypeToText)
 import Fractale.View exposing (byAt, viewRole, viewTensionArrow, viewUserFull, viewUsernameLink)
-import Components.Comments as Comments
-import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Dict
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.String exposing (space_, upH)
-import Utils.Date exposing (formatDate)
-import Form exposing (isPostEmpty)
-import Schema.Enum.ContractStatus as ContractStatus
-import Schema.Enum.NodeType as NodeType
-import Schema.Enum.RoleType as RoleType
-import Schema.Enum.TensionEvent as TensionEvent
-import Schema.Enum.TensionStatus as TensionStatus
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, div, form, hr, i, input, label, p, span, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (attribute, class, classList, colspan, disabled, href, id, name, selected, title, type_, value)
@@ -60,9 +51,18 @@ import Query.PatchContract exposing (sendVote)
 import Query.PatchTension exposing (patchComment)
 import Query.QueryContract exposing (getContract, getContracts)
 import Query.Reaction exposing (addReaction, deleteReaction)
+import Schema.Enum.ContractStatus as ContractStatus
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.RoleType as RoleType
+import Schema.Enum.TensionEvent as TensionEvent
+import Schema.Enum.TensionStatus as TensionStatus
 import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Date exposing (formatDate)
+import Utils.String exposing (space_, upH)
 
 
 type State

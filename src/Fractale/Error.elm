@@ -21,8 +21,6 @@
 
 module Fractale.Error exposing (..)
 
-import Utils.String exposing (upH)
-import Utils.DomEvents exposing (onClickPD)
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, button, div, p, text)
 import Html.Attributes exposing (class, href, target)
@@ -33,6 +31,8 @@ import Maybe exposing (withDefault)
 import RemoteData
 import Session exposing (SessionCommon)
 import Text as T
+import Utils.DomEvents exposing (onClickPD)
+import Utils.String exposing (upH)
 
 
 viewHttpErrors : HttpError String -> Html msg

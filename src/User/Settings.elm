@@ -25,25 +25,17 @@ import Assets as A
 import Assets.Logo as Logo
 import Auth exposing (ErrState(..))
 import Browser.Navigation as Nav
-import Fractale.Form exposing (..)
-import Fractale.User exposing (..)
-import Fractale.Graph exposing (..)
-import Fractale.HotUpdate exposing (..)
-import Fractale.Codecs exposing (FractalBaseRoute(..))
-import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
-import Fractale.View exposing (lang2str, viewProfileC)
 import Components.AuthModal as AuthModal
 import Dict
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.Html exposing (textH)
-import Utils.Maybe exposing (mor, unwrap)
-import Utils.String exposing (space_)
-import Utils.DomEvents exposing (onClickPD)
-import Utils.Url exposing (queryBuilder, queryParser)
 import Form exposing (getd, isPostSendable, isPostSendableOr)
 import Form.Help as Help
-import Schema.Enum.Lang as Lang
+import Fractale.Codecs exposing (FractalBaseRoute(..))
+import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
+import Fractale.Form exposing (..)
+import Fractale.Graph exposing (..)
+import Fractale.HotUpdate exposing (..)
+import Fractale.User exposing (..)
+import Fractale.View exposing (lang2str, viewProfileC)
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, button, div, h2, hr, i, input, label, li, nav, option, select, span, text, textarea, ul)
@@ -59,10 +51,18 @@ import Query.PatchUser exposing (patchUser)
 import Query.QueryUser exposing (queryUserFull)
 import RemoteData
 import Requests exposing (updatePassword)
+import Schema.Enum.Lang as Lang
 import Session exposing (GlobalCmd(..), toF6Referer)
 import Text as T
 import Time
 import Url exposing (Url)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.DomEvents exposing (onClickPD)
+import Utils.Html exposing (textH)
+import Utils.Maybe exposing (mor, unwrap)
+import Utils.String exposing (space_)
+import Utils.Url exposing (queryBuilder, queryParser)
 
 
 

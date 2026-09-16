@@ -22,19 +22,13 @@
 module Pages.Verification exposing (Flags, Model, Msg, page)
 
 import Assets exposing (almostThere)
-import Fractale.User exposing (UserState(..))
-import Fractale.Welcome as Welcome
-import Fractale.Error exposing (viewHttpErrors)
 import Components.AuthModal exposing (UserAuthForm)
 import Dict
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendSleep)
-import Utils.Html exposing (textH)
-import Utils.String exposing (upH)
-import Utils.DomEvents exposing (onKeydown)
-import Utils.Url exposing (queryParser)
 import Form exposing (isSignupSendable)
 import Form.Help as Help
+import Fractale.Error exposing (viewHttpErrors)
+import Fractale.User exposing (UserState(..))
+import Fractale.Welcome as Welcome
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, div)
@@ -48,6 +42,12 @@ import RemoteData
 import Requests exposing (signupValidate)
 import Session exposing (GlobalCmd(..))
 import Text as T
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendSleep)
+import Utils.DomEvents exposing (onKeydown)
+import Utils.Html exposing (textH)
+import Utils.String exposing (upH)
+import Utils.Url exposing (queryParser)
 
 
 page : Page Flags Model Msg

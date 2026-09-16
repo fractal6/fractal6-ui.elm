@@ -23,17 +23,12 @@ module Components.SelectType exposing (Msg(..), State, init, subscriptions, upda
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Fractale.Form exposing (Ev, TensionForm, initTensionForm)
-import Fractale.User exposing (UserState(..))
-import Fractale.Error exposing (viewGqlErrors)
-import Fractale.View exposing (tensionType2str, tensionTypeColor, tensionTypeIcon)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.Html exposing (showMsg)
-import Schema.Enum.TensionEvent as TensionEvent
-import Schema.Enum.TensionType as TensionType
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.Form exposing (Ev, TensionForm, initTensionForm)
+import Fractale.User exposing (UserState(..))
+import Fractale.View exposing (tensionType2str, tensionTypeColor, tensionTypeIcon)
 import Html exposing (Html, button, div, i, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, id, type_, value)
 import Html.Events exposing (onClick)
@@ -43,9 +38,14 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (patchLiteral)
+import Schema.Enum.TensionEvent as TensionEvent
+import Schema.Enum.TensionType as TensionType
 import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Html exposing (showMsg)
 
 
 type State

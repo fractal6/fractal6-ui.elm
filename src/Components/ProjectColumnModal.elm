@@ -23,19 +23,12 @@ module Components.ProjectColumnModal exposing (ModalType(..), Msg(..), State, in
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Fractale.User exposing (UserState(..), uctxFromUser)
-import Fractale.Error exposing (viewGqlErrors)
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.Html exposing (textH)
-import Utils.Maybe exposing (unwrap, unwrap2)
-import Utils.String exposing (upH)
-import Utils.DomEvents exposing (onClickPD)
 import Form exposing (isPostEmpty)
-import Schema.Enum.ProjectColumnType as ProjectColumnType
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.User exposing (UserState(..), uctxFromUser)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autofocus, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
@@ -46,9 +39,16 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (IdPayload, Post, ProjectColumn, ProjectColumnEdit, UserCtx)
 import Ports
 import Query.QueryProject exposing (addProjectColumn, getProjectColumn, updateProjectColumn)
+import Schema.Enum.ProjectColumnType as ProjectColumnType
 import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.DomEvents exposing (onClickPD)
+import Utils.Html exposing (textH)
+import Utils.Maybe exposing (unwrap, unwrap2)
+import Utils.String exposing (upH)
 
 
 

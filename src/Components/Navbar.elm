@@ -280,7 +280,7 @@ viewTensionTitle session tension_head handlers =
                     [ text th.title ]
                 , button
                     [ class "button is-small ml-2"
-                    , classList [ ( "is-primary has-border", isLoggedOut  ) ]
+                    , classList [ ( "is-primary has-border", isLoggedOut ) ]
                     , title T.scrollToBottom
                     , onClick handlers.onScrollToBottom
                     ]

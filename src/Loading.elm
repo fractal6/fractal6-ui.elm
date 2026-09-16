@@ -22,7 +22,6 @@
 module Loading exposing (..)
 
 import Assets as A
-import Utils.String exposing (upH)
 import Graphql.Http as GqlHttp
 import Html exposing (Html, a, div, img, span, text)
 import Html.Attributes exposing (alt, attribute, class, height, src, width)
@@ -31,6 +30,7 @@ import Json.Decode as JD
 import Maybe exposing (withDefault)
 import RemoteData exposing (RemoteData)
 import Text as T
+import Utils.String exposing (upH)
 
 
 

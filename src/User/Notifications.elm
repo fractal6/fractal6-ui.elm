@@ -24,21 +24,14 @@ module User.Notifications exposing (Flags, Model, Msg, init, page, subscriptions
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
-import Fractale.User exposing (UserState(..))
+import Components.AuthModal as AuthModal
+import Dict exposing (Dict)
+import Form.Help as Help
 import Fractale.Codecs exposing (FractalBaseRoute(..), focusFromNameid, nid2rootid)
 import Fractale.Error exposing (viewGqlErrors)
 import Fractale.Event exposing (contractEventToText, contractToJonction, contractToLink, contractTypeToText, eventToIcon, eventToLink, eventTypeToText, viewContractMedia, viewEventMedia, viewNotifMedia)
+import Fractale.User exposing (UserState(..))
 import Fractale.View exposing (counter, mediaTension, viewOrga)
-import Components.AuthModal as AuthModal
-import Dict exposing (Dict)
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.String exposing (upT)
-import Utils.DomEvents exposing (onClickPD)
-import Utils.Url exposing (queryBuilder, queryParser)
-import Form.Help as Help
-import Schema.Enum.RoleType as RoleType
-import Schema.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, div, h2, i, li, nav, p, span, text, ul)
@@ -54,10 +47,17 @@ import Ports
 import Query.PatchUser exposing (markAllAsRead, markAsRead)
 import Query.QueryNotifications exposing (queryNotifications)
 import Query.QueryTension exposing (queryAssignedTensions)
+import Schema.Enum.RoleType as RoleType
+import Schema.Enum.TensionEvent as TensionEvent
 import Session exposing (CommonMsg, GlobalCmd(..), SessionCommon, toF6Referer)
 import Text as T
 import Time
 import Url exposing (Url)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.DomEvents exposing (onClickPD)
+import Utils.String exposing (upT)
+import Utils.Url exposing (queryBuilder, queryParser)
 
 
 

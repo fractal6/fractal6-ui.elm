@@ -25,14 +25,6 @@ import Assets as A
 import Auth exposing (ErrState(..), hasLazyAdminRole)
 import Browser.Events as Events
 import Browser.Navigation as Nav
-import Fractale.Form exposing (..)
-import Fractale.User exposing (..)
-import Fractale.Graph exposing (..)
-import Fractale.HotUpdate exposing (..)
-import Utils.Bulma as B
-import Fractale.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, isOwner, nameidFromFlags, nearestCircleid, nid2rootid, toLink)
-import Fractale.Error exposing (viewGqlErrors)
-import Fractale.View exposing (role2icon, viewGoRoot, viewRole, viewUserFull)
 import Components.ActionPanel as ActionPanel exposing (PanelState(..))
 import Components.AuthModal as AuthModal
 import Components.ConfirmOwner as ConfirmOwner
@@ -42,20 +34,15 @@ import Components.OrgaMenu as OrgaMenu
 import Components.SearchBar exposing (viewSearchBarCol)
 import Components.TreeMenu as TreeMenu
 import Dict
-import Utils.DomEvents as Dom
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.Color exposing (colorAttr)
-import Utils.Html exposing (showIf)
-import Utils.Maybe exposing (unwrap, unwrap2)
-import Utils.String exposing (space_, upH)
-import Utils.Date exposing (formatDate)
-import Utils.Url exposing (queryBuilder, queryParser)
 import Form.Help as Help
 import Form.NewTension as NTF
-import Schema.Enum.NodeType as NodeType
-import Schema.Enum.RoleType as RoleType
-import Schema.Enum.TensionEvent as TensionEvent
+import Fractale.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, isOwner, nameidFromFlags, nearestCircleid, nid2rootid, toLink)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.Form exposing (..)
+import Fractale.Graph exposing (..)
+import Fractale.HotUpdate exposing (..)
+import Fractale.User exposing (..)
+import Fractale.View exposing (role2icon, viewGoRoot, viewRole, viewUserFull)
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, div, h2, hr, i, input, span, tbody, td, text, th, thead, tr)
@@ -73,11 +60,24 @@ import Query.QueryContract exposing (getContractId, queryOpenInvitation)
 import Query.QueryNode exposing (queryLocalGraph, queryMembersLocal)
 import Query.QueryUser exposing (queryUserRoles)
 import Requests exposing (fetchMembersSub)
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.RoleType as RoleType
+import Schema.Enum.TensionEvent as TensionEvent
 import Session exposing (GlobalCmd(..), SessionCommon, isMobile)
 import String.Format as Format
 import Text as T
 import Time
 import Url
+import Utils.Bool exposing (ternary)
+import Utils.Bulma as B
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Color exposing (colorAttr)
+import Utils.Date exposing (formatDate)
+import Utils.DomEvents as Dom
+import Utils.Html exposing (showIf)
+import Utils.Maybe exposing (unwrap, unwrap2)
+import Utils.String exposing (space_, upH)
+import Utils.Url exposing (queryBuilder, queryParser)
 
 
 page : Page Flags Model Msg

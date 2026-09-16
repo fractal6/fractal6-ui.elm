@@ -1,4 +1,6 @@
 {- Vendored from https://github.com/miniBill/elm-diff (v1.1.2, BSD-3-Clause), a fork of jinjor/elm-diff. -}
+
+
 module Utils.Diff exposing
     ( Change(..)
     , diff, diffLines, diffWith

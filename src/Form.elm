@@ -21,8 +21,8 @@
 
 module Form exposing (..)
 
-import Fractale.Form exposing (UserForm)
 import Dict
+import Fractale.Form exposing (UserForm)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (Post)
 

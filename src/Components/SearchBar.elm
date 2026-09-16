@@ -23,11 +23,9 @@ module Components.SearchBar exposing (Op, viewSearchBarCol, viewSearchBarLevel, 
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Fractale.User exposing (UserState(..))
-import Fractale.Error exposing (viewGqlErrors)
 import Dict
-import Utils.Bool exposing (ternary)
-import Utils.DomEvents exposing (onMousedownPD)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.User exposing (UserState(..))
 import Html exposing (Html, button, div, form, i, input, span, text)
 import Html.Attributes exposing (attribute, autofocus, class, disabled, id, name, placeholder, type_, value)
 import Html.Events exposing (keyCode, on, onClick, onInput, onSubmit)
@@ -38,6 +36,8 @@ import ModelSchema exposing (..)
 import Ports
 import Text as T
 import Time
+import Utils.Bool exposing (ternary)
+import Utils.DomEvents exposing (onMousedownPD)
 
 
 type alias Op msg =
@@ -115,7 +115,10 @@ viewSearchBarLevel op pattern_init pattern rightContent =
         ]
 
 
+
 -- Enter fires keydown 13 then form submit; both would call onSearchKeyDown 13, so skip 13 here.
+
+
 onKeydownExceptEnter : (Int -> msg) -> JD.Decoder msg
 onKeydownExceptEnter toMsg =
     keyCode
