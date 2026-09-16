@@ -715,37 +715,19 @@ counter c =
 --
 
 
-viewNodeDescr : Bool -> Node -> Html msg
-viewNodeDescr inPanel node =
-    let
-        cls =
-            if inPanel then
-                "level"
-
-            else
-                "is-flex"
-    in
-    div [] <|
-        case node.type_ of
-            NodeType.Circle ->
-                [ div [ class "is-mobile mb-3", classList [ ( cls, True ) ] ] <|
-                    [ span [ class "level-left mr-4" ]
-                        [ span [ class "tag tagHint" ] [ A.icon1 (nodeType2icon node.type_) (SE.humanize (nodeType2str node.type_)) ] ]
-                    , span [ class "level-item mr-4" ]
-                        [ span [ class "tag tagHint" ] [ A.icon1 (auth2icon node.type_) (auth2val node) ] ]
-                    , span [ class "level-right" ]
+viewNodeDescr : Node -> Html msg
+viewNodeDescr node =
+    div [ class "tags mb-3" ] <|
+        [ span [ class "tag tagHint" ] [ A.icon1 (nodeType2icon node.type_) (SE.humanize (nodeType2str node.type_)) ]
+        , span [ class "tag tagHint" ] [ A.icon1 (auth2icon node.type_) (auth2val node) ]
+        ]
+            ++ (case node.type_ of
+                    NodeType.Circle ->
                         [ span [ class "tag tagHint" ] [ A.icon1 (visibility2icon node.visibility) (NodeVisibility.toString node.visibility) ] ]
-                    ]
-                ]
 
-            NodeType.Role ->
-                [ div [ class "is-mobile mb-3 is-flex" ] <|
-                    [ span [ class "level-left mr-4" ]
-                        [ span [ class "tag tagHint" ] [ A.icon1 (nodeType2icon node.type_) (SE.humanize (nodeType2str node.type_)) ] ]
-                    , span [ class "level-item" ]
-                        [ span [ class "tag tagHint" ] [ A.icon1 (auth2icon node.type_) (auth2val node) ] ]
-                    ]
-                ]
+                    NodeType.Role ->
+                        []
+               )
 
 
 viewNodeRef : Bool -> String -> FractalBaseRoute -> EmitterOrReceiver -> Html msg

@@ -759,7 +759,7 @@ viewAboutSection : Node -> OrgaNodeData -> Maybe (NodeEdit -> msg) -> Html msg
 viewAboutSection node data op_m =
     div []
         [ -- Node title
-          div [ class "level subtitle" ]
+          div [ class "level is-mobile subtitle" ]
             [ div [ class "level-left", style "max-width" "90%" ]
                 [ A.icon "icon-info icon-lg mr-2"
                 , span [ class "nowrap" ] [ text T.about ]
@@ -788,7 +788,7 @@ viewAboutSection node data op_m =
           showIf (op_m == Nothing) <|
             div [ class "columns mt-1 mb-3" ]
                 [ div [ class "column is-6 py-0" ]
-                    [ viewNodeDescr False node ]
+                    [ viewNodeDescr node ]
                 ]
         , -- Node About
           showMaybe data.node_data.about
@@ -799,7 +799,7 @@ viewAboutSection node data op_m =
 viewMandateSection : SessionCommon -> Maybe RoleType.RoleType -> Maybe Mandate -> Maybe (NodeEdit -> msg) -> Html msg
 viewMandateSection session role_type_m mandate_m op_m =
     div []
-        [ div [ class "level subtitle" ]
+        [ div [ class "level is-mobile subtitle" ]
             [ div [ class "level-left" ]
                 [ A.icon "icon-book-open icon-lg mr-2"
                 , text (T.mandate session.lexicon)

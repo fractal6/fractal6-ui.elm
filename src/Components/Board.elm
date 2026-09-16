@@ -932,7 +932,6 @@ subscriptions (State model) =
         ++ (ProjectColumnModal.subscriptions model.projectColumnModal |> List.map (\s -> Sub.map ProjectColumnModalMsg s))
 
 
-
 {-| Menus acting on the card selection must not clear it before their own click is handled: the
 card dropdown, the per-card ellipsis triggers and the column menu.
 -}
@@ -1190,7 +1189,7 @@ viewBoard op model =
 viewHeader : Dict.Dict String String -> Bool -> Bool -> List String -> List String -> ProjectColumn -> Html Msg
 viewHeader lexicon isAdmin isEdited cardids selectedids col =
     span []
-        [ div [ class "level" ]
+        [ div [ class "level is-mobile" ]
             [ div [ class "level-left ml-3" ]
                 [ span [ class "mr-3", style "color" (withDefault "lightgrey" col.color) ] [ A.icon "icon-circle1 icon-lg" ]
                 , span [ class "kb-col-title" ] [ text col.name ]
@@ -1211,6 +1210,7 @@ viewHeader lexicon isAdmin isEdited cardids selectedids col =
                         , isOpen = isEdited
                         , dropdown_cls = "mx-2 is-align-self-baseline is-right"
                         , button_cls = ""
+
                         -- the id is what keepsSelection matches, dropdown_id only lands on the menu
                         , button_html = span [ id "col-menu-ellipsis" ] [ A.icon "button-light icon-more-horizontal icon-lg" ]
                         , msg = OnToggleColEdit (ternary isEdited "" col.id)

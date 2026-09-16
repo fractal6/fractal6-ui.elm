@@ -2217,7 +2217,7 @@ viewSidePane u t model =
                                 LoggedOut ->
                                     [ h2 [ class "subtitle" ] [ text T.document ] ]
                             )
-                                ++ [ viewNodeDescr True node
+                                ++ [ viewNodeDescr node
                                    , -- Node Artefact
                                      case node.type_ of
                                         NodeType.Circle ->

@@ -89,6 +89,12 @@
     gap: 0;
 }
 
+// Bulma 1.x sets flex-direction:row on level-left/right only at tablet; .is-mobile forgets it.
+.level.is-mobile .level-left,
+.level.is-mobile .level-right {
+    flex-direction: row;
+}
+
 // Bulma's 1rem (3rem for links) is too airy for our menus.
 .dropdown-item,
 a.dropdown-item,
