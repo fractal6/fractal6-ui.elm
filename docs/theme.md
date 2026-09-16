@@ -6,7 +6,10 @@ outside `VOLATILE_SESSION_ITEMS`, so it survives sign-out.
 `applyTheme` in `assets/js/bulma_drivers.js` is the single writer of the theme on `<html>`:
 `light`/`dark` set `data-theme`, `system` removes it so the `@media (prefers-color-scheme)`
 rules of `assets/sass/fractal6-variables.scss` take over. Each theme block also emits
-`color-scheme`, so native browser UI follows. An inline script in `public/index.html`
+`color-scheme`, so native browser UI follows. The light theme declares `only light`:
+plain `light` does not opt out of Chromium auto dark ("Darken websites" on Android),
+which repaints the DOM dark at paint time while leaving inline SVG and canvas surfaces
+alone — unreadable white text on light cards. An inline script in `public/index.html`
 duplicates those two lines to apply the theme before first paint — keep them in sync.
 
 `viewThemeSwitch` in `src/Components/Navbar.elm` renders the control; buttons carry

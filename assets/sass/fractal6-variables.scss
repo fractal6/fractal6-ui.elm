@@ -331,15 +331,16 @@ $f6-roles: (owner, member, coordinator, peer, bot, guest, pending, retired);
 // --
 // prefers-color-scheme
 // :not([data-theme]) == "system" preference, so an explicit theme always wins
+// "only light" opts out of Chromium auto dark; plain "light" still gets dark-filtered at paint time.
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) {
-    @include theme-vars($f6-light-theme, $bulma-light-theme, light);
+    @include theme-vars($f6-light-theme, $bulma-light-theme, only light);
   }
   @include apply-bulma-overrides($bulma-light-theme);
 }
 // Class-based overrides
 [data-theme=light], .theme-light, .is-light {
-  @include theme-vars($f6-light-theme, $bulma-light-theme, light);
+  @include theme-vars($f6-light-theme, $bulma-light-theme, only light);
   @include apply-bulma-overrides($bulma-light-theme);
 }
 
