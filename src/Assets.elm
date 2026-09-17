@@ -78,6 +78,13 @@ icon1 cls words =
     span [ classList [ ( "is-flex is-align-items-center", String.trim words /= "" ) ] ] [ icon cls, text (space_ ++ space_ ++ words) ]
 
 
+{-| Like icon1, but the label has its own box so wrapped lines align under the text
+-}
+icon1_wrap : String -> String -> Html msg
+icon1_wrap cls words =
+    span [ class "is-flex" ] [ icon cls, span [ class "ml-2" ] [ text words ] ]
+
+
 icon1_noflex : String -> String -> Html msg
 icon1_noflex cls words =
     span [] [ icon cls, text (space_ ++ space_ ++ words) ]

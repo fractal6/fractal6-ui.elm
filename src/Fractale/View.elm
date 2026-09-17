@@ -402,7 +402,7 @@ tensionIcon2 type_ =
 
 tensionIcon3 : TensionType.TensionType -> Html msg
 tensionIcon3 type_ =
-    span [ class "is-inline-flex" ] [ A.icon1 (tensionTypeIcon type_ ++ " " ++ tensionTypeColor "text" type_) (tensionType2str type_) ]
+    span [ class "is-inline-flex" ] [ A.icon1_wrap (tensionTypeIcon type_ ++ " " ++ tensionTypeColor "text" type_) (tensionType2str type_) ]
 
 
 viewTensionTypePicker : String -> TensionType.TensionType -> (TensionType.TensionType -> msg) -> Html msg

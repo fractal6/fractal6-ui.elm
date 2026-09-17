@@ -522,7 +522,7 @@ viewSettingsMenu model =
                     (\x ->
                         [ li []
                             [ a [ onClickPD (ChangeMenuFocus x), target "_blank", classList [ ( "is-active", x == model.menuFocus ) ] ]
-                                [ A.icon1 (menuToIcon x) (menuToString x |> Tuple.first) ]
+                                [ A.icon1_wrap (menuToIcon x) (menuToString x |> Tuple.first) ]
                             ]
                         ]
                     )

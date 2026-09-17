@@ -276,6 +276,14 @@
             background-color: var(--background-hover) !important;
         }
     }
+
+    // keep the icon aligned with the first line when the label wraps
+    a > span.is-flex {
+        align-items: flex-start !important; // beats bulma's .is-align-items-center
+        i {
+            line-height: inherit;
+        }
+    }
 }
 
 #target-menu .dropdown-content {

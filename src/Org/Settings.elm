@@ -280,7 +280,7 @@ type MenuSettings
 
 menuList : List MenuSettings
 menuList =
-    [ LabelsMenu, RolesMenu, TemplatesMenu, ProjectTemplatesMenu, EditMenu, GlobalMenu ]
+    [ GlobalMenu, LabelsMenu, RolesMenu, TemplatesMenu, ProjectTemplatesMenu, EditMenu ]
 
 
 menuEncoder : MenuSettings -> String
@@ -2237,7 +2237,7 @@ view_ model =
     div [ class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
             [ div [ class "columns" ]
-                [ div [ class "column is-one-fifth" ] [ viewSettingsMenu model ]
+                [ div [ class "column is-one-quarter" ] [ viewSettingsMenu model ]
                 , div [ class "column" ] [ viewSettingsContent model ]
                 ]
             ]
@@ -2251,15 +2251,15 @@ viewSettingsMenu model =
             (model.menuList
                 |> List.concatMap
                     (\x ->
-                        [ case x of
-                            GlobalMenu ->
-                                hr [ class "dropdown-divider" ] []
-
-                            _ ->
-                                text ""
-                        , li []
+                        [ li []
                             [ a [ onClickPD (ChangeMenuFocus x), target "_blank", classList [ ( "is-active", x == model.menuFocus ) ] ]
-                                [ A.icon1 (menuToIcon x) (menuToString x) ]
+                                [ A.icon1_wrap (menuToIcon x) (menuToString x) ]
+                            , case x of
+                                GlobalMenu ->
+                                    hr [ class "dropdown-divider" ] []
+
+                                _ ->
+                                    text ""
                             ]
                         ]
                     )

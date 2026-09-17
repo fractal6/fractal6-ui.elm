@@ -532,7 +532,7 @@ view global model =
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ id "notifications", class "top-section columns" ]
-        [ div [ class "column is-2 is-3-fullhd" ]
+        [ div [ class "column is-one-quarter-tablet is-one-fifth-desktop" ]
             [ div [ class "level mb-2" ]
                 [ div
                     [ class "is-strong arrow-left is-w is-h p-1 level-left"
@@ -543,7 +543,7 @@ view_ global model =
                 ]
             , viewMenu model
             ]
-        , div [ class "column is-8 is-6-fullhd pt-0" ]
+        , div [ class "column is-three-quarters-widescreen pt-0" ]
             [ case model.menuFocus of
                 NotificationsMenu ->
                     div [ class "is-2 has-text-centered is-pulled-right" ] [ div [ class "button is-small", onClick MarkAllAsRead ] [ text T.markAllAsRead ] ]
@@ -606,7 +606,7 @@ viewMenu model =
                                     (ChangeMenuFocus x)
                                 ]
                                 [ div [ class "is-inline-flex" ]
-                                    [ A.icon1 (menuToIcon x) (menuToString model.session x |> Tuple.first)
+                                    [ A.icon1_wrap (menuToIcon x) (menuToString model.session x |> Tuple.first)
                                     , menuToCount x model.notif
                                     ]
                                 ]

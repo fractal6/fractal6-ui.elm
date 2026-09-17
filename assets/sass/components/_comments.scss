@@ -134,6 +134,16 @@ textarea.is-dragover {
     .level-right {
         font-size: 15px;
         font-family: "Times New Roman", Times, serif !important;
+        // Toolbar must not widen the input (same trick as .pending-files): scroll it instead.
+        contain: inline-size;
+        flex: 1;
+        overflow-x: auto;
+        scrollbar-width: none;
+        &::-webkit-scrollbar { display: none; }
+        // flex-end + overflow clips the start unreachably; right-align via auto margin instead.
+        justify-content: flex-start;
+        > :first-child { margin-left: auto; }
+        > * { flex-shrink: 0; }
         *:not(:last-child) {
             padding-left: 0.6rem;
             padding-right: 0.6rem;
