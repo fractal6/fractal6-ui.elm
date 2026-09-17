@@ -960,12 +960,13 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="tapez pour filtrer les emoji"
 
 [searchTensions]
-  en="Search {{_tension_}}s"
-  fr="Rechercher des {{_tension_}}s"
+  en='Search {{_tension_}}s'
+  fr='Rechercher des {{_tension_}}s'
 
 [searchProjects]
   en="Search projects"
   fr="Rechercher des projets"
+
 
 [searchMembers]
   en="Search members"
@@ -1372,6 +1373,14 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [copied]
   en="Copied!"
   fr="Copié !"
+
+[copyText]
+  en="Copy text"
+  fr="Copier le texte"
+
+[copyLink]
+  en="Copy link"
+  fr="Copier le lien"
 
 [tipsSubmitShortcut]
   en="Tips: <C+Enter> to submit"
