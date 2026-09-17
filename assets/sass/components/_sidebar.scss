@@ -386,7 +386,7 @@
     right: 0;
     transition: all .45s ease-out;
     background-color: var(--orga-menu-background-color);
-    border-left: $border-size solid var(--border-color);
+    border-left: $border-size solid var(--border-color-light);
 
     overflow-x: hidden;
     overflow-y: auto;
