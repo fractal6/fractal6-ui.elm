@@ -2031,7 +2031,7 @@ viewProjectsCount counts statusFilter =
         Success c ->
             let
                 activeCls =
-                    "is-hovered has-text-weight-semibold"
+                    "is-hovered is-active has-text-weight-semibold"
 
                 inactiveCls =
                     "has-background-header"
