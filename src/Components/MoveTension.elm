@@ -698,7 +698,7 @@ viewModalContent tree_data model =
                                     [ text model.form.target.name, span [ class "ml-2 icon-chevron-down" ] [] ]
                         , menu_cls = ""
                         , content_cls = ""
-                        , content_html = viewSelectorTree OnChangeTarget OnToggleDropdownRoles [ model.form.target.nameid, decoded_nid ] model.expanded_lines tree_data
+                        , content_html = viewSelectorTree OnChangeTarget OnToggleDropdownRoles [ model.form.target.nameid, decoded_nid ] decoded_nid model.expanded_lines tree_data
                         , msg = ternary isTargetOpen (OnTargetClick "") (OnTargetClick "something")
                         }
                     ]

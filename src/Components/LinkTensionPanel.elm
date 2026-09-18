@@ -610,7 +610,7 @@ viewPanel tree_data path_data model =
                     , msg = OnToggleTargetFilter
                     , menu_cls = ""
                     , content_cls = ""
-                    , content_html = viewSelectorTree (OnChangeTarget tree_data) OnToggleDropdownRoles [ model.target.nameid ] model.expanded_lines tree_data
+                    , content_html = viewSelectorTree (OnChangeTarget tree_data) OnToggleDropdownRoles [ model.target.nameid ] "" model.expanded_lines tree_data
                     }
                 , div [ class "control has-icons-left" ]
                     [ input

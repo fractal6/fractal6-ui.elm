@@ -2043,7 +2043,7 @@ viewRecipients tree_data model =
                     ]
             , menu_cls = "is-right is-left-mobile"
             , content_cls = "p-0 has-border-light"
-            , content_html = viewSelectorTree (OnChangeTensionTarget tree_data) OnToggleDropdownRoles [ model.nodeDoc.form.target.nameid ] model.expanded_lines tree_data
+            , content_html = viewSelectorTree (OnChangeTensionTarget tree_data) OnToggleDropdownRoles [ model.nodeDoc.form.target.nameid ] "" model.expanded_lines tree_data
             , msg = ternary isOpen (OnTargetClick "") (OnTargetClick "something")
             }
         ]

@@ -2301,7 +2301,7 @@ viewMoveProjectModal model =
                                                 span [ class "button is-rounded has-border" ] [ text t.name, span [ class "ml-2 icon-chevron-down" ] [] ]
                                     , menu_cls = ""
                                     , content_cls = ""
-                                    , content_html = viewSelectorTree OnChangeMoveTarget OnMoveExpandToggle selected model.move_expanded_lines tree_data
+                                    , content_html = viewSelectorTree OnChangeMoveTarget OnMoveExpandToggle selected "" model.move_expanded_lines tree_data
                                     , msg = ternary isTargetOpen (OnMoveTargetClick "") (OnMoveTargetClick "open")
                                     }
                                 ]

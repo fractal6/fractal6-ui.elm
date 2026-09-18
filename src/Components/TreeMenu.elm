@@ -972,22 +972,27 @@ viewRolesLine type_txt hover roles nid expanded_lines =
 --
 
 
-viewSelectorTree : (Node -> msg) -> (String -> msg) -> List String -> ExpandedLines -> GqlData NodesDict -> Html msg
-viewSelectorTree onTargetClick onDropdownClick selected expanded_lines odata =
+{-| `exclude` greys out the given node and all its descendants (e.g. a node can't be moved into its own subtree).
+-}
+viewSelectorTree : (Node -> msg) -> (String -> msg) -> List String -> String -> ExpandedLines -> GqlData NodesDict -> Html msg
+viewSelectorTree onTargetClick onDropdownClick selected exclude expanded_lines odata =
     case odata of
         Success data ->
             let
                 tree =
                     buildTree_ Nothing data
+
+                excluded =
+                    ternary (exclude == "") [] (withDescendants [ exclude ] odata)
             in
-            div [ id "tree-selector", class "menu" ] [ viewSubTree2 onTargetClick onDropdownClick 0 selected tree expanded_lines ]
+            div [ id "tree-selector", class "menu" ] [ viewSubTree2 onTargetClick onDropdownClick 0 selected excluded tree expanded_lines ]
 
         _ ->
             div [ class "spinner" ] []
 
 
-viewSubTree2 : (Node -> msg) -> (String -> msg) -> Int -> List String -> Tree Node -> ExpandedLines -> Html msg
-viewSubTree2 onTargetClick onDropdownClick depth selected (Tree { node, children }) expanded_lines =
+viewSubTree2 : (Node -> msg) -> (String -> msg) -> Int -> List String -> List String -> Tree Node -> ExpandedLines -> Html msg
+viewSubTree2 onTargetClick onDropdownClick depth selected excluded (Tree { node, children }) expanded_lines =
     let
         roles =
             children |> List.filter (\(Tree c) -> List.member c.node.role_type [ Just RoleType.Coordinator, Just RoleType.Peer, Just RoleType.Bot ]) |> List.map (\(Tree c) -> c.node)
@@ -1000,11 +1005,11 @@ viewSubTree2 onTargetClick onDropdownClick depth selected (Tree { node, children
     in
     ul ([ class "menu-list" ] ++ ternary (depth == 0) [] [])
         [ li []
-            (Lazy.lazy3 viewNodeLine onTargetClick selected node
+            (Lazy.lazy4 viewNodeLine onTargetClick selected excluded node
                 :: List.map
                     (\(Tree c) ->
                         showIf (c.node.role_type == Nothing) <|
-                            viewSubTree2 onTargetClick onDropdownClick (depth + 1) selected (Tree c) expanded_lines
+                            viewSubTree2 onTargetClick onDropdownClick (depth + 1) selected excluded (Tree c) expanded_lines
                     )
                     children
             )
@@ -1014,7 +1019,7 @@ viewSubTree2 onTargetClick onDropdownClick depth selected (Tree { node, children
                     li [] [ viewRolesLine2 onDropdownClick "roles" (Just nid) roles nid expanded_lines ]
                  ]
                     ++ (if isExpanded then
-                            List.map (\n -> li [] [ Lazy.lazy3 viewNodeLine onTargetClick selected n ]) roles
+                            List.map (\n -> li [] [ Lazy.lazy4 viewNodeLine onTargetClick selected excluded n ]) roles
 
                         else
                             []
@@ -1025,19 +1030,22 @@ viewSubTree2 onTargetClick onDropdownClick depth selected (Tree { node, children
         ]
 
 
-viewNodeLine : (Node -> msg) -> List String -> Node -> Html msg
-viewNodeLine onTargetClick selected node =
+viewNodeLine : (Node -> msg) -> List String -> List String -> Node -> Html msg
+viewNodeLine onTargetClick selected excluded node =
     let
         isActive =
             List.member node.nameid selected
+
+        isDisabled =
+            List.member node.nameid excluded
     in
     a
         ([ class "treeMenu"
          , id (prefixId node.nameid)
-         , classList [ ( "is-active", isActive ) ]
+         , classList [ ( "is-active", isActive ), ( "is-disabled", isDisabled && not isActive ) ]
          , target "_blank"
          ]
-            ++ (if not isActive then
+            ++ (if not isActive && not isDisabled then
                     [ onClick (onTargetClick node) ]
 
                 else
