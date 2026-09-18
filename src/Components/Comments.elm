@@ -1846,7 +1846,7 @@ viewPendingChip targetId removable fraction p =
         ( statusEl, progressFraction ) =
             case p.status of
                 Queued ->
-                    ( A.icon "icon-clock", Nothing )
+                    ( A.icon "icon-file", Nothing )
 
                 Uploading ->
                     ( span [ class "loader is-inline-block ml-1" ] [], Just (clamp 0 1 fraction) )
