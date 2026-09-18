@@ -275,12 +275,11 @@ type MenuSettings
     | TemplatesMenu
     | ProjectTemplatesMenu
     | GlobalMenu
-    | EditMenu
 
 
 menuList : List MenuSettings
 menuList =
-    [ GlobalMenu, LabelsMenu, RolesMenu, TemplatesMenu, ProjectTemplatesMenu, EditMenu ]
+    [ GlobalMenu, LabelsMenu, RolesMenu, TemplatesMenu, ProjectTemplatesMenu ]
 
 
 menuEncoder : MenuSettings -> String
@@ -300,10 +299,6 @@ menuEncoder menu =
 
         GlobalMenu ->
             "global"
-
-        EditMenu ->
-            --redirect
-            ""
 
 
 menuDecoder : String -> MenuSettings
@@ -325,7 +320,7 @@ menuDecoder menu =
             GlobalMenu
 
         _ ->
-            LabelsMenu
+            GlobalMenu
 
 
 menuToString : MenuSettings -> String
@@ -346,9 +341,6 @@ menuToString menu =
         GlobalMenu ->
             T.organisation
 
-        EditMenu ->
-            T.editThisCircle ++ " 🡕"
-
 
 menuToIcon : MenuSettings -> String
 menuToIcon menu =
@@ -367,9 +359,6 @@ menuToIcon menu =
 
         GlobalMenu ->
             "icon-shield"
-
-        EditMenu ->
-            "icon-edit"
 
 
 resetForm : Model -> Model
@@ -545,9 +534,6 @@ init global flags =
 
                         GlobalMenu ->
                             [ getCircleRights apis (nid2rootid newFocus.nameid) GotRootRights ]
-
-                        EditMenu ->
-                            []
                    )
     in
     ( model
@@ -739,22 +725,12 @@ update global message model =
                     ( { model | path_data = result }, Cmd.none, Cmd.none )
 
         ChangeMenuFocus menu ->
-            case menu of
-                EditMenu ->
-                    case model.path_data of
-                        Success lg ->
-                            ( model, Cmd.none, send (NavigateRaw (toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid lg.focus.nameid, param2 = getSourceTid lg.focus }))) )
-
-                        _ ->
-                            ( model, Cmd.none, Cmd.none )
-
-                _ ->
-                    let
-                        query =
-                            queryBuilder
-                                [ ( "m", menuEncoder menu ) ]
-                    in
-                    ( model, Cmd.none, Nav.pushUrl global.key (toLink SettingsBaseUri model.node_focus.nameid [] ++ "?" ++ query) )
+            let
+                query =
+                    queryBuilder
+                        [ ( "m", menuEncoder menu ) ]
+            in
+            ( model, Cmd.none, Nav.pushUrl global.key (toLink SettingsBaseUri model.node_focus.nameid [] ++ "?" ++ query) )
 
         ChangeArtefactPost field value ->
             let
@@ -2258,6 +2234,9 @@ viewSettingsMenu model =
                                 GlobalMenu ->
                                     hr [ class "dropdown-divider" ] []
 
+                                LabelsMenu ->
+                                    hr [ class "dropdown-divider" ] []
+
                                 _ ->
                                     text ""
                             ]
@@ -2303,14 +2282,36 @@ viewSettingsContent model =
         GlobalMenu ->
             div []
                 [ h2 [ class "subtitle is-size-3" ] [ text T.organisationSettings ]
+                , viewCircleEditLinks model
+                , hr [] []
                 , viewOrgaSettings model.lexicon model.orga_rights model.switch_result model.switch_index
                 , hr [] []
                 , viewLexiconSettings model.lexicon_input model.mandate_input model.lexicon_result
                 ]
 
-        EditMenu ->
-            -- redirection
-            div [] [ text "" ]
+
+{-| Circle name/mandate/visibility/mode live in the node's source tension: link to it.
+-}
+viewCircleEditLinks : Model -> Html Msg
+viewCircleEditLinks model =
+    case model.path_data of
+        Success lg ->
+            let
+                rootid =
+                    nid2rootid lg.focus.nameid
+
+                -- markdown list item; hover title shows the nameid
+                link node label =
+                    "- [" ++ label ++ " « " ++ node.name ++ " » 🡕](" ++ toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = rootid, param2 = getSourceTid node }) ++ " \"" ++ node.nameid ++ "\")"
+
+                links =
+                    (List.head lg.path |> Maybe.map (\root -> [ link root T.editOrganisation ]) |> withDefault [])
+                        ++ ternary (lg.focus.nameid /= rootid) [ link lg.focus T.editCurrentCircle ] []
+            in
+            showMsg "circle-edit" "is-info" "icon-info" (T.circleEditHelp model.lexicon ++ "\n\n" ++ String.join "\n" links) ""
+
+        _ ->
+            text ""
 
 
 

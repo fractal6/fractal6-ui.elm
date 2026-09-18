@@ -670,9 +670,17 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Edit"
   fr="Editer"
 
-[editThisCircle]
-  en="Edit this Circle"
-  fr="Editer ce Cercle"
+[editOrganisation]
+  en="Edit the organisation (root circle)"
+  fr="Editer l’organisation (cercle racine)"
+
+[editCurrentCircle]
+  en="Edit the current circle"
+  fr="Editer le cercle courant"
+
+[circleEditHelp]
+  en="The name, description, {{_mandate_}}, visibility and governance mode of the organisation and of each circle are edited from the tension that defines it:"
+  fr="Le nom, la description, le {{_mandate_}}, la visibilité et le mode de gouvernance de l’organisation et de chaque cercle se modifient depuis la tension qui le définit :"
 
 [editThisRole]
   en="Edit this Role"
