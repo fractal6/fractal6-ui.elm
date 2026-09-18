@@ -279,11 +279,13 @@
 }
 
 .menu-list {
-    a {
-        &.is-active {
-            color: var(--link);
-            background-color: var(--background-hover) !important;
-        }
+    li {
+        padding-bottom: 0.15rem;
+    }
+    a.is-active {
+        font-weight: 600;
+        color: var(--link);
+        background-color: var(--background-hover) !important;
     }
 
     // keep the icon aligned with the first line when the label wraps
@@ -481,22 +483,14 @@
 #menuSettings {
     border-right: solid 1px var(--border-color-light) !important;
     margin-right: 2rem;
-    .menu-list {
-        li {
-            padding-bottom: $size-small;
-        }
-        a.is-active {
-            font-weight: 600;
-        }
+    li {
+        margin-bottom: 0.5rem;
     }
 }
 
 .list-settings {
     .menu-list {
         font-size: 88% !important;
-        a.is-active {
-            font-weight: 600;
-        }
     }
 
     .more-filters-item {

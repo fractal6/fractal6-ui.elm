@@ -2230,16 +2230,16 @@ viewSettingsMenu model =
                         [ li []
                             [ a [ onClickPD (ChangeMenuFocus x), target "_blank", classList [ ( "is-active", x == model.menuFocus ) ] ]
                                 [ A.icon1_wrap (menuToIcon x) (menuToString x) ]
-                            , case x of
-                                GlobalMenu ->
-                                    hr [ class "dropdown-divider" ] []
-
-                                LabelsMenu ->
-                                    hr [ class "dropdown-divider" ] []
-
-                                _ ->
-                                    text ""
                             ]
+                        , case x of
+                            GlobalMenu ->
+                                hr [ class "dropdown-divider mb-2" ] []
+
+                            LabelsMenu ->
+                                hr [ class "dropdown-divider mb-2" ] []
+
+                            _ ->
+                                text ""
                         ]
                     )
             )

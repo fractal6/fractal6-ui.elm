@@ -82,7 +82,7 @@ icon1 cls words =
 -}
 icon1_wrap : String -> String -> Html msg
 icon1_wrap cls words =
-    span [ class "is-flex" ] [ icon cls, span [ class "ml-2" ] [ text words ] ]
+    span [ class "is-flex is-align-items-center" ] [ icon cls, span [ class "ml-2" ] [ text words ] ]
 
 
 icon1_noflex : String -> String -> Html msg
