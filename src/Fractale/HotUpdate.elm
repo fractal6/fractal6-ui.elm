@@ -93,8 +93,18 @@ hotNodeMove oldNameid parentNameid newNameid odata =
 
                             moved =
                                 { node | nameid = newNameid, parent = Just { nameid = parentNameid, source = parent.source } }
+
+                            shiftOpenTensions : Int -> String -> NodesDict -> NodesDict
+                            shiftOpenTensions delta nid d =
+                                Dict.update nid (Maybe.map (\n -> { n | n_open_tensions = max 0 (n.n_open_tensions + delta) })) d
                         in
-                        ( data |> Dict.remove oldNameid |> Dict.insert newNameid moved, renames )
+                        ( data
+                            |> Dict.remove oldNameid
+                            |> Dict.insert newNameid moved
+                            |> (\d -> node.parent |> Maybe.map (\p -> shiftOpenTensions -1 p.nameid d) |> withDefault d)
+                            |> shiftOpenTensions 1 parentNameid
+                        , renames
+                        )
 
                 _ ->
                     ( data, Dict.empty )

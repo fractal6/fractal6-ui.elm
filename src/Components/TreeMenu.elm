@@ -295,7 +295,6 @@ type Msg
     | UpdateNode String (Node -> Node)
     | DelNodes (List String)
     | MoveNode String String String
-    | MovedTreeAck String NodesDict (GqlData NodesDict)
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -609,38 +608,14 @@ update_ apis message model =
                     , focus = Dict.get model.focus.nameid nodeRenames |> Maybe.map focusFromNameid |> withDefault model.focus
                   }
                     |> setTree
-                , Out [ queryOrgaTree apis model.focus.rootnameid (MovedTreeAck model.focus.rootnameid data) ]
-                    [ DoUpdateToken, DoUpdateTree (Just data) ]
+                , Out []
+                    -- Only a renamed (role) move invalidates the token rights.
+                    (ternary (nameid_new /= "" && nameid_new /= nameid_old) [ DoUpdateToken ] []
+                        ++ [ DoUpdateTree (Just data) ]
+                    )
                     Nothing
                     nodeRenames
                 )
-
-        MovedTreeAck rootid expected result ->
-            if rootid /= model.focus.rootnameid then
-                ( model, noOut )
-
-            else if model.tree_result /= Success expected then
-                -- Requery rather than overwrite a newer move/add/archive with an older snapshot.
-                ( model
-                , withMaybeData model.tree_result
-                    |> Maybe.map (\current -> out0 [ queryOrgaTree apis rootid (MovedTreeAck rootid current) ])
-                    |> withDefault noOut
-                )
-
-            else
-                case result of
-                    Success data ->
-                        ( { model | tree_result = result } |> setTree, out1 [ DoUpdateTree (Just data) ] )
-
-                    Failure err ->
-                        if errorIsNoDataFound err then
-                            ( { model | tree_result = Success Dict.empty } |> setTree, out1 [ DoUpdateTree (Just Dict.empty) ] )
-
-                        else
-                            ( model, out0 [ Ports.logErr (String.join "; " err) ] )
-
-                    _ ->
-                        ( model, noOut )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->

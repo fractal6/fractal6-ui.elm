@@ -242,48 +242,48 @@ refreshTests =
             TreeMenu.getOrgaData_ moved |> withDefaultData Dict.empty
     in
     describe "move reconciliation"
-        [ test "the confirmed move publishes its map once and fetches an authoritative snapshot" <|
+        [ test "the move is applied locally, without refetching the tree nor invalidating the token" <|
             \_ ->
-                let
-                    fresh =
-                        expected |> Dict.remove "org#c1" |> Dict.map (\_ n -> { n | n_open_tensions = 7 })
-
-                    ( reconciled, out ) =
-                        TreeMenu.update apis (TreeMenu.MovedTreeAck "org" expected (Success fresh)) moved
-                in
                 Expect.all
-                    [ \_ -> Expect.equal 1 (List.length moveOut.cmds)
+                    [ \_ -> Expect.equal [] moveOut.cmds
+                    , \_ -> Expect.equal [ DoUpdateTree (Just expected) ] moveOut.gcmds
                     , \_ -> Expect.equal (Just "org#c1") (Dict.get "org#c1" moveOut.nodeRenames)
-                    , \_ -> Expect.equal (Success fresh) (TreeMenu.getOrgaData_ reconciled)
-                    , \_ -> Expect.equal [ DoUpdateTree (Just fresh) ] out.gcmds
-                    , \_ -> Expect.equal Dict.empty out.nodeRenames
+                    , \_ -> Expect.equal (Just "org#c3") (Dict.get "org#c1" expected |> Maybe.andThen .parent |> Maybe.map .nameid)
                     ]
                     ()
-        , test "a stale response cannot undo a later edit and instead requests fresh data" <|
+        , test "a renamed node (role move) refreshes the token" <|
+            \_ ->
+                TreeMenu.update apis (TreeMenu.MoveNode "org#c1#@bob" "org#c3" "org#c3#@bob") initial
+                    |> Tuple.second
+                    |> .gcmds
+                    |> List.head
+                    |> Expect.equal (Just DoUpdateToken)
+        , test "open tension counters shift from the old parent to the new one, clamped at zero" <|
             \_ ->
                 let
-                    newer =
-                        TreeMenu.update apis (TreeMenu.MoveNode "org#c1" "org" "org#c1") moved |> Tuple.first
+                    counted =
+                        orga
+                            |> withDefaultData Dict.empty
+                            |> Dict.map
+                                (\nid n ->
+                                    { n
+                                        | n_open_tensions =
+                                            if nid == "org#c1" then
+                                                3
 
-                    ( after, out ) =
-                        TreeMenu.update apis (TreeMenu.MovedTreeAck "org" expected orga) newer
-                in
-                Expect.equal ( newer, 1, [] ) ( after, List.length out.cmds, out.gcmds )
-        , test "a no-data response clears cached authorization while other-org responses are ignored" <|
-            \_ ->
-                let
-                    ( empty, out ) =
-                        TreeMenu.update apis (TreeMenu.MovedTreeAck "org" expected (Failure [ "no data returned" ])) moved
+                                            else
+                                                0
+                                    }
+                                )
+                            |> Success
 
-                    ( unchanged, ignored ) =
-                        TreeMenu.update apis (TreeMenu.MovedTreeAck "other" expected orga) moved
+                    ( data, _ ) =
+                        hotNodeMove "org#c2" "org#c3" "org#c2" counted
+
+                    counter nid =
+                        Dict.get nid data |> Maybe.map .n_open_tensions
                 in
-                Expect.all
-                    [ \_ -> Expect.equal (Success Dict.empty) (TreeMenu.getOrgaData_ empty)
-                    , \_ -> Expect.equal [ DoUpdateTree (Just Dict.empty) ] out.gcmds
-                    , \_ -> Expect.equal ( moved, [], [] ) ( unchanged, ignored.cmds, ignored.gcmds )
-                    ]
-                    ()
+                Expect.equal ( Just 2, Just 1 ) ( counter "org#c1", counter "org#c3" )
         , test "drag moves activate the move modal's close and contract subscriptions" <|
             \_ ->
                 ActionPanel.init session

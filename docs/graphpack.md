@@ -29,8 +29,9 @@ an **old nameid → new nameid** map (empty for ordinary updates). Moving a role
 its ID; circle IDs are flat and unchanged, descendants follow parent links. `TreeMenu`
 reparents the confirmed move with `hotNodeMove` and carries the map through
 `Overview.OnUpdateTree`, which is also the path for additions, archives, restores and
-edits. Moves additionally requery the authoritative tree, since parent-dependent
-authorization and aggregates cannot be inferred from the cache.
+edits. Moves are applied locally only: `hotNodeMove` also shifts `n_open_tensions`
+(−1 old parent, +1 new parent) and the token is refreshed only when the move renames
+the node (a role), which is the sole rights-impacting change.
 
 ## Rendering
 
@@ -110,5 +111,5 @@ move modal for its own `domid`.
 
 - `tests/Js/graphpackHitTest.test.js` — geometric hit-testing (depth caps, sibling stop level, role factors, transform inversion).
 - `tests/Js/graphpackPorts.test.js` — the real canvas renderer with controlled D3 timers: packing, focus/move mapping, motion, tooltip, resize, cleanup, cards placement.
-- `tests/Elm/GraphTest.elm` — subtree discovery, atomic moves, rename payloads, reconciliation, drag-modal activation, tooltip menu nesting.
+- `tests/Elm/GraphTest.elm` — subtree discovery, atomic moves, rename payloads, counter shift, drag-modal activation, tooltip menu nesting.
 - `tests/Elm/ShapesTest.elm` — quarter-disc path geometry.
