@@ -963,7 +963,7 @@ update global message model =
 
                             else
                                 unwrap Cmd.none
-                                    (\b -> Cmd.map ActionPanelMsg (send (ActionPanel.OnMoveTo "actionPanelHelper" b.tension.id target)))
+                                    (\_ -> Cmd.map ActionPanelMsg (send (ActionPanel.OnMoveTo "actionPanelHelper" node target)))
                                     node.source
                         )
                         (getNode nameid model.tree_data)

@@ -527,7 +527,7 @@ update_ apis message model =
                 [--Ports.addQuickSerchNodes nodes
                  --List.map (\n -> n.first_link) nodes |> List.filterMap identity |> Ports.addQuickSearchUsers
                 ]
-                ([ DoUpdateToken, DoUpdateTree (Just data) ]
+                ([ DoUpdateTree (Just data) ]
                     ++ (model.next_focus
                             |> Maybe.map (\nid -> [ DoFocus nid ])
                             |> withDefault []
@@ -555,14 +555,14 @@ update_ apis message model =
                     in
                     ( { model | tree_result = Success data } |> setTree
                     , Out (ternary isArchiveChange [ Ports.reloadOrgaMenu ] [])
-                        ([ DoUpdateToken, DoUpdateTree (Just data) ] ++ ternary isArchiveChange [ DoUpdateOrgs Nothing ] [])
+                        (DoUpdateTree (Just data) :: ternary isArchiveChange [ DoUpdateOrgs Nothing ] [])
                         Nothing
                         Dict.empty
                     )
 
                 Nothing ->
                     -- For exemple, when Guest leave an organisation
-                    ( model, out1 [ DoUpdateToken ] )
+                    ( model, noOut )
 
         DelNodes nameids_ ->
             let
@@ -576,7 +576,7 @@ update_ apis message model =
             ( { model | tree_result = Success data } |> setTree
               --, Cmd.batch [ Ports.addQuickSearchNodes nodes, nodes |> List.map (\n -> n.first_link) |> List.filterMap identity |> Ports.addQuickSearchUsers ]
             , out1
-                ([ DoUpdateToken, DoUpdateTree (Just data) ]
+                ([ DoUpdateTree (Just data) ]
                     ++ (if List.member model.focus.nameid nameids then
                             let
                                 newFocus =

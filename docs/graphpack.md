@@ -103,13 +103,15 @@ press can become a drag; the drop sends `nodeDraggedFromJs [source, target]`.
 `getDropTarget` rejects roles, the current parent and the dragged node's own subtree.
 
 Elm side (`Org/Overview.elm`, `NodeDragged`): gated by `getNodeRights`, then
-`ActionPanel.OnMoveTo domid tid target` opens `MoveTension` with the target
+`ActionPanel.OnMoveTo domid node target` opens `MoveTension` with the target
 pre-selected. `domid` must name a rendered panel, as `ActionPanel.view` only renders the
 move modal for its own `domid`.
+
+`ActionPanel.openMoveOf` builds the modal input from the tree node, no tension head fetch.
 
 ## Tests
 
 - `tests/Js/graphpackHitTest.test.js` — geometric hit-testing (depth caps, sibling stop level, role factors, transform inversion).
 - `tests/Js/graphpackPorts.test.js` — the real canvas renderer with controlled D3 timers: packing, focus/move mapping, motion, tooltip, resize, cleanup, cards placement.
-- `tests/Elm/GraphTest.elm` — subtree discovery, atomic moves, rename payloads, counter shift, drag-modal activation, tooltip menu nesting.
+- `tests/Elm/GraphTest.elm` — subtree discovery, atomic moves, rename payloads, counter shift, `nid2eid`/`nodeIdCodec` roundtrip, drag-modal activation, tooltip menu nesting.
 - `tests/Elm/ShapesTest.elm` — quarter-disc path geometry.

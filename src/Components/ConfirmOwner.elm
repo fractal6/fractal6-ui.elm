@@ -259,6 +259,7 @@ update_ apis message model =
 
                         -- do the Doload !
                         , DoUpdateNode model.focus.nameid identity
+                        , DoUpdateToken
                         ]
                     )
 

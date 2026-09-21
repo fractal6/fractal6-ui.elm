@@ -492,6 +492,13 @@ nodeIdCodec parentid targetid type_ =
                 String.join "#" [ parentid, targetid ]
 
 
+nid2eid : String -> String
+nid2eid nameid =
+    -- Inverse of nodeIdCodec: returns the nameid fragment of a Circle/Role.
+    -- Note: the root has an empty fragment in its blob source, this returns its rootnameid.
+    String.split "#" nameid |> LE.last |> withDefault ""
+
+
 nameidEncoder : String -> String
 nameidEncoder nameid =
     nameid

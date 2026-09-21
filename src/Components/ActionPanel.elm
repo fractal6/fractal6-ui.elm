@@ -29,7 +29,7 @@ import Components.MoveTension as MoveTension
 import Components.UserInput as UserInput
 import Dict
 import Form exposing (isPostEmpty, isUsersSendable)
-import Fractale.Codecs exposing (FractalBaseRoute(..), getOrgaRoles, isBaseMember, isMembershipNode, isOwner, nid2rootid, playsRole, toLink, userFromBaseMember)
+import Fractale.Codecs exposing (FractalBaseRoute(..), getOrgaRoles, isBaseMember, isMembershipNode, isOwner, nid2eid, nid2rootid, playsRole, toLink, userFromBaseMember)
 import Fractale.Error exposing (viewGqlErrors)
 import Fractale.Form exposing (ActionForm, Ev, initActionForm, isSelfContract, makeCandidateContractForm)
 import Fractale.Graph exposing (getNode)
@@ -48,7 +48,6 @@ import Ports
 import Query.AddContract exposing (addOneContract)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode2)
-import Query.QueryTension exposing (getTensionHead)
 import RemoteData
 import Requests exposing (hasSubtreeAuthority)
 import Schema.Enum.NodeMode as NodeMode
@@ -64,7 +63,7 @@ import Utils.Bool exposing (ternary)
 import Utils.Cmd exposing (send, sendNow, sendSleep)
 import Utils.DomEvents as Dom exposing (onClickPD)
 import Utils.Html exposing (showIf, showMsg)
-import Utils.Maybe exposing (mor)
+import Utils.Maybe exposing (mor, unwrap)
 import Utils.String exposing (space_)
 
 
@@ -112,6 +111,24 @@ type PanelState
 type ActionStep
     = StepOne
     | StepAck IdPayload
+
+
+openMoveOf : Node -> MoveTension.Msg
+openMoveOf node =
+    -- MoveTension only reads tid, receiver and blob.node.{name, nameid, type_}; nameid is the encoded fragment.
+    let
+        frag =
+            node2NodeFragment (Just node) Nothing
+
+        blob =
+            { id = ""
+            , createdAt = ""
+            , createdBy = Username ""
+            , node = Just { frag | nameid = Just (nid2eid node.nameid) }
+            , pushedFlag = Nothing
+            }
+    in
+    MoveTension.OnOpen (unwrap "" (.tension >> .id) node.source) (unwrap "" .nameid node.parent) (Just blob)
 
 
 initModel : SessionCommon -> Model
@@ -579,11 +596,8 @@ type Msg
     | PushAction ActionForm PanelState
     | PushAck (GqlData IdPayload)
     | OnActionMove
-    | GotTensionToMove (GqlData TensionHead)
-    | OnMoveTo String String Node
-    | GotTensionToMoveTo Node (GqlData TensionHead)
+    | OnMoveTo String Node Node
       -- Autonomous Action (components)
-    | DoMove TensionHead
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -816,14 +830,17 @@ update_ apis message model =
                                             role_type =
                                                 mor model.form.fragment.role_type model.form.node.role_type
                                         in
-                                        [ DoUpdateNode model.form.node.nameid (\n -> { n | role_type = role_type }) ]
+                                        -- A role_type change can alter the current user rights
+                                        [ DoUpdateNode model.form.node.nameid (\n -> { n | role_type = role_type }), DoUpdateToken ]
 
                             ArchiveAction ->
                                 if nid2rootid model.form.node.nameid == model.form.node.nameid then
+                                    -- Root archive flag only, no first-link is touched
                                     [ DoUpdateNode model.form.node.nameid (\n -> { n | isRootArchived = Just True }) ]
 
                                 else
-                                    [ DoDelNodes [ model.form.node.nameid ] ]
+                                    -- Archiving unlinks the first-links of the subtree
+                                    [ DoDelNodes [ model.form.node.nameid ], DoUpdateToken ]
 
                             UnarchiveAction ->
                                 if nid2rootid model.form.node.nameid == model.form.node.nameid then
@@ -838,18 +855,20 @@ update_ apis message model =
                                         fs =
                                             model.form.users |> List.head |> Maybe.map (\u -> { username = u.username, name = u.name })
                                     in
-                                    [ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = fs }) ]
+                                    [ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = fs }), DoUpdateToken ]
 
                                 else
                                     --Contract based event (DoLoad for pendings nodes)...
                                     [ DoUpdateNode model.form.node.nameid identity ]
 
-                            UnLinkAction _ ->
-                                [ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = Nothing }) ]
+                            UnLinkAction u ->
+                                DoUpdateNode model.form.node.nameid (\n -> { n | first_link = Nothing })
+                                    :: ternary (u.username == model.form.uctx.username) [ DoUpdateToken ] []
 
                             LeaveAction ->
                                 -- Ignore Guest deletion (either non visible or very small)
                                 [ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = Nothing })
+                                , DoUpdateToken
                                 ]
                         )
 
@@ -948,36 +967,19 @@ update_ apis message model =
                     ( setActionResult result model, ternary (isFailure result) (out1 [ DoUpdateToken ]) noOut )
 
         OnActionMove ->
-            ( setAction MoveAction model, out0 [ getTensionHead apis model.form.uctx model.form.tid GotTensionToMove ] )
+            ( close (setAction MoveAction model)
+            , out0 [ Cmd.map MoveTensionMsg (send (openMoveOf model.form.node)) ]
+            )
 
-        GotTensionToMove result ->
-            case result of
-                Success th ->
-                    ( model, out0 [ send (DoMove th) ] )
-
-                _ ->
-                    ( model, noOut )
-
-        DoMove t ->
-            ( close model, out0 [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid t.latest_blob)) ] )
-
-        OnMoveTo domid tid target ->
+        OnMoveTo domid node target ->
             -- Open the move modal with a preset target (drag-and-drop on the graphpack).
             -- domid must be a rendered panel, as it carries the MoveTension view.
-            ( { model | domid = domid, state = MoveAction }, out0 [ getTensionHead apis model.form.uctx tid (GotTensionToMoveTo target) ] )
-
-        GotTensionToMoveTo target result ->
-            case result of
-                Success th ->
-                    ( close model
-                    , out0
-                        [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen th.id th.receiver.nameid th.latest_blob))
-                        , Cmd.map MoveTensionMsg (send (MoveTension.OnChangeTarget target))
-                        ]
-                    )
-
-                _ ->
-                    ( model, noOut )
+            ( close { model | domid = domid, state = MoveAction }
+            , out0
+                [ Cmd.map MoveTensionMsg (send (openMoveOf node))
+                , Cmd.map MoveTensionMsg (send (MoveTension.OnChangeTarget target))
+                ]
+            )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->

@@ -501,6 +501,7 @@ update_ apis message model =
                         [ send (OnCloseSafe "" "") ]
                         [ --Contract based event (DoLoad for pendings nodes)...
                           DoUpdateNode model.form.node.nameid identity
+                        , DoUpdateToken
                         , DoUpdateDraft ClearNewInvite
                         , DoPushSystemNotif
                             { cls = "is-success"

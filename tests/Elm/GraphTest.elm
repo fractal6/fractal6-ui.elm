@@ -4,7 +4,7 @@ import Components.ActionPanel as ActionPanel
 import Components.TreeMenu as TreeMenu
 import Dict
 import Expect
-import Fractale.Codecs exposing (FractalBaseRoute(..), focusFromNameid)
+import Fractale.Codecs exposing (FractalBaseRoute(..), focusFromNameid, nid2eid, nodeIdCodec)
 import Fractale.Graph exposing (isFreshOrga, withDescendants)
 import Fractale.HotUpdate exposing (hotNodeMove)
 import Fractale.User exposing (UserState(..))
@@ -15,6 +15,7 @@ import ModelSchema exposing (NodesDict, initNode, initUserctx)
 import Org.Overview exposing (viewActionPanel)
 import Ports
 import Schema.Enum.Lang as Lang
+import Schema.Enum.NodeType as NodeType
 import Schema.Enum.RoleType as RoleType
 import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Test exposing (Test, describe, test)
@@ -226,6 +227,60 @@ treeMenuCounterTest =
                 label
 
 
+nidCodecTests : Test
+nidCodecTests =
+    -- ActionPanel.openMoveOf feeds nid2eid to the move modal, MoveTension.buildOutResult
+    -- rebuilds the nameid with nodeIdCodec: the roundtrip must hold.
+    let
+        roundtrip type_ parentid nameid =
+            nodeIdCodec parentid (nid2eid nameid) type_
+    in
+    describe "nid2eid is the inverse of nodeIdCodec"
+        [ test "a circle is rebuilt from its parent" <|
+            \_ ->
+                roundtrip NodeType.Circle "org#c1" "org#c2"
+                    |> Expect.equal "org#c2"
+        , test "a role nested in a circle is rebuilt from its parent" <|
+            \_ ->
+                roundtrip NodeType.Role "org#c1" "org#c1#@bob"
+                    |> Expect.equal "org#c1#@bob"
+        , test "a role hanging on the root keeps its empty middle segment" <|
+            \_ ->
+                roundtrip NodeType.Role "org" "org##role"
+                    |> Expect.equal "org##role"
+        ]
+
+
+tokenTests : Test
+tokenTests =
+    -- Tree edits never refresh the token: the callers that can change the current user roles do.
+    let
+        apis =
+            Apis "" "" "" "" "" "" "test"
+
+        initial =
+            TreeMenu.init OverviewBaseUri Nothing (focusFromNameid "org#c1") Nothing (Just (withDefaultData Dict.empty orga)) session
+
+        gcmdsOf msg =
+            TreeMenu.update apis msg initial |> Tuple.second |> .gcmds
+    in
+    describe "tree edits do not refresh the token"
+        [ test "neither UpdateNode, DelNodes nor AddNodes ask for a new token" <|
+            \_ ->
+                [ TreeMenu.UpdateNode "org#c1" identity
+                , TreeMenu.DelNodes [ "org#c2" ]
+                , TreeMenu.AddNodes [ { initNode | nameid = "org#c4", parent = Just { nameid = "org", source = Nothing } } ]
+                ]
+                    |> List.concatMap gcmdsOf
+                    |> List.member DoUpdateToken
+                    |> Expect.equal False
+        , test "UpdateNode on an unknown node is a no-op" <|
+            \_ ->
+                gcmdsOf (TreeMenu.UpdateNode "org#nope" identity)
+                    |> Expect.equal []
+        ]
+
+
 refreshTests : Test
 refreshTests =
     let
@@ -287,7 +342,7 @@ refreshTests =
         , test "drag moves activate the move modal's close and contract subscriptions" <|
             \_ ->
                 ActionPanel.init session
-                    |> ActionPanel.update apis (ActionPanel.OnMoveTo "actionPanelHelper" "tension" initNode)
+                    |> ActionPanel.update apis (ActionPanel.OnMoveTo "actionPanelHelper" initNode initNode)
                     |> Tuple.first
                     |> ActionPanel.getState_
                     |> Expect.equal ActionPanel.MoveAction

@@ -1450,14 +1450,16 @@ update_ apis message model =
                                 newNameid =
                                     getNewNameid NodeType.Role model.nodeDoc
                             in
-                            ( setResult resultT data, Out cmds (DoFetchNode newNameid :: gcmds) output )
+                            -- The new node may first-link the current user
+                            ( setResult resultT data, Out cmds (DoFetchNode newNameid :: DoUpdateToken :: gcmds) output )
 
                         NewCircleTab ->
                             let
                                 newNameid =
                                     getNewNameid NodeType.Circle model.nodeDoc
                             in
-                            ( setResult resultT data, Out cmds (DoFetchNode newNameid :: gcmds) output )
+                            -- The new node may first-link the current user
+                            ( setResult resultT data, Out cmds (DoFetchNode newNameid :: DoUpdateToken :: gcmds) output )
 
                 DuplicateErr ->
                     ( setResult (Failure [ T.duplicateNameError ]) model, noOut )

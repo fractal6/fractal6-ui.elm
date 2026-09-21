@@ -41,6 +41,11 @@ share it instead of duplicating.
 **GlobalCmd.** The bridge from a component to `Global.elm` (`DoFocus`, `DoNavigate`,
 `DoUpdateTree`, `DoPushSystemNotif`, …). Pages translate them in `mapGlobalOutcmds`.
 
+**Token refresh.** `DoUpdateToken` costs a `tokenack` + a `getOrgaInfo` round-trip, so only the
+actions that can change the current user's roles emit it — never the tree edits
+(`TreeMenu.AddNodes` / `UpdateNode` / `DelNodes`) they happen to end in. `grep DoUpdateToken`
+for the current callers.
+
 **Interceptor.** Components that outlive the page hold a stale `SessionCommon`. Fix it at the
 Org page level: match the specific message (typically `OnOpen`) and inject fresh session data
 with a setter before calling the component's `update`. See `docs/draft-persistence.md`.
