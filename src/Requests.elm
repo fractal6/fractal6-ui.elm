@@ -378,6 +378,41 @@ fetchTensionsCount api q msg =
     fetchTension api "tensions/count" q msg (JD.map2 TensionsCount (JD.field "open" JD.int) (JD.field "closed" JD.int))
 
 
+{-| Download the queried tensions as a xlsx attachment, yielding (filename, content).
+-}
+exportTensions : Apis -> TensionQuery -> (Result Http.Error ( String, Bytes ) -> msg) -> Cmd msg
+exportTensions api q msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = setHeaders api
+        , url = api.rest ++ "/tensions/export"
+        , body = Http.jsonBody <| JE.object <| tensionQueryEncoder q
+        , expect = Http.expectBytesResponse msg httpResponseToAttachment
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+{-| Read the attachment filename from Content-Disposition.
+Needs Access-Control-Expose-Headers on the server when cross-origin, hence the fallback.
+-}
+httpResponseToAttachment : Http.Response Bytes -> Result Http.Error ( String, Bytes )
+httpResponseToAttachment response =
+    case response of
+        Http.GoodStatus_ metadata body ->
+            let
+                filename =
+                    Dict.get "content-disposition" metadata.headers
+                        |> Maybe.andThen (String.split "filename=" >> List.drop 1 >> List.head)
+                        |> Maybe.map (String.trim >> String.replace "\"" "")
+                        |> Maybe.withDefault "tensions.xlsx"
+            in
+            Ok ( filename, body )
+
+        _ ->
+            httpResponseToBytes response |> Result.map (\b -> ( "", b ))
+
+
 fetchTension : Apis -> String -> TensionQuery -> (GqlData a -> msg) -> JD.Decoder a -> Cmd msg
 fetchTension api route q msg decoder =
     Http.riskyRequest
@@ -759,9 +794,14 @@ resetPasswordChallenge api msg =
 
 httpReponseToImage : Http.Response Bytes -> Result Http.Error (Maybe Image)
 httpReponseToImage response =
+    httpResponseToBytes response |> Result.map Image.decode
+
+
+httpResponseToBytes : Http.Response Bytes -> Result Http.Error Bytes
+httpResponseToBytes response =
     case response of
         Http.GoodStatus_ _ body ->
-            Ok <| Image.decode body
+            Ok body
 
         Http.BadUrl_ url ->
             Err (Http.BadUrl url)

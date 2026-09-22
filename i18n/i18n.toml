@@ -971,6 +971,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en='Search {{_tension_}}s'
   fr='Rechercher des {{_tension_}}s'
 
+[exportTensionsHelp]
+  en='Export the filtered {{_tension_}}s to a spreadsheet (.xlsx)'
+  fr='Exporter les {{_tension_}}s filtrées vers un tableur (.xlsx)'
+
 [searchProjects]
   en="Search projects"
   fr="Rechercher des projets"

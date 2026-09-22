@@ -38,7 +38,9 @@ import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
 import Dict.Extra as DE
+import Bytes exposing (Bytes)
 import Fifo exposing (Fifo)
+import File.Download as Download
 import Form.Help as Help
 import Form.NewTension as NTF
 import Fractale.Board as BB exposing (viewBoard)
@@ -54,6 +56,7 @@ import Html exposing (Html, a, button, div, h2, input, li, span, text, ul)
 import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, href, id, placeholder, style, target, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
+import Http
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), RestData, errorIsNoDataFound, fromMaybeData, fromMaybeDataRest, isSuccess, withDefaultData, withDefaultDataRest, withMapData, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
@@ -63,7 +66,7 @@ import Ports
 import Query.QueryNode exposing (queryLocalGraph, queryPinnedTensionsSub)
 import Query.QueryTension exposing (queryOrgTensions)
 import RemoteData
-import Requests exposing (fetchTensionsAll, fetchTensionsCount, fetchTensionsInt)
+import Requests exposing (TensionQuery, exportTensions, fetchTensionsAll, fetchTensionsCount, fetchTensionsInt)
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.TensionStatus as TensionStatus
 import Schema.Enum.TensionType as TensionType
@@ -212,6 +215,7 @@ type alias Model =
     , tensions_count : GqlData TensionsCount
     , pinned_sub : GqlData (List NodeWithPins)
     , tensionsInitFired : Bool
+    , isExporting : Bool
 
     -- Board
     , boardHeight : Maybe Float
@@ -729,6 +733,22 @@ getTargetsHere model =
                     []
 
 
+buildTensionQuery : Model -> List String -> Int -> Int -> TensionQuery
+buildTensionQuery model nameids first offset =
+    { targetids = nameids
+    , first = first
+    , offset = offset
+    , pattern = ternary (model.pattern == "") Nothing (Just model.pattern)
+    , status = statusDecoder model.statusFilter
+    , type_ = typeDecoder model.typeFilter
+    , sort = sortFilterEncoder model.sortFilter |> (\s -> ternary (s == defaultSort) Nothing (Just s))
+    , authors = model.authors
+    , labels = model.labels
+    , projectid = Nothing
+    , inProject = False
+    }
+
+
 statusDecoder : StatusFilter -> Maybe TensionStatus.TensionStatus
 statusDecoder statusF =
     case statusF of
@@ -812,6 +832,7 @@ init global flags =
             , tensions_count = fromMaybeData session.data.tensions_count Loading
             , pinned_sub = NotAsked
             , tensionsInitFired = False
+            , isExporting = False
 
             -- Board
             , boardHeight = Nothing
@@ -962,8 +983,10 @@ type Msg
     | GotTensionsAll (GqlData (List Tension)) -- GraphQL
     | GotTensionsCount (GqlData TensionsCount)
     | GotPinnedSub (GqlData (List NodeWithPins))
+    | GotExport (Result Http.Error ( String, Bytes ))
       -- Page Action
     | DoLoadInit
+    | OnExport
     | DoLoad Bool -- query tensions
     | ChangePattern String
     | ChangeViewFilter TensionsView
@@ -1238,18 +1261,7 @@ update global message model =
                     List.member model.viewMode [ CircleView, LabelView, AssigneeView ]
 
                 query =
-                    { targetids = nameids
-                    , first = first
-                    , offset = skip
-                    , pattern = ternary (model.pattern == "") Nothing (Just model.pattern)
-                    , status = statusDecoder model.statusFilter
-                    , type_ = typeDecoder model.typeFilter
-                    , sort = sortFilterEncoder model.sortFilter |> (\s -> ternary (s == defaultSort) Nothing (Just s))
-                    , authors = model.authors
-                    , labels = model.labels
-                    , projectid = Nothing
-                    , inProject = False
-                    }
+                    buildTensionQuery model nameids first skip
             in
             if nameids == [] then
                 ( model, Cmd.none, Cmd.none )
@@ -1309,6 +1321,24 @@ update global message model =
 
                         else
                             ( model, Cmd.none, Cmd.none )
+
+        OnExport ->
+            -- first=0 lets the server apply its own export cap
+            ( { model | isExporting = True }
+            , exportTensions apis (buildTensionQuery model (getTargetsHere model) 0 0) GotExport
+            , Cmd.none
+            )
+
+        GotExport result ->
+            ( { model | isExporting = False }
+            , case result of
+                Ok ( filename, bytes ) ->
+                    Download.bytes filename "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" bytes
+
+                Err _ ->
+                    Cmd.none
+            , Cmd.none
+            )
 
         ChangePattern value ->
             ( { model | pattern = value }, Cmd.none, Cmd.none )
@@ -2214,12 +2244,21 @@ viewSearchBar model =
                         ]
                     ]
                 , viewClearFilterButton model
-                , div
-                    [ class "button is-success is-hidden-mobile"
-                    , style "margin-left" "auto"
-                    , onClick (NewTensionMsg (NTF.OnOpen (FromNameid model.node_focus.nameid) Nothing))
+                , div [ class "buttons is-hidden-mobile", style "margin-left" "auto" ]
+                    [ showIf (model.orgFilter == NoOrgFilter) <|
+                        div
+                            [ class "button is-small"
+                            , classList [ ( "is-loading", model.isExporting ) ]
+                            , title (T.exportTensionsHelp model.session.lexicon)
+                            , onClick OnExport
+                            ]
+                            [ A.icon "icon-share1" ]
+                    , div
+                        [ class "button is-success"
+                        , onClick (NewTensionMsg (NTF.OnOpen (FromNameid model.node_focus.nameid) Nothing))
+                        ]
+                        [ A.icon0 "icon-plus", text (T.tension model.session.lexicon) ]
                     ]
-                    [ A.icon0 "icon-plus", text (T.tension model.session.lexicon) ]
                 ]
             ]
         , div [ class "tabs no-overflow is-md" ]
