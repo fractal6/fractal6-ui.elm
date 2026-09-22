@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'fractaleicon';
-  src:  url('fonts/fractaleicon.eot?er84yr');
-  src:  url('fonts/fractaleicon.eot?er84yr#iefix') format('embedded-opentype'),
-    url('fonts/fractaleicon.ttf?er84yr') format('truetype'),
-    url('fonts/fractaleicon.woff?er84yr') format('woff'),
-    url('fonts/fractaleicon.svg?er84yr#fractaleicon') format('svg');
+  src:  url('fonts/fractaleicon.eot?z5dv4h');
+  src:  url('fonts/fractaleicon.eot?z5dv4h#iefix') format('embedded-opentype'),
+    url('fonts/fractaleicon.ttf?z5dv4h') format('truetype'),
+    url('fonts/fractaleicon.woff?z5dv4h') format('woff'),
+    url('fonts/fractaleicon.svg?z5dv4h#fractaleicon') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -280,6 +280,9 @@
 .icon-settings:before {
   content: "\e943";
 }
+.icon-share1:before {
+  content: "\e974";
+}
 .icon-share:before {
   content: "\e944";
 }
@@ -349,6 +352,12 @@
 .icon-x-circle:before {
   content: "\e95c";
 }
+.icon-fractale-light:before {
+  content: "\e972";
+}
+.icon-three-circles:before {
+  content: "\e973";
+}
 .icon-markdown:before {
   content: "\e967";
 }
@@ -360,6 +369,9 @@
 }
 .icon-home3:before {
   content: "\e966";
+}
+.icon-library:before {
+  content: "\e970";
 }
 .icon-history:before {
   content: "\e94d";
