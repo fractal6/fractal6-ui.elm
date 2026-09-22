@@ -11,6 +11,8 @@ Related: `project-permissions.md` (who can edit), `project-collaborators.md` (se
 
 - Columns and cards are HTML5-draggable (`moveProjectColumn` / `moveProjectCard`). The backend
   shifts the siblings positions, so the front only sends the target position.
+- Each column ends with a `kb-drop-zone`, sticky at the bottom while dragging so the last position
+  stays reachable when cards overflow; it doubles as the placeholder when hovered.
 - Column menu (admin) and card menu (ellipsis) for the column/card actions; the bulk ones act on
   the current selection.
 - Inline draft creation in a column (first line is the title, the rest the message), convertible

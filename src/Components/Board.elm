@@ -399,7 +399,8 @@ update_ apis message model =
                                         { c | colid = colid, pos = pos_fixed + i }
                                     )
                     in
-                    if not isMulti && card.id == c_hover.cardid then
+                    -- Dropped on its own position: nothing to move.
+                    if cardsToMove == [ card ] then
                         ( newModel, out0 [ sendSleep OnCancelHov 300 ] )
 
                     else
@@ -466,49 +467,17 @@ update_ apis message model =
             ( { model | movingHoverCol = Nothing, movingHoverT = Nothing }, noOut )
 
         OnMoveEnterCol hover isLast ->
-            -- @DEBUG: How to optimize / simplify that ?
-            -- Does "dragCount" still usefull ??
-            if Just hover == model.movingHoverCol && not isLast then
-                ( { model | dragCount = 1 }, noOut )
+            -- @DEBUG: Does "dragCount" still usefull ??
+            let
+                -- End of the column (also the virtual hover of an empty column): no card below, hence no cardid.
+                mht =
+                    if isLast || Maybe.map .colid model.movingHoverT /= Just hover.colid then
+                        Just { pos = hover.length, cardid = "", colid = hover.colid }
 
-            else if Just hover == model.movingHoverCol && isLast then
-                let
-                    c_h =
-                        Maybe.map (\ch -> { ch | pos = hover.length }) model.movingHoverT
-                in
-                ( { model | movingHoverT = c_h }, noOut )
-
-            else
-                let
-                    -- Add a virtual card hover in empty columns in order to be able to move card there.
-                    ( last_cardid, n_cards ) =
-                        LE.find (\x -> x.id == hover.colid) model.project.columns
-                            |> unwrap ( "", -1 )
-                                (\cols -> ( LE.last cols.cards |> unwrap "" .id, List.length cols.cards ))
-
-                    mht_ =
-                        if Maybe.map .colid model.movingHoverT /= Just hover.colid then
-                            Nothing
-
-                        else
-                            model.movingHoverT
-
-                    mht =
-                        case mht_ of
-                            Nothing ->
-                                if n_cards == 0 then
-                                    Just { pos = 0, cardid = "", colid = hover.colid }
-
-                                else if n_cards > 0 then
-                                    Just { pos = n_cards, cardid = last_cardid, colid = hover.colid }
-
-                                else
-                                    Nothing
-
-                            Just _ ->
-                                model.movingHoverT
-                in
-                ( { model | dragCount = 1, movingHoverCol = Just hover, movingHoverT = mht }, noOut )
+                    else
+                        model.movingHoverT
+            in
+            ( { model | dragCount = 1, movingHoverCol = Just hover, movingHoverT = mht }, noOut )
 
         OnMoveLeaveCol ->
             ( { model | dragCount = model.dragCount - 1 }, out0 [ sendSleep OnMoveLeaveCol_ 15 ] )
@@ -1065,7 +1034,7 @@ viewBoard op model =
                         , onDragStart <| OnMoveColumn col
                         , onDragEnd <| OnMoveColumnEnd
 
-                        -- @debug: allow move card in empty collumn
+                        -- Hovering the header drops at the top of the column.
                         , onDragEnter <| OnMoveEnterT { pos = 0, cardid = unwrap "" .id c1, colid = colid }
                         ]
                         [ viewHeader model.session.lexicon model.isProjectAdmin (model.colEdit == colid) cardids selectedids col ]
@@ -1124,13 +1093,23 @@ viewBoard op model =
                                     Nothing ->
                                         -- Add potential dragging div
                                         let
+                                            -- End slot hovered: the sticky drop zone is the placeholder (stays in view when cards overflow).
+                                            isEndHover =
+                                                model.draging
+                                                    && (model.movingHoverT == Just { pos = cards_len, cardid = "", colid = colid })
+                                                    -- Not already the last card of this column
+                                                    && (Maybe.map (\c -> c.colid == colid && c.pos == cards_len - 1) model.movingCard /= Just True)
+
                                             xx =
                                                 x
                                                     ++ [ text "" -- elm bug#1
                                                        , div
-                                                            [ class "box"
-                                                            , style "opacity" "0"
-                                                            , onDragLeave <| OnMoveEnterCol { pos = i, colid = colid, length = cards_len } True
+                                                            [ class "kb-drop-zone"
+                                                            , classList
+                                                                [ ( "is-active", model.draging )
+                                                                , ( "box is-shrinked2 is-dragging is-growing has-border-link", isEndHover )
+                                                                ]
+                                                            , onDragEnter <| OnMoveEnterCol { pos = i, colid = colid, length = cards_len } True
                                                             ]
                                                             []
                                                        ]
@@ -1138,8 +1117,8 @@ viewBoard op model =
                                         Maybe.map2
                                             (\c c_hov ->
                                                 if
-                                                    -- In this col
-                                                    (c_hov.colid == colid)
+                                                    -- Card drag, in this col, on a card (the end slot is handled by the drop zone)
+                                                    (model.draging && c_hov.colid == colid && c_hov.cardid /= "")
                                                         -- Not just above the dragged element
                                                         && (c.id /= c_hov.cardid)
                                                         -- Not just below the dragged element

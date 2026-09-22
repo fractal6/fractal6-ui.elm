@@ -49,6 +49,19 @@
     }
 
 
+    // Trailing "drop at the end" target. Pinned at the bottom of the column while dragging,
+    // so the last position stays reachable when cards overflow. Becomes the placeholder when hovered.
+    .kb-drop-zone {
+        min-height: 2.5rem;
+        border-radius: 6px;
+
+        &.is-active {
+            position: sticky;
+            bottom: 0;
+            margin: 0 0.5rem 0.25rem;
+        }
+    }
+
     .kb-card {
         border-width: 1px !important;
         border-radius: 6px !important;
