@@ -205,6 +205,13 @@
     }
 }
 
+// Placeholder box while an image downloads. `height: auto` keeps the implicit
+// aspect-ratio of the `![alt|WxH]()` width/height attributes when scaled down.
+.markdown-body img:not(.emoji) {
+    height: auto;
+    background-color: var(--border-color-lighter);
+}
+
 // Fix highlight color in human mardown
 .markdown-body.is-human {
     strong {

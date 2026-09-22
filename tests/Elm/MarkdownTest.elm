@@ -509,6 +509,28 @@ imageRewriteTests =
                     |> Query.fromHtml
                     |> Query.find [ Selector.tag "img" ]
                     |> Query.has [ Selector.attribute (Attr.title "tooltip") ]
+        , test "the |WxH alt suffix becomes width/height, and leaves the alt" <|
+            \_ ->
+                renderMarkdown fileServer "" "![shot|800x600](/file/abc123)"
+                    |> Query.fromHtml
+                    |> Query.find [ Selector.tag "img" ]
+                    |> Query.has
+                        [ Selector.attribute (Attr.width 800)
+                        , Selector.attribute (Attr.height 600)
+                        , Selector.attribute (Attr.alt "shot")
+                        ]
+        , test "an unparseable dimension suffix is kept as alt text" <|
+            \_ ->
+                renderMarkdown fileServer "" "![shot|big](/file/abc123)"
+                    |> Query.fromHtml
+                    |> Query.find [ Selector.tag "img" ]
+                    |> Query.has [ Selector.attribute (Attr.alt "shot|big") ]
+        , test "a bare WxH alt is not read as a dimension" <|
+            \_ ->
+                renderMarkdown fileServer "" "![800x600](/file/abc123)"
+                    |> Query.fromHtml
+                    |> Query.find [ Selector.tag "img" ]
+                    |> Query.has [ Selector.attribute (Attr.alt "800x600") ]
         ]
 
 

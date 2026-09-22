@@ -468,6 +468,7 @@ type alias PastedFiles =
     { targetId : String
     , files : List File.File
     , objectUrls : List String
+    , dims : List String -- natural "WxH" of pasted images, "" when unknown
     , isPaste : Bool -- False for dropped files, staged as plain attachments
     }
 
@@ -1074,7 +1075,7 @@ update_ apis message model =
             in
             ( { model | pendingByEditor = pendingByEditor1 }, noOut )
 
-        OnPastedFiles { targetId, files, objectUrls, isPaste } ->
+        OnPastedFiles { targetId, files, objectUrls, dims, isPaste } ->
             if not (List.member targetId model.pasteTargets) then
                 -- Paste meant for another mounted Comments instance.
                 ( model, noOut )
@@ -1101,9 +1102,16 @@ update_ apis message model =
                     pendingByEditor1 =
                         Dict.update targetId (Maybe.withDefault [] >> (\xs -> xs ++ newPendings) >> Just) model.pendingByEditor
 
+                    -- `![|WxH](name)` lets the renderer reserve the image box before
+                    -- download; the dim is empty for non-images and failed decodes.
                     insertCmds =
                         if isPaste then
-                            List.map (\p -> Ports.insertAtCaret targetId ("![](" ++ p.filename ++ ") ")) newPendings
+                            List.map2
+                                (\p d ->
+                                    Ports.insertAtCaret targetId ("![" ++ ternary (d == "") "" ("|" ++ d) ++ "](" ++ p.filename ++ ") ")
+                                )
+                                newPendings
+                                dims
 
                         else
                             []
@@ -1316,10 +1324,11 @@ checkboxDecoder =
 
 pastedFilesDecoder : JD.Decoder PastedFiles
 pastedFilesDecoder =
-    JD.map4 PastedFiles
+    JD.map5 PastedFiles
         (JD.field "targetId" JD.string)
         (JD.field "files" (JD.list File.decoder))
         (JD.field "objectUrls" (JD.list JD.string))
+        (JD.field "dims" (JD.list JD.string))
         (JD.field "isPaste" JD.bool)
 
 

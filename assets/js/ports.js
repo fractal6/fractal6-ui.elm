@@ -174,6 +174,21 @@ window.addEventListener('load', _ => {
 // used to unregister an OUTSIDE_CLICK_CLOSE listener). They have no matching
 // mousedown, so the mousedown-inside guard must not swallow them.
 export function initFileCapture(app) {
+    // Natural size of a pasted image, as "WxH" ("" for anything else).
+    // Elm carries it in the `![|WxH](name)` placeholder so the browser can
+    // reserve the layout box before the uploaded image is downloaded.
+    function imageDims(url, type) {
+        if (!url || !type || type.indexOf('image/') !== 0) return Promise.resolve('');
+        return new Promise(function (resolve) {
+            var img = new Image();
+            img.onload = function () {
+                resolve(img.naturalWidth && img.naturalHeight ? img.naturalWidth + 'x' + img.naturalHeight : '');
+            };
+            img.onerror = function () { resolve(''); };
+            img.src = url;
+        });
+    }
+
     // Paste/drop-capture: any element with [data-paste-capture] forwards
     // clipboard or dropped files to Elm. The element id (if any)
     // is sent so the receiver can disambiguate multiple editors.
@@ -217,11 +232,14 @@ export function initFileCapture(app) {
         }
         if (files.length === 0) return;
         e.preventDefault();
-        app.ports.pastedFilesFromJs.send({
-            targetId: target.id || '',
-            files: files,
-            objectUrls: objectUrls,
-            isPaste: true,
+        Promise.all(files.map(function (f, j) { return imageDims(objectUrls[j], f.type); })).then(function (dims) {
+            app.ports.pastedFilesFromJs.send({
+                targetId: target.id || '',
+                files: files,
+                objectUrls: objectUrls,
+                dims: dims,
+                isPaste: true,
+            });
         });
     }
 
@@ -265,6 +283,7 @@ export function initFileCapture(app) {
             targetId: t.id || '',
             files: files,
             objectUrls: [],
+            dims: [],
             isPaste: false,
         });
     });

@@ -53,6 +53,13 @@ tensionRegex =
     regexFromString "(^|[^\\w\\[\\`])0x[0-9a-f]+"
 
 
+{-| The `![alt|800x600](src)` dimension suffix set by the paste capture.
+-}
+imageDimsRegex : Regex.Regex
+imageDimsRegex =
+    regexFromString "^(.*)\\|(\\d+)x(\\d+)$"
+
+
 {-| Match bare '&' that are NOT already part of an HTML entity.
 Negative lookahead skips named (&amp;), decimal (&#123;) and lowercase hex (&#x1f;) entities.
 Uppercase hex (&#x1F;) is intentionally NOT protected because elm-markdown
@@ -161,6 +168,20 @@ deadEndsToString deadEnds =
         |> String.join "\n"
 
 
+{-| Split the `![alt|800x600](src)` dimension suffix set by the paste capture:
+width/height attributes reserve the image box before it is downloaded.
+Anything unparseable keeps the alt as-is and falls back to the CSS placeholder.
+-}
+splitImageDims : String -> ( String, List (Html.Attribute msg) )
+splitImageDims altText =
+    case Regex.find imageDimsRegex altText |> List.head |> Maybe.map .submatches of
+        Just [ Just a, Just w, Just h ] ->
+            ( a, [ Attr.width (withDefault 0 (String.toInt w)), Attr.height (withDefault 0 (String.toInt h)) ] )
+
+        _ ->
+            ( altText, [] )
+
+
 frac6Renderer : RendererConfig -> Markdown.Renderer.Renderer (Html msg)
 frac6Renderer config =
     -- see https://github.com/dillonkearns/elm-markdown/blob/master/README.md
@@ -178,8 +199,11 @@ frac6Renderer config =
                         else
                             imageInfo.src
 
+                    ( altText, dimAttrs ) =
+                        splitImageDims imageInfo.alt
+
                     baseAttrs =
-                        [ src resolvedSrc, alt imageInfo.alt ]
+                        src resolvedSrc :: alt altText :: dimAttrs
                 in
                 case imageInfo.title of
                     Just t ->

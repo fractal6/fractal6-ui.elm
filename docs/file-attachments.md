@@ -66,7 +66,8 @@ keep their native behaviour.
 
 The payload's `isPaste` splits the two flows:
 
-- **paste** (`isPaste: true`) — files renamed, blob preview, `![](name)` inserted at the caret.
+- **paste** (`isPaste: true`) — files renamed, blob preview, `![|WxH](name)` inserted at the
+  caret.
 - **drop** (`isPaste: false`) — original filename, no rename, no placeholder: staged as a plain
   attachment chip, exactly like the Attach button (`OnFilesSelected`).
 
@@ -84,7 +85,13 @@ Two constraints on the paste step:
 Then, in Elm:
 
 1. `OnPastedFiles` stores `{file, objectUrl, …}` in `pendingByEditor[targetId]` and inserts
-   `![](<filename>)` at the caret through `Ports.insertAtCaret` (undo-preserving).
+   `![|WxH](<filename>)` at the caret through `Ports.insertAtCaret` (undo-preserving).
+
+   `|WxH` (natural size, decoded from the blob by `imageDims`, shipped as the port's `dims`)
+   rides in the alt text so it survives the backend rewrite, which only touches the URL;
+   `Markdown.elm` turns it back into `width`/`height` so the browser reserves the box before
+   the image downloads. Empty for non-images and failed decodes: the `.markdown-body img`
+   background placeholder (`assets/sass/markdown.scss`) covers those.
 2. On carrier success the queue drains.
 3. Each `OnUploadAck` rewrites the local message to `/file/<id>` and appends the file to
    `comment.files`, mirroring what the server stored.

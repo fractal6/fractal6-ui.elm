@@ -49,6 +49,12 @@ internal vs external links, a limited set of raw HTML tags (`<i> <u> <span> <div
 <summary> <a>`), auto-linking of bare URLs, `@username` and `0x…` tension references, and
 checkboxes rendered with the `checkbox_readonly` class.
 
+### Image dimensions
+
+`![alt|800x600](src)` renders `width`/`height` attributes and strips the suffix from the alt,
+so pasted screenshots reserve their layout box before they download. Anything that doesn't
+parse as `|<int>x<int>` stays plain alt text. See `docs/file-attachments.md`.
+
 ### Link attributes
 
 `[Link](/path){target="_blank" title="More details"}` is supported. `expandLinkAttributes`
