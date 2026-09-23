@@ -834,8 +834,8 @@ export const actions = {
             window.location.href = url.toString();
         });
     },
-    'RELOAD_LANG': (app, session, lang) => {
-        updateLang(app, lang);
+    'RELOAD_LANG': (app, session, data) => {
+        updateLang(app, data.lang, data.referer);
     },
     'FIT_HEIGHT': (app, session, id) => {
         var fitElement = id => {

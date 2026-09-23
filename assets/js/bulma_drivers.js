@@ -74,26 +74,23 @@ export function applyTheme(pref) {
     }
 }
 
-export function updateLang(app, lang) {
+export function updateLang(app, lang, referer) {
     localStorage.setItem('lang', lang);
     app.ports.updateLangFromJs.send(lang);
     setTimeout(() => {
         var loc = window.location;
-        window.location.replace(
-            loc.protocol + '//' + loc.host + "/" + lang.toLowerCase() + loc.pathname + loc.search
-        );
-        // Maybe try this to force reoload ?
-        // https://itecnote.com/tecnote/javascript-force-a-reload-of-page-in-chrome-using-javascript-no-cache/
-        //$.ajax({
-        //	url: window.location.href,
-        //	headers: {
-        //		"Pragma": "no-cache",
-        //		"Expires": -1,
-        //		"Cache-Control": "no-cache"
-        //	}
-        //}).done(function () {
-        //	window.location.reload(true);
-        //});
+        var target = loc.protocol + '//' + loc.host + "/" + lang.toLowerCase() + loc.pathname + loc.search;
+        // The reload wipes the Elm referer: insert it below the current entry so GoBack (history.back) lands on it.
+        if (referer) {
+            try {
+                var cur = loc.href;
+                history.replaceState(null, '', referer);
+                history.pushState(null, '', cur);
+            } catch (e) { /* cross-origin referer: keep default behavior */ }
+        }
+        // This document keeps the old lang: if the browser restores it from bfcache on back, reload it.
+        window.addEventListener('pageshow', e => { if (e.persisted) window.location.reload() });
+        window.location.replace(target);
     }, 333);
 }
 

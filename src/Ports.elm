@@ -812,11 +812,11 @@ forceReload =
         }
 
 
-reloadLang : String -> Cmd msg
-reloadLang lang =
+reloadLang : String -> Maybe String -> Cmd msg
+reloadLang lang referer =
     outgoing
         { action = "RELOAD_LANG"
-        , data = JE.string lang
+        , data = JE.object [ ( "lang", JE.string lang ), ( "referer", referer |> Maybe.map JE.string |> Maybe.withDefault JE.null ) ]
         }
 
 

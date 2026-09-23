@@ -315,7 +315,7 @@ update global message model =
                       }
                     , case form.lang of
                         Just lang ->
-                            Ports.reloadLang (Lang.toString lang)
+                            Ports.reloadLang (Lang.toString lang) (Maybe.map Url.toString model.can_referer)
 
                         Nothing ->
                             Cmd.none
