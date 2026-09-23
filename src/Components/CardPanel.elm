@@ -370,7 +370,7 @@ update_ apis message model =
                     ( { model | subscribe_result = result }, noOut )
 
         DoChangeTitle ->
-            ( { model | isTitleEdit = True }, out0 [ Ports.focusOn "titleInput" ] )
+            ( { model | isTitleEdit = True }, out0 [ Ports.focusOn "titleInput", Ports.bulma_driver "cardPanel" ] )
 
         OnChangeTitle value ->
             let
@@ -897,7 +897,7 @@ viewTitleEdit new old result =
             new /= old
     in
     div []
-        [ div [ class "field is-grouped" ]
+        [ div [ class "field is-grouped submitFocus" ]
             [ p [ class "control is-expanded" ]
                 [ input
                     [ id "titleInput"
@@ -912,7 +912,7 @@ viewTitleEdit new old result =
                 ]
             , p [ class "control buttons" ]
                 [ button
-                    [ class "button is-success is-small"
+                    [ class "button is-success is-small defaultSubmit"
                     , classList [ ( "is-loading", isLoading ) ]
                     , disabled (not isSendable)
                     , onClick (OnSubmit (isSendable && not isLoading) SubmitTitle)

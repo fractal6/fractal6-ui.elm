@@ -983,7 +983,7 @@ update global message model =
             ( { model | tension_form = newForm }, Cmd.none, Cmd.none )
 
         DoChangeTitle ->
-            ( { model | isTitleEdit = True }, Ports.focusOn "titleInput", Cmd.none )
+            ( { model | isTitleEdit = True }, Cmd.batch [ Ports.focusOn "titleInput", Ports.bulma_driver "tensionTitle" ], Cmd.none )
 
         CancelTitle ->
             ( { model | isTitleEdit = False, tension_form = initTensionForm global.session.common.lexicon model.tensionid Nothing global.session.common.user, title_result = NotAsked }, Cmd.none, Cmd.none )
@@ -1731,7 +1731,7 @@ viewTension u t model =
             -- @DEBUG: width corresponding to is-9 is hard-coded in modal-content (below) to
             -- avoid overflow with no scroll caude by <pre> tag
             [ div [ class "column is-9 px-0 pt-0" ]
-                [ h1 [ class "title tensionTitle" ] <|
+                [ h1 [ id "tensionTitle", class "title tensionTitle" ] <|
                     if model.isTitleEdit then
                         let
                             title =
@@ -1743,7 +1743,7 @@ viewTension u t model =
                             isSendable =
                                 title /= t.title
                         in
-                        [ div [ class "field is-grouped" ]
+                        [ div [ class "field is-grouped submitFocus" ]
                             [ p [ class "control is-expanded" ]
                                 [ input
                                     [ id "titleInput"
@@ -1758,7 +1758,7 @@ viewTension u t model =
                                 ]
                             , p [ class "control buttons" ]
                                 [ button
-                                    [ class "button is-success is-small"
+                                    [ class "button is-success is-small defaultSubmit"
                                     , classList [ ( "is-loading", isLoading ) ]
                                     , disabled (not isSendable)
                                     , onClick (Submit (isSendable && not isLoading) SubmitTitle)
