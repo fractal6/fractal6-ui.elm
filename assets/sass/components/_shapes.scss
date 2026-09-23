@@ -37,14 +37,14 @@
 }
 .arrow-up { // short
     &::after {
-        content: " \2191 ";
+        content: " \2B06 ";
         padding-right: 5px;
         padding-left: 5px;
     }
 }
-.arrow-down { // short
+.arrow-down { // short (also \2191)
     &::after {
-        content: " \2193 ";
+        content: " \2B07 ";
         padding-right: 5px;
         padding-left: 5px;
     }

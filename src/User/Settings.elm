@@ -35,7 +35,7 @@ import Fractale.Form exposing (..)
 import Fractale.Graph exposing (..)
 import Fractale.HotUpdate exposing (..)
 import Fractale.User exposing (..)
-import Fractale.View exposing (lang2str, viewProfileC)
+import Fractale.View exposing (lang2str, viewProfileC, viewGoBack)
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, button, div, h2, hr, i, input, label, li, nav, option, select, span, text, textarea, ul)
@@ -481,14 +481,7 @@ view_ model =
         [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
             [ div [ class "columns" ]
                 [ div [ class "column is-one-fifth" ]
-                    [ div [ class "level mb-2" ]
-                        [ div
-                            [ class "is-strong arrow-left is-w is-h p-1 level-left"
-                            , title T.goBack
-                            , onClick GoBack
-                            ]
-                            []
-                        ]
+                    [ viewGoBack GoBack
                     , viewSettingsMenu model
                     ]
                 , div [ class "column" ]

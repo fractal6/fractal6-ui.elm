@@ -31,7 +31,7 @@ import Fractale.Codecs exposing (FractalBaseRoute(..), focusFromNameid, nid2root
 import Fractale.Error exposing (viewGqlErrors)
 import Fractale.Event exposing (contractEventToText, contractToJonction, contractToLink, contractTypeToText, eventToIcon, eventToLink, eventTypeToText, viewContractMedia, viewEventMedia, viewNotifMedia)
 import Fractale.User exposing (UserState(..))
-import Fractale.View exposing (counter, mediaTension, viewOrga)
+import Fractale.View exposing (counter, mediaTension, viewOrga, viewGoBack)
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, div, h2, i, li, nav, p, span, text, ul)
@@ -533,14 +533,7 @@ view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ id "notifications", class "top-section columns" ]
         [ div [ class "column is-one-quarter-tablet is-one-fifth-desktop" ]
-            [ div [ class "level mb-2" ]
-                [ div
-                    [ class "is-strong arrow-left is-w is-h p-1 level-left"
-                    , title T.goBack
-                    , onClick GoBack
-                    ]
-                    []
-                ]
+            [ viewGoBack GoBack
             , viewMenu model
             ]
         , div [ class "column is-three-quarters-widescreen pt-0" ]

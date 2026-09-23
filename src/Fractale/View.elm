@@ -1029,12 +1029,20 @@ helperButton cls content =
 
 viewGoRoot : String -> msg -> Html msg
 viewGoRoot cls cmd =
-    let
-        combinedClasses =
-            "help-label button-light is-goroot " ++ cls
-    in
-    span [ class combinedClasses, onClick cmd ]
-        [ A.icon "arrow-up", text T.goRoot ]
+    span [ class ("help-label button-light is-goroot " ++ cls), onClick cmd ]
+        [ A.icon "icon-arrow-up-thick", text T.goRoot ]
+
+
+viewGoBack : msg -> Html msg
+viewGoBack cmd =
+    div [ class "level mb-2" ]
+        [ div
+            [ class "is-strong arrow-left is-w is-h p-1 level-left"
+            , title T.goBack
+            , onClick cmd
+            ]
+            []
+        ]
 
 
 viewUrlForm : Maybe String -> (String -> msg) -> Bool -> Html msg
