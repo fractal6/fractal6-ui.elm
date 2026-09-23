@@ -70,15 +70,60 @@ ampersandRegex =
     regexFromString "&(?![a-zA-Z]+;|#[0-9]+;|#x[0-9a-f]+;)"
 
 
-{-| Match ALL HTML tags registered as custom handlers in frac6Renderer.
-Used to escape them inside code fences within HTML blocks, because
-elm-markdown's HTML scanner does not respect code fences — it sees tags
-in a code fence and tries to parse them as real HTML, breaking the code block.
-The list must stay in sync with the Markdown.Html.oneOf handlers in frac6Renderer.
+{-| Match a single-line inline code span (`code`, ``co`de``).
 -}
-htmlBlockTagRegex : Regex.Regex
-htmlBlockTagRegex =
-    regexFromString "<(/?(?:details|summary|div|span|u|i|a))\\b"
+inlineCodeRegex : Regex.Regex
+inlineCodeRegex =
+    regexFromString "(`+)[^`\n][^\n]*?\\1(?!`)"
+
+
+{-| Code fence delimiter line (\`\`\` or ~~~).
+-}
+fenceRegex : Regex.Regex
+fenceRegex =
+    regexFromString "^\\s*(```|~~~)"
+
+
+{-| Open/close tags of the block-level elements that elm-markdown parses as HTML blocks.
+-}
+htmlBlockOpenRegex : Regex.Regex
+htmlBlockOpenRegex =
+    regexFromString "^\\s*<(details|div)\\b"
+
+
+htmlBlockCloseRegex : Regex.Regex
+htmlBlockCloseRegex =
+    regexFromString "</(details|div)>"
+
+
+{-| Placeholder standing for the n-th inline code span in `transformOutsideInlineCode`.
+-}
+codePlaceholderRegex : Regex.Regex
+codePlaceholderRegex =
+    regexFromString "\u{E000}(\\d+)\u{E000}"
+
+
+{-| Private-use chars standing for '&' and '<' in code (spans and fences) inside HTML blocks,
+where elm-markdown's HTML scanner would read them. Restored by `restoreCode` at render.
+-}
+ampSentinel : String
+ampSentinel =
+    "\u{E001}"
+
+
+ltSentinel : String
+ltSentinel =
+    "\u{E002}"
+
+
+encodeCode : String -> String
+encodeCode s =
+    s |> String.replace "&" ampSentinel |> String.replace "<" ltSentinel
+
+
+restoreCode : String -> String
+restoreCode s =
+    s |> String.replace ampSentinel "&" |> String.replace ltSentinel "<"
 
 
 {-| Match `[label](url){attr="value" ...}` links with an attribute block.
@@ -187,7 +232,9 @@ frac6Renderer config =
     -- see https://github.com/dillonkearns/elm-markdown/blob/master/README.md
     -- for default markdown renderer details
     { defaultHtmlRenderer
-        | image =
+        | codeSpan = restoreCode >> defaultHtmlRenderer.codeSpan
+        , codeBlock = \cb -> defaultHtmlRenderer.codeBlock { cb | body = restoreCode cb.body }
+        , image =
             -- Prefix relative `/file/<id>` paths with the file server URL
             -- so attachments render against the file server, not the app domain.
             \imageInfo ->
@@ -428,8 +475,8 @@ code-fence tracking) because elm-markdown's HTML block parser scans content
 inside <details>/<div> — including code fences — before identifying markdown
 structures. A bare '&' anywhere inside an HTML block will crash the parser.
 
-The remaining transformations (escapeLinks, forced line breaks) are wrapped
-in processOutsideCodeBlocks so they don't modify fenced code block content.
+The remaining transformations (escapeLinks, forced line breaks, link attributes) are
+wrapped in processOutsideCodeBlocks so they don't modify code (fences and inline spans).
 
 -}
 frac6Parser : String -> String
@@ -633,20 +680,17 @@ escapeLinks input =
         |> List.foldl (\match acc -> replaceUnderscores match.match acc) input
 
 
-{-| Apply a transformation only to content outside fenced code blocks (\`\`\` or ~~~).
-Lines inside code fences are passed through unchanged. This prevents the
+{-| Apply a transformation only to content outside code: fenced blocks (\`\`\` or ~~~)
+and inline code spans are passed through unchanged. This prevents the
 preprocessor from mangling code examples that contain HTML tags, URLs, etc.
 -}
 processOutsideCodeBlocks : (String -> String) -> String -> String
 processOutsideCodeBlocks transform content =
     let
-        fencePattern =
-            "^\\s*(```|~~~)"
-
         -- Walk lines, toggling inFence on each fence delimiter.
         -- Accumulate (isCode, lines) segments that are later joined back.
         folder line ( inFence, currentLines, acc ) =
-            if regexContains fencePattern line then
+            if Regex.contains fenceRegex line then
                 if inFence then
                     -- Closing fence: finish the code segment (include this fence line)
                     ( False, [], acc ++ [ ( True, List.reverse (line :: currentLines) ) ] )
@@ -675,9 +719,31 @@ processOutsideCodeBlocks transform content =
                     Just (String.join "\n" segLines)
 
                 else
-                    Just (transform (String.join "\n" segLines))
+                    Just (transformOutsideInlineCode transform (String.join "\n" segLines))
             )
         |> String.join "\n"
+
+
+{-| Apply a transformation outside inline code spans, swapped for placeholders meanwhile.
+-}
+transformOutsideInlineCode : (String -> String) -> String -> String
+transformOutsideInlineCode transform content =
+    let
+        spans =
+            Regex.find inlineCodeRegex content |> List.map .match
+    in
+    content
+        |> Regex.replace inlineCodeRegex (\m -> "\u{E000}" ++ String.fromInt m.number ++ "\u{E000}")
+        |> transform
+        |> Regex.replace codePlaceholderRegex
+            (\m ->
+                m.submatches
+                    |> List.head
+                    |> Maybe.andThen identity
+                    |> Maybe.andThen String.toInt
+                    |> Maybe.andThen (\n -> LE.getAt (n - 1) spans)
+                    |> withDefault m.match
+            )
 
 
 {-| Escape bare '&' to '&amp;' but only on lines that sit inside an HTML
@@ -691,28 +757,19 @@ parser accepts bare '&' without issue.
 This function tracks fenced code blocks (\`\`\` / ~~~) so that:
 
   - <details> tags inside a code fence do NOT change the HTML depth
-  - '&' inside a code fence that is itself inside an HTML block IS escaped,
-    because elm-markdown's HTML scanner sees it before identifying the fence
+  - '&' and '<' in code (fences and inline spans) inside an HTML block are swapped
+    for sentinels, because elm-markdown's HTML scanner reads them before identifying
+    the code. The renderer restores them.
 
 -}
 escapeAmpersandsInHtmlBlocks : String -> String
 escapeAmpersandsInHtmlBlocks content =
     let
-        -- Only target block-level elements that elm-markdown parses as HTML blocks
-        openPattern =
-            "^\\s*<(details|div)\\b"
-
-        closePattern =
-            "</(details|div)>"
-
-        fencePattern =
-            "^\\s*(```|~~~)"
-
         folder line ( depth, inFence, result ) =
             let
                 -- Toggle fence state on fence delimiters
                 isFence =
-                    regexContains fencePattern line
+                    Regex.contains fenceRegex line
 
                 newInFence =
                     if isFence then
@@ -724,38 +781,29 @@ escapeAmpersandsInHtmlBlocks content =
                 -- Only count HTML open/close tags when outside code fences,
                 -- so that <details> appearing in code examples doesn't alter depth
                 opens =
-                    if not inFence && not newInFence && regexContains openPattern line then
+                    if not inFence && not newInFence && Regex.contains htmlBlockOpenRegex line then
                         1
 
                     else
                         0
 
                 closes =
-                    if not inFence && not newInFence && regexContains closePattern line then
+                    if not inFence && not newInFence && Regex.contains htmlBlockCloseRegex line then
                         1
 
                     else
                         0
 
-                -- Escape '&' when we are currently inside (or entering) an HTML block,
-                -- regardless of whether we are also inside a code fence.
-                -- Additionally, when inside a code fence within an HTML block,
-                -- escape block-level opening/closing tags (<details>, <div>) to &lt;
-                -- because elm-markdown's HTML scanner doesn't respect code fences —
-                -- it would see <details> in the code and try to parse a nested HTML block.
-                -- The visual trade-off: <details> in code renders as &lt;details>
-                -- but that's better than a parse crash for this rare edge case.
+                -- Inside (or entering) an HTML block: code gets sentinels, other '&' get escaped
                 processedLine =
                     if depth + opens > 0 then
-                        let
-                            ampEscaped =
-                                Regex.replace ampersandRegex (\_ -> "&amp;") line
-                        in
                         if inFence || newInFence then
-                            Regex.replace htmlBlockTagRegex (\m -> "&lt;" ++ String.dropLeft 1 m.match) ampEscaped
+                            encodeCode line
 
                         else
-                            ampEscaped
+                            line
+                                |> Regex.replace inlineCodeRegex (.match >> encodeCode)
+                                |> Regex.replace ampersandRegex (\_ -> "&amp;")
 
                     else
                         line

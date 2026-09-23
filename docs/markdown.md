@@ -49,6 +49,11 @@ internal vs external links, a limited set of raw HTML tags (`<i> <u> <span> <div
 <summary> <a>`), auto-linking of bare URLs, `@username` and `0x…` tension references, and
 checkboxes rendered with the `checkbox_readonly` class.
 
+The `frac6Parser` preprocessing skips code: fenced blocks and inline code spans are left
+untouched. Inside HTML blocks (`<details>`, `<div>`), `&` and `<` in code (spans and fences)
+are swapped for private-use sentinels (the parser would otherwise read them as HTML), and the
+`codeSpan`/`codeBlock` renderers restore them.
+
 ### Image dimensions
 
 `![alt|800x600](src)` renders `width`/`height` attributes and strips the suffix from the alt,

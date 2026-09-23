@@ -43,14 +43,14 @@ escapeAmpersandsTests =
             \_ ->
                 escapeAmpersandsInHtmlBlocks "<details>\n&amp; &lt; &#123;\n</details>"
                     |> Expect.equal "<details>\n&amp; &lt; &#123;\n</details>"
-        , test "& inside code fence within <details> IS escaped" <|
+        , test "& inside code fence within <details> IS encoded" <|
             \_ ->
                 escapeAmpersandsInHtmlBlocks "<details>\n<summary>Code</summary>\n\n```\na=1&b=2\n```\n\n</details>"
-                    |> Expect.equal "<details>\n<summary>Code</summary>\n\n```\na=1&amp;b=2\n```\n\n</details>"
-        , test "HTML tags in code fence within <details> are escaped" <|
+                    |> Expect.equal "<details>\n<summary>Code</summary>\n\n```\na=1\u{E001}b=2\n```\n\n</details>"
+        , test "HTML tags in code fence within <details> are encoded" <|
             \_ ->
                 escapeAmpersandsInHtmlBlocks "<details>\n<summary>T</summary>\n\n```\n<details> <summary>x</summary> </details>\n```\n\n</details>"
-                    |> Expect.equal "<details>\n<summary>T</summary>\n\n```\n&lt;details> &lt;summary>x&lt;/summary> &lt;/details>\n```\n\n</details>"
+                    |> Expect.equal "<details>\n<summary>T</summary>\n\n```\n\u{E002}details> \u{E002}summary>x\u{E002}/summary> \u{E002}/details>\n```\n\n</details>"
         , test "<details> inside a code fence does NOT change depth" <|
             \_ ->
                 escapeAmpersandsInHtmlBlocks "```\n<details>\n&foo\n</details>\n```\n&bar"
@@ -531,6 +531,45 @@ imageRewriteTests =
                     |> Query.fromHtml
                     |> Query.find [ Selector.tag "img" ]
                     |> Query.has [ Selector.attribute (Attr.alt "800x600") ]
+        ]
+
+
+inlineCodeTests : Test
+inlineCodeTests =
+    let
+        codeText input expected =
+            renderMarkdown "" "" input
+                |> Query.fromHtml
+                |> Query.find [ Selector.tag "code" ]
+                |> Query.has [ Selector.text expected ]
+
+        inDetails s =
+            "<details>\n<summary>T</summary>\n\n<details>\n<summary>I</summary>\n\n" ++ s ++ "\n\n</details>\n\n</details>"
+    in
+    describe "code (spans and fences) is not preprocessed"
+        [ test "markdown url in backticks" <|
+            \_ -> codeText "`[x](https://a.com/b_c)`" "[x](https://a.com/b_c)"
+        , test "link attribute block in backticks" <|
+            \_ -> codeText "`[x](/p){target=\"_blank\"}`" "[x](/p){target=\"_blank\"}"
+        , test "markdown url in backticks inside nested details" <|
+            \_ -> codeText (inDetails "see `[x](https://a.com/b_c){target=\"_blank\"}` ok") "[x](https://a.com/b_c){target=\"_blank\"}"
+        , test "& and tags in backticks inside details" <|
+            \_ -> codeText (inDetails "`a=1&b=2 <div>`") "a=1&b=2 <div>"
+        , test "no link is rendered from backticks inside details" <|
+            \_ ->
+                renderMarkdown "" "" (inDetails "`[x](/p){target=\"_blank\"}`")
+                    |> Query.fromHtml
+                    |> Query.hasNot [ Selector.tag "a" ]
+        , test "& and tags in a code fence inside details" <|
+            \_ -> codeText (inDetails "```\na=1&b=2 <details> x\n```") "a=1&b=2 <details> x"
+        , test "several code spans on a line, same url in text and code" <|
+            \_ ->
+                frac6Parser "https://a.com/b_c `https://a.com/b_c` and `x_y`"
+                    |> Expect.equal "https://a.com/b\\_c `https://a.com/b_c` and `x_y`"
+        , test "forced line break before a line starting with code" <|
+            \_ ->
+                frac6Parser "a\n`b`"
+                    |> Expect.equal "a  \n`b`"
         ]
 
 
