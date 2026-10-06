@@ -1393,7 +1393,7 @@ view_ global model =
                 , viewFromPos model.window_pos.bottomLeft
                 ]
           )
-        , ( "divider", div [ class "divider is-vertical is-h is-hidden-mobile", onClick SwitchWindow ] [ text "⇋" ] )
+        , ( "divider", div [ class "divider is-small is-vertical is-h is-hidden-mobile", onClick SwitchWindow ] [ text "⇋" ] )
         , ( "next-column"
           , div [ class "column is-6 is-5-fullhd" ]
                 [ div [ id "nextToChart" ]

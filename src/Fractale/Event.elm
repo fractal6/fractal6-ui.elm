@@ -798,15 +798,14 @@ viewEventMentioned session event =
                         , strong [ class "has-text-evidence" ] [ text (T.mentioned2 session.lexicon) ]
                         , text (formatDate session.lang session.now event.createdAt)
                         ]
-                , div [ class "level ml-4 mt-1" ] <|
+                , div [ class "level mt-1" ] <|
                     List.singleton <|
                         div [ class "level-left" ] <|
                             [ a
                                 [ class "is-strong is-size-6 discrete-link mr-4 level-item"
                                 , href ((Route.Tension_Dynamic_Dynamic { param1 = nid2rootid receiverid, param2 = id } |> toHref) ++ "?goto=" ++ goto)
                                 ]
-                                [ span [ Html.Attributes.title (tensionStatus2str status) ]
-                                    [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor status) ]
+                                [ i [ class ("icon-alert-circle icon-sm mr-2 has-text-" ++ statusColor status), Html.Attributes.title (tensionStatus2str status) ] []
                                 , text title
                                 ]
                             , a

@@ -28,7 +28,7 @@ import Fractale.Codecs exposing (FractalBaseRoute(..), NodeFocus, eor2ur, getOrg
 import Fractale.Graph exposing (getParentFragmentFromRole, maxPinnedTensions)
 import Fractale.User exposing (UserState(..))
 import Generated.Route as Route exposing (toHref)
-import Html exposing (Html, a, br, div, hr, input, span, text)
+import Html exposing (Html, a, br, div, hr, input, span, text, i)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, style, target, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Identicon
@@ -99,10 +99,7 @@ mediaTension baseUri commonOp session focusid tension showStatus showRecip size 
                 [ div [ class "level-left" ]
                     [ -- Governance tensions with a node doc are auto-closed on creation; a "Closed" tag would be misleading since the object exists.
                       showIf (showStatus && not (tension.type_ == TensionType.Governance && tensionNode /= Nothing)) <|
-                        span
-                            [ title (tensionStatus2str tension.status)
-                            ]
-                            [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
+                        i [ class ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status), title (tensionStatus2str tension.status) ] []
                     , if showRecip then
                         viewTensionDateAndUser session "is-weak" tension.createdAt tension.createdBy
 
@@ -229,11 +226,8 @@ viewPin session focus origin tension =
                         Nothing ->
                             text ""
                     ]
-                , div [ class "is-smaller2 mt-2" ]
-                    [ span
-                        [ title (tensionStatus2str tension.status)
-                        ]
-                        [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
+                , div [ class "is-smaller2 mt-2 is-flex is-align-items-center" ]
+                    [ i [ class ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status), title (tensionStatus2str tension.status) ] []
                     , span [] [ viewTensionDateAndUser session "is-weak" tension.createdAt tension.createdBy ]
                     ]
                 ]

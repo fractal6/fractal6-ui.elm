@@ -117,12 +117,11 @@ a > .tension-project-tag:hover {
     }
 }
 
-.marginTensionStatus {
-    margin-left: -24px;
-    padding-right: 5px;
-
-    position: relative;
-    top: 1px;
+.marginTensionStatus { // hangs in the mediaTensionIcon gutter (1rem column + mr-2)
+    width: 1rem;
+    text-align: center;
+    margin-left: -1.5rem;
+    margin-right: 0.5rem;
 }
 
 .icons-list {
