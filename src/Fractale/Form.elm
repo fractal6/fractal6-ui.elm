@@ -300,7 +300,7 @@ initProjectPanelForm tid user =
     { uctx = uctxFromUser user
     , tid = tid
     , targets = []
-    , project = { id = "", name = "", columns = [], nodes = [] }
+    , project = { id = "", name = "", status = ProjectStatus.Open, columns = [], nodes = [] }
     , isNew = False
     , post = Dict.empty
     }

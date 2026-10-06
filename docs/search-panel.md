@@ -5,7 +5,7 @@ projects, users. They share the same shape — `OnOpen targets …` opens the pa
 a fetch — but the **scope** of that fetch depends on the call site.
 
 - `src/Components/LabelSearchPanel.elm` — also owns `viewLabels` / `viewLabel`
-- `src/Components/ProjectSearchPanel.elm` — also owns `viewCards`, `viewProjectColumnTag`, the tension card list and column-move dropdown
+- `src/Components/ProjectSearchPanel.elm` — also owns `viewCards`, `viewProjectColumnTag`, the tension card list and column-move dropdown (a closed project shows a red alert icon at the card's top-right, from `ProjectWithColumns.status`). Cards are sorted by `sortTensionProjects`: open projects first, then closed, alphabetical within each group (the server returns them in column-uid order, which is not meaningful)
 - `src/Components/UserSearchPanel.elm` — also owns `viewUsers` / `viewUser`
 
 ## Scope rules

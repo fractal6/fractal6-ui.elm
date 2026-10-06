@@ -1531,6 +1531,7 @@ toTensionProject colid pos pj =
                 , project =
                     { id = pj.id
                     , name = pj.name
+                    , status = pj.status
                     , columns = List.map toLite pj.columns
                     , nodes = List.map (\n -> { nameid = n.nameid }) pj.nodes
                     }

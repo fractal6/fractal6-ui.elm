@@ -911,6 +911,7 @@ type alias ProjectColumnLite =
 type alias ProjectWithColumns =
     { id : String
     , name : String
+    , status : ProjectStatus.ProjectStatus
     , columns : List ProjectColumnLite
     , nodes : List NameidPayload
     }

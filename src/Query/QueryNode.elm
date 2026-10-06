@@ -1769,6 +1769,7 @@ projectWithColumnsPayload =
     SelectionSet.succeed ProjectWithColumns
         |> with (Schema.Object.Project.id |> SelectionSet.map decodedId)
         |> with Schema.Object.Project.name
+        |> with Schema.Object.Project.status
         |> with
             (Schema.Object.Project.columns
                 (\args ->

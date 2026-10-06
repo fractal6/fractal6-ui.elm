@@ -83,6 +83,11 @@
         font-size: 0.88rem;
     }
 
+    // Drop Bulma's media gap: an empty .media-right would otherwise leave a 1rem strip on the right.
+    .mediaBox .media-right {
+        margin-inline-start: 0;
+    }
+
     &.board1 {
         .column .subtitle {
             padding-bottom: 0.5rem;

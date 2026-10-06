@@ -31,7 +31,7 @@ import Fractale.Form exposing (ProjectPanelForm, initProjectPanelForm)
 import Fractale.User exposing (UserState(..))
 import Fractale.View exposing (viewCircleSimple)
 import Html exposing (Html, a, div, i, input, nav, p, span, text)
-import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, style, type_, value)
+import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, style, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), loadingSpin, withDefaultData, withMapData)
@@ -42,6 +42,7 @@ import Query.QueryNode exposing (getOpenProjectsForPanel)
 import Query.QueryProject exposing (addProjectCard, moveProjectCard, removeProjectCards)
 import Query.QueryTension exposing (getTensionProjects)
 import Schema.Enum.ProjectColumnType as ProjectColumnType
+import Schema.Enum.ProjectStatus as ProjectStatus
 import Session exposing (Apis, GlobalCmd(..), ProjectSearchPanelOnClickAction(..))
 import Text as T
 import Time
@@ -359,7 +360,7 @@ update_ apis message model =
                             }
 
                         newModel =
-                            { model | tension_projects = withMapData (\xs -> tp :: xs) model.tension_projects }
+                            { model | tension_projects = withMapData (\xs -> sortTensionProjects (tp :: xs)) model.tension_projects }
                     in
                     ( setClickResult NotAsked newModel, out0 [ sendSleep ResetClickResult 333 ] )
 
@@ -398,7 +399,7 @@ update_ apis message model =
                     ( model, noOut )
 
         GotCards result ->
-            ( { model | tension_projects = result }, noOut )
+            ( { model | tension_projects = withMapData sortTensionProjects result }, noOut )
 
         OnStatusEditOpen cardid ->
             if model.statusEditOpen == Just cardid then
@@ -777,10 +778,23 @@ viewCard canEdit model tp =
                 text ""
     in
     div [ class "tension-project-card", onClickSP NoMsg ]
-        [ div [ class "tension-project-name" ]
-            [ a [ href (toLink ProjectBaseUri rootid [ tp.project.id ]) ] [ text tp.project.name ] ]
+        [ div [ class "tension-project-name is-flex is-justify-content-space-between" ]
+            [ a [ href (toLink ProjectBaseUri rootid [ tp.project.id ]) ] [ text tp.project.name ]
+            , if tp.project.status == ProjectStatus.Closed then
+                span [ title T.closedProject ] [ A.icon "icon-alert-circle icon-sm has-text-danger" ]
+
+              else
+                text ""
+            ]
         , div [ id (statusDropdownId tp.card.id), class "mt-1" ] [ statusPill, dropdown ]
         ]
+
+
+{-| Open projects first, then closed ones; alphabetical within each group.
+-}
+sortTensionProjects : List TensionProject -> List TensionProject
+sortTensionProjects =
+    List.sortBy (\tp -> ( ternary (tp.project.status == ProjectStatus.Closed) 1 0, String.toLower tp.project.name ))
 
 
 statusDropdownId : String -> String
