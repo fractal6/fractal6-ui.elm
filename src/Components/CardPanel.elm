@@ -866,7 +866,7 @@ viewTitle t model =
     in
     div [ class "is-flex is-justify-content-space-between is-align-items-center" ]
         [ a
-            [ class "title tensionTitle discrete-link is-human"
+            [ class "title tensionTitle discrete-link"
             , target "_blank"
             , href (toLink TensionBaseUri t.receiver.nameid [ t.id ])
             ]
@@ -901,7 +901,7 @@ viewTitleEdit new old result =
             [ p [ class "control is-expanded" ]
                 [ input
                     [ id "titleInput"
-                    , class "input is-human"
+                    , class "input"
                     , type_ "text"
                     , placeholder "Title*"
                     , spellcheck True

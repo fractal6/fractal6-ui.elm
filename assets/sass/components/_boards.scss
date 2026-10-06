@@ -48,7 +48,6 @@
         }
     }
 
-
     // Trailing "drop at the end" target. Pinned at the bottom of the column while dragging,
     // so the last position stays reachable when cards overflow. Becomes the placeholder when hovered.
     .kb-drop-zone {
@@ -78,6 +77,10 @@
         .card-ellipsis { visibility: hidden; }
         &:hover .card-ellipsis,
         .card-ellipsis.is-edited { visibility: visible; }
+    }
+
+    .mediaBox .link-like {
+        font-size: 0.88rem;
     }
 
     &.board1 {

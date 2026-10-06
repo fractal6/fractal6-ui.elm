@@ -338,7 +338,7 @@ viewHero model =
                 --[ text "Collective Intelligence", br [] [], text "at Work" ]
                 , div [ class "columns is-vcentered" ]
                     [ div [ class "column is-7", style "min-width" "300px" ]
-                        [ h2 [ class "subtitle" ] [ renderMarkdown "" "is-recursive" T.heroSubtitle ] ]
+                        [ h2 [ class "subtitle" ] [ renderMarkdown "" "" T.heroSubtitle ] ]
                     ]
                 ]
             , div [ class "column is-5-desktop is-4-widescreen is-3-fullhd is-hidden-mobile" ]

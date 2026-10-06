@@ -10,9 +10,6 @@
  */
 
 #tensionsTab  {
-    .t-o{
-        font-size: 1rem !important;
-    }
 }
 
 #journalTab {
@@ -179,12 +176,9 @@ a > .tension-project-tag:hover {
 // Tension/Blob Page
 //
 
-.tensionTitle > .is-human,
-.tensionTitle.is-human {
+.tensionTitle {
     color: var(--text-strong);
     font-size: 2rem !important;
-    // Zen font
-    //font-size: 2.5rem !important;
 }
 
 .tensionSubtitle {

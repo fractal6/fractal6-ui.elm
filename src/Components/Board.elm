@@ -1276,7 +1276,7 @@ viewMediaDraft cardid isProjectAdmin isEdited d =
             [ div [ class "is-weak mb-2 is-flex is-justify-content-space-between" ]
                 [ div [ class "is-inline-flex" ] [ A.icon1 "icon-circle-draft" "Draft", ellipsis ] ]
             , div [ class "link-like py-2 pr-2", onClickSP (OpenCardPane cardid) ]
-                [ span [ class "is-human mr-2" ]
+                [ span [ class "mr-2" ]
                     [ text d.title ]
                 , case d.labels of
                     Just labels ->
@@ -1418,7 +1418,7 @@ viewMediaTension cardid isProjectAdmin isEdited focus t =
             [ div [ class "is-weak mb-2 is-flex is-justify-content-space-between" ]
                 [ div [] [ span [ class "mr-2" ] [ tensionIcon t.type_ ], text t.receiver.name, ellipsis ], status_html ]
             , div [ class "link-like py-2 pr-2", onClickSP (OpenCardPane cardid) ]
-                [ span [ class "is-human mr-2" ]
+                [ span [ class "mr-2" ]
                     [ text t.title ]
                 , case t.labels of
                     Just labels ->

@@ -45,8 +45,7 @@
     // Html
     // --
     pre, code {
-        @include defaultFontFace;
-        font-size: 14px;
+        font-size: 12px;
         max-height: 500px;
         color: currentColor;
         background-color: var(--code-color) !important;
@@ -216,9 +215,5 @@
 .markdown-body.is-human {
     strong {
         color: var(--text-strong);
-    }
-
-    em {
-        font-variation-settings: initial !important;
     }
 }

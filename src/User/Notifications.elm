@@ -801,7 +801,7 @@ viewAssigned commonOp session tensions_d =
                 div []
                     [ div [ class "mb-2" ] [ span [ class "subtitle" ] [ text orgaName ] ]
                     , tensions
-                        |> List.map (\t -> mediaTension OverviewBaseUri commonOp session (nid2rootid t.receiver.nameid) t True True "is-size-6 t-o")
+                        |> List.map (\t -> mediaTension OverviewBaseUri commonOp session (nid2rootid t.receiver.nameid) t True True "is-size-6")
                         |> div [ id "tensionsTab", class "box is-shrinked mb-5" ]
                     ]
             )

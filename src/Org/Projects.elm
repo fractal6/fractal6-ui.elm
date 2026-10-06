@@ -2183,7 +2183,7 @@ viewProjectRow canEdit commonOp session focus project extraMenuItems =
             [ div [ class "columns mb-1" ]
                 [ div [ class ("column pb-0 " ++ ternary (project.description == Nothing) "is-8" "is-4") ]
                     [ a
-                        [ class "has-text-weight-semibold is-human discrete-link"
+                        [ class "has-text-weight-semibold discrete-link"
                         , href (Route.Project_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = shortId project.id } |> toHref)
                         ]
                         [ text project.name ]

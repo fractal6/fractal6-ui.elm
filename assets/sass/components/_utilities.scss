@@ -192,7 +192,7 @@ input[type="checkbox"] {
     margin-top: 0.25rem !important;
 }
 .help {
-    // Avoid font-weight < 400 as is wont work with certain font (QuickSand, Cantarell)
+    // Avoid font-weight < 400 as is wont work with certain font (Quicksand)
     //font-weight: 300 !important;
     //font-size: 0.85rem !important;
     color: var(--text-weak);
@@ -428,7 +428,7 @@ a.tag-circle {
     color: inherit;
     text-decoration: none !important;
     &:visited {
-        color: inherit;
+        //color: inherit;
     }
     &:hover {
         color: var(--link) !important;

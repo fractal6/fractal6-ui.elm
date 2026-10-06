@@ -470,7 +470,7 @@ viewProfileRight user_s user model =
                     --            , a [ href (toHref Route.New_Orga) ] [ text "first organisation." ]
                     --            ]
                     --    ]
-                    renderMarkdown "" "is-human is-size-bg" T.welcomeNoOrga
+                    renderMarkdown "" "is-size-bg" T.welcomeNoOrga
 
                   else
                     p [] [ text T.nothingToShow ]

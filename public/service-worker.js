@@ -33,10 +33,10 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Cache-first for /static/ only (content-hashed URLs are immutable).
+  // Cache-first for /static/ and /<lang>/static/ only (content-hashed URLs are immutable).
   // Everything else passes through: backend routes (/api, /q, /file, ...) can
   // share the SPA origin, and /assets content updates independently of deploys.
-  if (!url.pathname.startsWith('/static/')) return;
+  if (!/^\/([a-z]{2}\/)?static\//.test(url.pathname)) return;
   e.respondWith(
     caches.open(CACHE_NAME).then((cache) =>
       cache.match(e.request).then((response) =>

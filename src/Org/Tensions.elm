@@ -26,6 +26,7 @@ import Auth exposing (ErrState(..))
 import Browser.Dom as Dom
 import Browser.Events as Events
 import Browser.Navigation as Nav
+import Bytes exposing (Bytes)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
@@ -38,7 +39,6 @@ import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
 import Dict.Extra as DE
-import Bytes exposing (Bytes)
 import Fifo exposing (Fifo)
 import File.Download as Download
 import Form.Help as Help
@@ -2672,7 +2672,7 @@ viewTensions tensionDir model =
             Success tensions ->
                 if List.length tensions > 0 then
                     tensions
-                        |> List.map (\t -> mediaTension TensionsBaseUri model.commonOp model.session model.node_focus.nameid t True True "is-size-6 t-o")
+                        |> List.map (\t -> mediaTension TensionsBaseUri model.commonOp model.session model.node_focus.nameid t True True "is-size-6")
                         |> div [ id "tensionsTab" ]
 
                 else if model.pattern_init /= "" then

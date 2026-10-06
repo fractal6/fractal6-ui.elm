@@ -21,7 +21,7 @@ The service worker (`public/service-worker.js`) is registered from `public/index
 | Cross-origin | Pass-through (no SW logic) | Not our business. |
 | Non-GET (POST/PUT/DELETE) | Pass-through | Cache API rejects POST; mutations must hit network. |
 | Navigation (`request.mode === 'navigate'`) | **Network-first**, precached `/` shell offline | Every SPA route returns the same shell, which must be fresh after deploys. |
-| `/static/*` | **Cache-first** | Content-hashed URLs are immutable; serving from cache is always correct. |
+| `/static/*`, `/<lang>/static/*` | **Cache-first** | Content-hashed URLs are immutable; serving from cache is always correct. Published builds load assets under `/<lang>/`. |
 | Everything else | Pass-through | Allowlist, not denylist: backend routes (`/api`, `/auth`, `/q`, `/file`, `/notifications`) can share the SPA origin in single-domain deployments and must always hit the network; `/assets` static content (see `docs/static-content.md`) updates independently of deploys. |
 
 Only `res.ok` responses are cached (never persist a 404/500 as an asset).

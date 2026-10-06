@@ -79,17 +79,11 @@ mediaTension baseUri commonOp session focusid tension showStatus showRecip size 
     in
     div
         [ class ("media mediaBox is-hoverable " ++ size) ]
-        [ div [ class "media-left mr-3" ]
-            [ div
-                [ title (tensionType2str tension.type_)
-                , style "width" "10px"
-                ]
-                [ tensionIcon tension.type_ ]
-            ]
+        [ mediaTensionIcon tension.type_
         , div [ class "media-content" ]
             [ div [ class "content mb-1" ]
                 [ a
-                    [ class ("has-text-weight-semibold is-human discrete-link " ++ size)
+                    [ class ("has-text-weight-semibold discrete-link " ++ size)
                     , href (Route.Tension_Dynamic_Dynamic { param1 = rootnameid, param2 = tension.id } |> toHref)
                     , onClickSP commonOp.noMsg
                     ]
@@ -153,7 +147,7 @@ viewTensionLight t =
     span [ class "is-flex is-align-items-center", style "width" "100%" ]
         [ span [ class "mr-2" ] [ tensionIcon t.type_ ]
         , a
-            [ class "is-human discrete-link mr-2"
+            [ class "discrete-link mr-2"
             , href (Route.Tension_Dynamic_Dynamic { param1 = "", param2 = t.id } |> toHref)
             , target "_blank"
             ]
@@ -204,7 +198,7 @@ viewPinnedTensions size session focus pins =
             List.take (maxPinnedTensions - 1) pins
 
         cells =
-            List.map (\( origin, pin ) -> div [ class "cell" ] [ viewPin session focus origin pin ]) visible
+            List.map (\( origin, pin ) -> div [ class "cell is-size-6" ] [ viewPin session focus origin pin ]) visible
                 ++ (if hasMore then
                         [ div [ class "cell is-italic has-text-grey is-size-7", title T.morePinnedNotShown ] [ text "…" ] ]
 
@@ -220,17 +214,11 @@ viewPin : SessionCommon -> NodeFocus -> Maybe EmitterOrReceiver -> PinTension ->
 viewPin session focus origin tension =
     div [ class "box p-4 is-h", style "width" "100%" ]
         [ div [ class "media mediaBox" ]
-            [ div [ class "media-left mr-3" ]
-                [ div
-                    [ title (tensionType2str tension.type_)
-                    , style "width" "10px"
-                    ]
-                    [ tensionIcon tension.type_ ]
-                ]
+            [ mediaTensionIcon tension.type_
             , div [ class "media-content" ]
                 [ div [ class "content mb-1" ]
                     [ a
-                        [ class "has-text-weight-semibold is-human discrete-link "
+                        [ class "has-text-weight-semibold discrete-link "
                         , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                         ]
                         [ text tension.title ]
@@ -393,6 +381,19 @@ tensionTypeIcon tt =
 tensionIcon : TensionType.TensionType -> Html msg
 tensionIcon type_ =
     span [ class <| String.join " " <| [ "is-inline-flex", tensionTypeColor "text" type_ ] ] [ A.icon (tensionTypeIcon type_) ]
+
+
+{-| Tension type icon in a fixed media-left slot, centered on the title's first line.
+-}
+mediaTensionIcon : TensionType.TensionType -> Html msg
+mediaTensionIcon type_ =
+    div
+        [ class "media-left mr-2 is-flex is-align-items-center is-justify-content-center"
+        , style "width" "1rem"
+        , style "height" "1.5em"
+        , title (tensionType2str type_)
+        ]
+        [ tensionIcon type_ ]
 
 
 tensionIcon2 : TensionType.TensionType -> Html msg
@@ -773,7 +774,7 @@ mediaOrga commonOp user_m root =
                         [ a [ class "is-strong", href (toLink OverviewBaseUri root.nameid []) ] [ text root.name ]
                         , case root.about of
                             Just ab ->
-                                renderMarkdown "" "is-human pt-1" ab
+                                renderMarkdown "" "pt-1" ab
 
                             Nothing ->
                                 text ""

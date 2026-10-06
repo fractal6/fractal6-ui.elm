@@ -6,6 +6,9 @@ globalThis.__failExecCommand = false;
 // Verbose-level logs from assets/js/ are noise in the test report
 console.debug = () => {};
 
+// jsdom has no CSS Font Loading API (used by graphpack_d3.js to redraw once fonts are loaded)
+document.fonts = { check: () => true, load: () => Promise.resolve([]) };
+
 document.execCommand = function (cmd, _ui, value) {
     if (globalThis.__failExecCommand === 'throw') throw new Error('execCommand disabled');
     if (globalThis.__failExecCommand === true) return false;

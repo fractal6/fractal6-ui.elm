@@ -157,7 +157,7 @@ export const GraphPack = {
     minCardsSide: 220, // below that, the in-circle action cards are not shown
     fontsizeCircle_start: 22,
     fontsizeRole_start: 19,
-    fontstyleCircle: "Cantarell, Quicksand, Roboto, Lato, Ubuntu, Open Sans, Oxygen, sans-serif, fractaleicon",
+    fontstyleCircle: "Quicksand, Roboto, Ubuntu, Oxygen, sans-serif, fractaleicon", // defaultFontFace (_fonts.scss)
 
     // Graph fx settings
     motionDuration: 400,
@@ -531,13 +531,13 @@ export const GraphPack = {
         if (node.data.visibility !== this.getParent(node).data.visibility) {
             if (node.data.visibility == NodeVisibility.Public) {
                 // icon-globe
-                text = "\ue960 " + text;
+                text = "\ue960\u2009" + text;
             } else if (node.data.visibility == NodeVisibility.Private) {
                 // icon-lock
-                text = "\ue930 " + text;
+                text = "\ue930\u2009" + text;
             } else if (node.data.visibility == NodeVisibility.Secret) {
                 // icon-key
-                text = "\ue95f " + text;
+                text = "\ue95f\u2009" + text;
             }
         }
         //ctx2d.strokeText(text, node.ctx.centerX, node.ctx.centerY - node.ctx.rayon * 0.4);
@@ -1685,6 +1685,13 @@ export const GraphPack = {
 
         this.nodeSize = this.nodeSizeTopDown;
         this.resetGraphPack(dataNodes, data.focusid);
+
+        // Canvas text doesn't wait for web fonts: redraw once they are loaded (skipped when already loaded)
+        const fonts = ["1em Quicksand", "1em fractaleicon"];
+        if (!fonts.every(f => document.fonts.check(f))) {
+            Promise.all(fonts.map(f => document.fonts.load(f)))
+                .then(() => this.isActive() && this.drawCanvas());
+        }
 
         /*////////////////////////////////////////////////////////////
         ////////////////// Events Handler callback ///////////////////

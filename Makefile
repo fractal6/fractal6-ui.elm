@@ -254,6 +254,10 @@ css:
 js:
 	npm run js_build
 
+# WOFF2 subset of the icon font with only the glyphs used in the code (also run by npm pre* hooks)
+icon_font:
+	./icons_subset.py
+
 icon:
 	cp ../fractal6-logo/img/v1/favicon.ico assets/images/logo/favicon.ico
 	cp ../fractal6-logo/img/v1/favicon*.png assets/images/logo/

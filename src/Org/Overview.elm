@@ -1975,7 +1975,7 @@ viewChildExpandedContent model depth child =
                 div []
                     [ case data.about of
                         Just about ->
-                            renderMarkdown "" "is-human" about
+                            renderMarkdown "" "" about
 
                         Nothing ->
                             text ""

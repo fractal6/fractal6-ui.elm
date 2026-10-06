@@ -1747,7 +1747,7 @@ viewTension u t model =
                             [ p [ class "control is-expanded" ]
                                 [ input
                                     [ id "titleInput"
-                                    , class "input is-human"
+                                    , class "input"
                                     , type_ "text"
                                     , placeholder "Title*"
                                     , spellcheck True
@@ -1771,7 +1771,7 @@ viewTension u t model =
                         ]
 
                     else
-                        [ span [ class "is-human" ] [ text t.title ]
+                        [ text t.title
                         , if (model.isTensionAdmin || isAuthor) && blob_m == Nothing then
                             div
                                 [ class "button has-text-weight-normal is-pulled-right is-small is-hidden-embed"

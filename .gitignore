@@ -13,6 +13,8 @@ tests/robot/robotresults/
 # Auto-generated
 src/Text.elm
 src/.tags
+assets/icons/fonts/fractaleicon.subset.woff2
+assets/icons/style.subset.css
 
 # temp data from icomoon
 assets/icons/Read*.txt

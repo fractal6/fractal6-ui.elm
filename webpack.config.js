@@ -126,6 +126,27 @@ module.exports = (env, argv) => {
                     }
                 ],
             }),
+            // Preload the icon and default text fonts (hashed names) so they download in parallel with the JS bundle
+            {
+                apply(compiler) {
+                    compiler.hooks.thisCompilation.tap('PreloadFonts', (compilation) => {
+                        HtmlWebpackPlugin.getHooks(compilation).alterAssetTagGroups.tap('PreloadFonts', (data) => {
+                            compilation.getAssets()
+                                .filter(a => /(fractaleicon\.subset|quicksand-latin)-\w+\.woff2$/.test(a.name))
+                                .forEach(a => data.headTags.unshift({ // before the stylesheet, to start downloading first
+                                    tagName: 'link',
+                                    voidTag: true,
+                                    meta: { plugin: 'PreloadFonts' },
+                                    attributes: {
+                                        rel: 'preload', as: 'font', type: 'font/woff2', crossorigin: true,
+                                        href: compilation.outputOptions.publicPath + a.name.replace(/^\.\//, ''),
+                                    },
+                                }));
+                            return data;
+                        });
+                    });
+                },
+            },
         ],
         module: {
             rules: [
@@ -320,7 +341,8 @@ module.exports = (env, argv) => {
                         test: /\.(sa|sc|c)ss$/,
                         exclude: [/elm-stuff/, /node_modules/],
                         use: [
-                            MiniCssExtractPlugin.loader,
+                            // Relative to static/css/, so CSS assets follow the /<lang>/ prefix added by the publish sed
+                            { loader: MiniCssExtractPlugin.loader, options: { publicPath: '../../' } },
                             "css-loader",
                             "postcss-loader",
                             {
