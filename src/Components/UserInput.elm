@@ -34,7 +34,7 @@ import Html.Attributes exposing (attribute, class, classList, id, name, placehol
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, loadingSpinRight, withDefaultData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), isLoading, isSuccess, loadingSpinRight, withDefaultData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
@@ -346,17 +346,18 @@ update_ apis message model =
                             List.length model.lookup
 
                         newPos =
-                            (case dir of
+                            case dir of
                                 "up" ->
-                                    model.activePos - 1
+                                    clamp 0 (n - 1) (model.activePos - 1)
 
                                 "down" ->
-                                    model.activePos + 1
+                                    clamp 0 (n - 1) (model.activePos + 1)
+
+                                "next" ->
+                                    modBy n (model.activePos + 1)
 
                                 _ ->
                                     model.activePos
-                            )
-                                |> clamp 0 (n - 1)
                     in
                     ( { model | activePos = newPos }, noOut )
 
@@ -467,7 +468,10 @@ viewUserSeeker : State -> Html Msg
 viewUserSeeker (State model) =
     div [ class "panel dropList" ]
         [ div [ class "selectors" ] <|
-            if model.lookup == [] then
+            if model.lookup == [] && isLoading model.users_result then
+                [ p [ class "panel-block help-label is-static", attribute "style" "cursor: default !important;" ] [ text T.loading, loadingSpinRight True ] ]
+
+            else if model.lookup == [] then
                 [ p [ class "panel-block help-label is-static", attribute "style" "cursor: default !important;" ] [ text T.userNotFound ] ]
 
             else

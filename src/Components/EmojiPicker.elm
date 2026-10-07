@@ -138,8 +138,15 @@ update msg (State model) =
                                 _ ->
                                     0
 
+                        n =
+                            List.length model.results
+
                         newPos =
-                            clamp 0 (List.length model.results - 1) (model.activePos + delta)
+                            if dir == "next" then
+                                modBy n (model.activePos + 1)
+
+                            else
+                                clamp 0 (n - 1) (model.activePos + delta)
                     in
                     ( State { model | activePos = newPos }, out0 )
 

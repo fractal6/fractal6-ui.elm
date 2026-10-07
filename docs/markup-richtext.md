@@ -22,10 +22,11 @@ Both are routed through the shared `handlePickerKey()` helper, which exchanges k
 
 **Arrow mode** (an item is highlighted):
 - `ArrowUp/Down/Left/Right` → move selection (sent to Elm via `arrowPort`).
-- `Enter` / `Return` / `Tab` → select the highlighted item (`selectPort`).
+- `Tab` → cycle to the next item, wrapping around (`arrowPort` sends `"next"`).
+- `Enter` / `Return` → select the highlighted item (`selectPort`).
 - Anything else → close the panel.
 
-`Tab` is treated as `ArrowDown` when entering arrow mode so users can quickly grab the first match without reaching for the arrow keys.
+`Tab` enters arrow mode on the first item, then cycles through items, so users can browse matches without reaching for the arrow keys.
 
 ## Other Behaviors in `markupRichText`
 

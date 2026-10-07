@@ -8,8 +8,9 @@ An inline emoji picker triggered by typing `:` in comment textareas.
 2. An emoji grid popup appears near the cursor.
 3. Continue typing after `:` to filter emojis (e.g., `:smi` shows smile-related emojis).
 4. Click an emoji to insert its unicode character, replacing the `:pattern` text.
-5. Press Space, Tab, Enter, or Escape to dismiss the picker without inserting an emoji.
-6. Backspacing to delete the `:` also dismisses the picker.
+5. Press Tab to enter the grid and cycle through emojis; Enter inserts the highlighted one.
+6. Press Space, Enter, or Escape (before entering the grid) to dismiss the picker without inserting an emoji.
+7. Backspacing to delete the `:` also dismisses the picker.
 
 ## Architecture
 

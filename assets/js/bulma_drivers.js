@@ -788,7 +788,13 @@ function handlePickerKey(e, el, tooltip, opts) {
             opts.arrowPort.send(e.key.replace("Arrow", "").toLowerCase());
             return
         }
-        if (e.key === "Enter" || e.key === "Return" || e.key === "Tab") {
+        if (e.key === "Tab") {
+            e.preventDefault();
+            e.stopPropagation();
+            opts.arrowPort.send("next"); // cycle through items
+            return
+        }
+        if (e.key === "Enter" || e.key === "Return") {
             e.preventDefault();
             e.stopPropagation();
             opts.selectPort.send(null);
