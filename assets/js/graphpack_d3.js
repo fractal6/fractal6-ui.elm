@@ -204,7 +204,7 @@ export const GraphPack = {
 
     // Avatars (first links of the roles whose names are drawn)
     fileServerUrl: typeof FILE_SERVER_URL !== "undefined" ? FILE_SERVER_URL : "",
-    avatarImages: {}, // file id -> {img, ok}
+    avatarImages: {}, // file id -> {img, ok, mips}
     avatarFrame: null,
     avatarHovered: null, // username whose avatar disc is under the pointer
     avatarMinRayon: 6,
@@ -636,7 +636,10 @@ export const GraphPack = {
         ctx2d.arc(x, y, r, 0, 2 * Math.PI, true);
         ctx2d.clip();
         if (av?.ok) {
-            ctx2d.drawImage(av.img, x - r, y - r, 2 * r, 2 * r);
+            // Smallest copy at least the disc size in device pixels (the original when larger than all)
+            var px = 2 * r * (window.devicePixelRatio || 1);
+            ctx2d.imageSmoothingQuality = "high"; // sharper in Chrome/Safari, ignored by Firefox
+            ctx2d.drawImage(av.mips.findLast(m => m.width >= px) || av.mips[0], x - r, y - r, 2 * r, 2 * r);
         } else {
             // Identicon (also while the image loads or when it fails), sized like the HTML ones (~0.95r)
             var ic = identicon(fl.username);
@@ -657,7 +660,20 @@ export const GraphPack = {
         var av = this.avatarImages[id];
         if (!av) {
             av = this.avatarImages[id] = { img: new Image(), ok: false };
-            av.img.onload = () => { av.ok = true; this.scheduleAvatarRedraw(); };
+            av.img.onload = () => {
+                // Half-size copies down to 16px: drawImage gets grainy beyond a 2x downscale.
+                av.mips = [av.img];
+                for (var w = av.img.naturalWidth >> 1; w >= 16; w >>= 1) {
+                    var c = document.createElement("canvas");
+                    c.width = c.height = w;
+                    var g = c.getContext("2d");
+                    if (!g) break
+                    g.drawImage(av.mips[av.mips.length - 1], 0, 0, w, w);
+                    av.mips.push(c);
+                }
+                av.ok = true;
+                this.scheduleAvatarRedraw();
+            };
             av.img.src = this.fileServerUrl + "/file/" + id;
         }
         return av

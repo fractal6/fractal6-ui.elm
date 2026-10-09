@@ -40,7 +40,8 @@ the identicon's size, so both sit on the same baseline.
 one level below (when the zoomed node is focused). Users without an avatar (or while it loads)
 get the identicon, ported to JS in `avatars.js` (`identicon`, same hash as `dividat/elm-identicon`,
 LRU-cached for the last 50 users).
-The `@username` text only stays when the circle is too small. Sizes: `avatarMinRayon` / `avatarMaxRayon`. One `Image` per id (`avatarImages`), one coalesced
+The `@username` text only stays when the circle is too small. Sizes: `avatarMinRayon` / `avatarMaxRayon`. One `Image` per id (`avatarImages`), with half-size copies built on load (down
+to 16px, drawn from the closest one for a clean downscale), one coalesced
 redraw after decodes (`scheduleAvatarRedraw`, skipped during motion). The disc is kept on
 `node.ctx.avatar` for the hover hit test (`getAvatarUnderPointer`).
 
