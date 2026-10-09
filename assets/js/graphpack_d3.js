@@ -451,30 +451,6 @@ export const GraphPack = {
                 ctx.arc(node.ctx.centerX, node.ctx.centerY, rayon, 0, 2 * Math.PI, true);
                 ctx.fill();
         }
-
-        // Draw owned Role
-        if (rayon > 1 && (this.uctx && node.data.first_link) && this.uctx.username == node.data.first_link.username) {
-            // Draw user pin
-            //var r =  Math.max(10 - (node.depth - this.focusedNode.depth) , 1)/4
-            //ctx.beginPath();
-            //ctx.fillStyle = "green";
-            //ctx.arc(node.ctx.centerX, node.ctx.centerY + node.ctx.rayon*3/4 , r,
-            //    0, 2 * Math.PI, true);
-            //ctx.fill();
-
-            // Draw user dashed border
-            var w = 2;
-            var color = this.link2Color;
-            ctx.beginPath();
-            ctx.setLineDash([10, 10]);
-            ctx.beginPath();
-            ctx.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon - w * 0.5,
-                0, 2 * Math.PI, true);
-            ctx.lineWidth = w;
-            ctx.strokeStyle = color;
-            ctx.stroke();
-            ctx.setLineDash([]);
-        }
     },
 
     drawNodeNames(node) {
@@ -688,11 +664,12 @@ export const GraphPack = {
     },
 
     // Coalesce decoded avatars into one redraw; motion frames redraw anyway.
+    // Skipped while drag/group-hover overlays are shown, a plain redraw would erase them.
     scheduleAvatarRedraw() {
         if (this.avatarFrame !== null) return
         this.avatarFrame = requestAnimationFrame(() => {
             this.avatarFrame = null;
-            if (!this.isActive() || !this.graph || this.motion) return
+            if (!this.isActive() || !this.graph || this.motion || this.isDragging || this.hoverGroup) return
             var hovered = this.hoveredNode;
             this.drawCanvas();
             this.hoveredNode = null;
@@ -1146,7 +1123,6 @@ export const GraphPack = {
         this.backgroundColor = styles.getPropertyValue('--body-background-color').trim()
         this.focusCircleColor = styles.getPropertyValue('--link').trim()
         this.hoverCircleColor = styles.getPropertyValue('--text-weak').trim()
-        this.link2Color = styles.getPropertyValue('--link2').trim()
         this.nameColor = styles.getPropertyValue('--text-evidence').trim()
         this.usernameColor = styles.getPropertyValue('--text').trim()
         this.userEmoticonBg = styles.getPropertyValue('--user-emoticon-bg').trim() || this.userEmoticonBg
