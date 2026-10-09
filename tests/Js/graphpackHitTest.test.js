@@ -183,3 +183,46 @@ describe('keyTarget (keyboard navigation)', () => {
         expect(gp.keyTarget('a')).toBeUndefined();
     });
 });
+
+describe('avatars', () => {
+    test('avatar disc hit test on the zoomed node children', () => {
+        const g = mkGraph();
+        const gp = mkGp(g, g.root);
+        gp.zoomedNode = g.root;
+        g.roleB.data.first_link = { username: 'bob', avatar: { id: '0x2a' } };
+        g.roleB.ctx = { centerX: 150, centerY: 100, rayon: 19, avatar: { x: 150, y: 110, r: 5 } };
+        expect(gp.getAvatarUnderPointer(at(153, 113))).toBe(g.roleB);
+        expect(gp.getAvatarUnderPointer(at(150, 100))).toBeNull(); // role, off the disc
+        gp.motion = {};
+        expect(gp.getAvatarUnderPointer(at(150, 110))).toBeNull(); // paused during motion
+    });
+
+    test('avatar disc of a role one level below, only when the zoomed node is focused', () => {
+        const g = mkGraph();
+        const roleX = role(60, 120, 10, 2, 'Peer');
+        g.circleA.children.push(roleX);
+        roleX.parent = g.circleA;
+        roleX.data.first_link = { username: 'alice', avatar: { id: '0x2b' } };
+        roleX.ctx = { centerX: 60, centerY: 120, rayon: 9.5, avatar: { x: 60, y: 120, r: 7 } };
+        const gp = mkGp(g, g.root);
+        gp.zoomedNode = g.root;
+        expect(gp.getAvatarUnderPointer(at(62, 121))).toBe(roleX);
+        gp.focusedNode = g.roleB; // role focused: zoomed on its parent, nested subtrees not drawn
+        expect(gp.getAvatarUnderPointer(at(62, 121))).toBeNull();
+    });
+
+    test('one redraw for N decoded avatars', () => {
+        jest.useFakeTimers();
+        const gp = Object.create(GraphPack);
+        gp.avatarImages = {};
+        gp.avatarFrame = null;
+        gp.graph = {};
+        gp.isActive = () => true;
+        gp.drawCanvas = jest.fn();
+        ['a', 'b', 'c'].map(id => gp.avatarImage(id)).forEach(av => av.img.onload());
+        expect(gp.avatarImage('a').ok).toBe(true);
+        jest.runAllTimers();
+        expect(gp.drawCanvas).toHaveBeenCalledTimes(1);
+        jest.useRealTimers();
+    });
+});

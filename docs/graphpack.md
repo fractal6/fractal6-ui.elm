@@ -45,6 +45,8 @@ focused node:
 
 `drawNode` projects pack coordinates through `zoomCtx`; names, hover borders and the
 tooltip are drawn on top. Colors come from CSS variables (`computeCircleColorRange`).
+Roles linked to a user with an avatar draw it in place of the `@username` line, and
+hovering it opens the user card (see [avatars.md](avatars.md)).
 
 ### Motion and lifecycle
 
@@ -111,7 +113,7 @@ move modal for its own `domid`.
 
 ## Tests
 
-- `tests/Js/graphpackHitTest.test.js` — geometric hit-testing (depth caps, sibling stop level, role factors, transform inversion).
+- `tests/Js/graphpackHitTest.test.js` — geometric hit-testing (depth caps, sibling stop level, role factors, transform inversion), avatar disc and redraw coalescing.
 - `tests/Js/graphpackPorts.test.js` — the real canvas renderer with controlled D3 timers: packing, focus/move mapping, motion, tooltip, resize, cleanup, cards placement.
 - `tests/Elm/GraphTest.elm` — subtree discovery, atomic moves, rename payloads, counter shift, `nid2eid`/`nodeIdCodec` roundtrip, drag-modal activation, tooltip menu nesting.
 - `tests/Elm/ShapesTest.elm` — quarter-disc path geometry.

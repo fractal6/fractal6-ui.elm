@@ -130,7 +130,7 @@ initModel path focus session =
     , message_result = NotAsked
 
     -- Components
-    , assigneesPanel = UserSearchPanel.init "" AssignUser session.user
+    , assigneesPanel = UserSearchPanel.init "" AssignUser session
     , labelsPanel = LabelSearchPanel.init "" AssignLabel session.user
     , comments = Comments.init focus.nameid "" session
 
@@ -1034,7 +1034,7 @@ viewTensionSidePane t model =
                 , ternary hasAssigneeRight (onClick DoAssigneeEdit) (onClick NoMsg)
                 ]
                 [ if List.length assignees > 0 then
-                    viewUsers False assignees
+                    viewUsers model.session False assignees
 
                   else
                     div [ class "help", classList [ ( "is-w", hasAssigneeRight ) ] ] [ text T.addAssignees ]
@@ -1326,7 +1326,7 @@ viewDraftSidePane d model =
                 , ternary canEdit (onClick DoAssigneeEdit) (onClick NoMsg)
                 ]
                 [ if List.length assignees > 0 then
-                    viewUsers False assignees
+                    viewUsers model.session False assignees
 
                   else
                     div [ class "help", classList [ ( "is-w", canEdit ) ] ] [ text T.addAssignees ]

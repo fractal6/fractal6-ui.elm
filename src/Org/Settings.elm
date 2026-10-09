@@ -453,7 +453,7 @@ init global flags =
             , template_form = initTensionTemplateForm session.common.user newFocus.nameid
             , templates = NotAsked
             , labelsPanel = LabelSearchPanel.init "" SelectLabel session.common.user
-            , assigneesPanel = UserSearchPanel.init "" SelectUser session.common.user
+            , assigneesPanel = UserSearchPanel.init "" SelectUser session.common
             , templates_top = RemoteData.NotAsked
             , templates_sub = RemoteData.NotAsked
             , template_add = action == "new" && menu == TemplatesMenu
@@ -3062,7 +3062,7 @@ viewTensionTemplates model =
                                                         , td [] [ text (withDefault "" d.description) ]
                                                         , td [] [ tensionIcon2 d.type_ ]
                                                         , td [] [ LabelSearchPanel.viewLabels Nothing (withDefault [] d.labels) ]
-                                                        , td [] [ viewUsers False (withDefault [] d.assignees) ]
+                                                        , td [] [ viewUsers model.session False (withDefault [] d.assignees) ]
                                                         , td []
                                                             [ if d.is_recursive then
                                                                 A.icon "icon-check"

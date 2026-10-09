@@ -566,7 +566,7 @@ type alias Comment =
     { id : String
     , createdAt : String
     , updatedAt : Maybe String
-    , createdBy : Username
+    , createdBy : User
     , message : String
 
     -- Reaction Results are agglomerated in the query decoder
@@ -829,7 +829,7 @@ type alias ProjectFull =
     , description : Maybe String
     , parentnameid : Maybe String
     , nodes : List EmitterOrReceiver
-    , collaborators : List Username
+    , collaborators : List User
     , peerCanEditProject : Bool
     , guestCanEditProject : Bool
     }
@@ -842,7 +842,7 @@ type alias ProjectData =
     , status : ProjectStatus.ProjectStatus
     , nodes : List EmitterOrReceiver
     , columns : List ProjectColumn
-    , collaborators : List Username
+    , collaborators : List User
     , peerCanEditProject : Bool
     , guestCanEditProject : Bool
     }
@@ -973,7 +973,7 @@ type alias Mandate =
 
 initUserctx : UserCtx
 initUserctx =
-    UserCtx Nothing "" Lang.En initUserRights [] ""
+    UserCtx Nothing "" Nothing Lang.En initUserRights [] ""
 
 
 initNodeData : NodeData
@@ -1047,12 +1047,14 @@ type alias Email =
 type alias User =
     { username : String
     , name : Maybe String
+    , avatar : Maybe String
     }
 
 
 type alias Member =
     { username : String
     , name : Maybe String
+    , avatar : Maybe String
     , roles : List UserRoleExtended
     }
 
@@ -1061,8 +1063,7 @@ type alias UserView a =
     { a
         | username : String
         , name : Maybe String
-
-        -- avatar ?
+        , avatar : Maybe String
     }
 
 
@@ -1127,6 +1128,7 @@ type alias NotificationsForm =
 type alias UserCtx =
     { name : Maybe String
     , username : String
+    , avatar : Maybe String
     , lang : Lang.Lang
     , rights : UserRights
     , roles : List UserRole
@@ -1137,6 +1139,7 @@ type alias UserCtx =
 type alias UserProfile =
     { username : String
     , name : Maybe String
+    , avatar : Maybe String
     , lang : Lang.Lang
     , rights : UserRights
     , roles : List UserRole
@@ -1152,9 +1155,19 @@ type alias UserProfile =
     }
 
 
+type alias UserCard =
+    { username : String
+    , name : Maybe String
+    , avatar : Maybe String
+    , bio : Maybe String
+    , location : Maybe String
+    }
+
+
 type alias UserFull =
     { username : String
     , name : Maybe String
+    , avatar : Maybe String
     , rights : UserRights
     , roles : List UserRole
 
@@ -1176,6 +1189,7 @@ type alias UserCommon a =
     { a
         | username : String
         , name : Maybe String
+        , avatar : Maybe String
         , rights : UserRights
         , roles : List UserRole
 

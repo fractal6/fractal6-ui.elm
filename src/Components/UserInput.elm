@@ -484,7 +484,7 @@ viewUserSeeker (State model) =
                                 , classList [ ( "is-active", model.isArrowMode && model.activePos == i ) ]
                                 , onMousedownPD (OnClickUser u)
                                 ]
-                                [ viewUserFull 1 False False u ]
+                                [ viewUserFull model.session 1 False False u ]
                         )
                     |> List.append [ loadingSpinRight (model.users_result == LoadingSlowly) ]
         ]
@@ -505,7 +505,7 @@ viewInput op model =
                                 viewEmail x.email
 
                               else
-                                viewUserFull 0 False False (User x.username x.name)
+                                viewUserFull model.session 0 False False (User x.username x.name Nothing)
                             ]
                         , span [ class "tag is-delete is-rounded", onClick (OnUnselect i) ] []
                         ]
@@ -584,7 +584,7 @@ viewUserSelectors op model =
                                 [ class "panel-block pt-1 pb-1"
                                 , onMousedownPD (OnClickUser u)
                                 ]
-                                [ viewUserFull 1 False False u ]
+                                [ viewUserFull model.session 1 False False u ]
                         )
                     |> List.append [ loadingSpinRight (model.users_result == LoadingSlowly) ]
         ]

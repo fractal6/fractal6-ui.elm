@@ -169,6 +169,39 @@
     display: inline-block !important;
 }
 
+// Uploaded avatar fills the circle (the padding-top only centers the identicon).
+.image.circleBaseInline > img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+// User hover card, placed by assets/js/avatars.js (hidden until placed).
+#userCard {
+    position: fixed;
+    z-index: 200; // above the modals
+    width: 300px;
+    margin: 0;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color-light);
+    visibility: hidden;
+    &.is-placed {
+        visibility: visible;
+    }
+    .media-content {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    p {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+}
+
 .circle00 {
     background: var(--user-emoticon-bg);
     width: 28px;

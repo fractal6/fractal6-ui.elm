@@ -853,7 +853,7 @@ update_ apis message model =
                                 if isSelfContract model.form.uctx model.form.users then
                                     let
                                         fs =
-                                            model.form.users |> List.head |> Maybe.map (\u -> { username = u.username, name = u.name })
+                                            model.form.users |> List.head |> Maybe.map (\u -> { username = u.username, name = u.name, avatar = model.form.uctx.avatar })
                                     in
                                     [ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = fs }), DoUpdateToken ]
 
@@ -1318,7 +1318,7 @@ viewPanelMenu op model =
                 --  Remove User (Assume Guest)
                 let
                     user =
-                        userFromBaseMember model.targetid |> withDefault "" |> (\u -> { username = u, name = Nothing })
+                        userFromBaseMember model.targetid |> withDefault "" |> (\u -> { username = u, name = Nothing, avatar = Nothing })
                 in
                 [ div [ class "dropdown-item button-light is-danger", onClick (OnOpenModal (UnLinkAction user)) ]
                     [ A.icon1 "icon-user-plus" T.removeUser ]
@@ -1437,7 +1437,7 @@ viewStep1 op model =
                     ]
 
                 UnLinkAction user ->
-                    [ div [ class "mb-5" ] [ text T.confirmToUnlinkUser, text ": ", viewUserFull 2 True True user ]
+                    [ div [ class "mb-5" ] [ text T.confirmToUnlinkUser, text ": ", viewUserFull model.session 2 True True user ]
                     , viewComment model
                     ]
 

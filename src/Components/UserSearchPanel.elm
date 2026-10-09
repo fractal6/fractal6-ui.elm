@@ -29,11 +29,10 @@ import Dict
 import Fractale.Codecs exposing (FractalBaseRoute(..), toLink)
 import Fractale.Error exposing (viewGqlErrors)
 import Fractale.Form exposing (AssigneeForm, Ev, initAssigneeForm)
-import Fractale.User exposing (UserState(..))
 import Fractale.View exposing (getAvatar1, viewUserFull)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, div, i, input, nav, p, span, text)
-import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, title, type_, value)
+import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD
@@ -46,7 +45,7 @@ import Query.PatchTension exposing (setAssignee)
 import Query.QueryNode exposing (queryMembers)
 import Query.QueryProject exposing (setProjectDraftAssignee)
 import Schema.Enum.TensionEvent as TensionEvent
-import Session exposing (Apis, GlobalCmd(..), UserSearchPanelOnClickAction(..))
+import Session exposing (Apis, GlobalCmd(..), SessionCommon, UserSearchPanelOnClickAction(..))
 import Text as T
 import Time
 import Utils.Bool exposing (ternary)
@@ -77,15 +76,15 @@ id_target_name =
     "usersPanelContent"
 
 
-init : String -> OnClickAction -> UserState -> State
-init tid action user =
-    initModel tid action user |> State
+init : String -> OnClickAction -> SessionCommon -> State
+init tid action session =
+    initModel tid action session |> State
 
 
-initModel : String -> OnClickAction -> UserState -> Model
-initModel tid action user =
+initModel : String -> OnClickAction -> SessionCommon -> Model
+initModel tid action session =
     { isOpen = False
-    , form = initAssigneeForm tid user
+    , form = initAssigneeForm tid session.user
     , click_result = NotAsked
     , action = action
 
@@ -96,17 +95,18 @@ initModel tid action user =
 
     -- Common
     , refresh_trial = 0
+    , session = session
     }
 
 
-load : Maybe Model -> UserState -> State
-load model user =
+load : Maybe Model -> SessionCommon -> State
+load model session =
     case model of
         Just m ->
-            State { m | click_result = NotAsked }
+            State { m | click_result = NotAsked, session = session }
 
         Nothing ->
-            init "" SelectUser user
+            init "" SelectUser session
 
 
 getModel : State -> Model
@@ -484,7 +484,7 @@ viewNew op (State model) =
                 [ A.icon1 "icon-1x icon-user" "", text T.assignees ]
             ]
         , if List.length op.selectedAssignees > 0 then
-            viewUsers False op.selectedAssignees
+            viewUsers model.session False op.selectedAssignees
 
           else
             text ""
@@ -605,7 +605,7 @@ viewAssigneeSelectors isEmbedded users op model =
                                 , onClick (OnSubmit <| OnAssigneeClick u (not isActive))
                                 ]
                                 [ span [ class "panel-icon" ] [ A.icon iconCls ]
-                                , viewUserFull 1 False False u
+                                , viewUserFull model.session 1 False False u
                                 , loadingSpin isLoading
                                 ]
                         )
@@ -619,14 +619,17 @@ viewAssigneeSelectors isEmbedded users op model =
 --
 
 
-viewUsers : Bool -> List User -> Html msg
-viewUsers isLinked users =
-    span [ class "usersList" ] (List.map (\u -> viewUser isLinked u.username) users)
+viewUsers : SessionCommon -> Bool -> List User -> Html msg
+viewUsers session isLinked users =
+    span [ class "usersList" ] (List.map (viewUser session isLinked) users)
 
 
-viewUser : Bool -> String -> Html msg
-viewUser isLinked_ username =
+viewUser : SessionCommon -> Bool -> User -> Html msg
+viewUser session isLinked_ user =
     let
+        username =
+            user.username
+
         isLinked =
             if String.contains "@" username then
                 False
@@ -635,10 +638,10 @@ viewUser isLinked_ username =
                 isLinked_
     in
     if isLinked then
-        span [ class "mr-2", title username ]
+        span [ class "mr-2" ]
             [ a [ href (toLink UsersBaseUri username []) ]
-                [ getAvatar1 username ]
+                [ getAvatar1 session user ]
             ]
 
     else
-        span [ class "mr-2", title username ] [ getAvatar1 username ]
+        span [ class "mr-2" ] [ getAvatar1 session user ]

@@ -713,7 +713,7 @@ viewBlob data op_m =
                                     [ A.icon1 "icon-users" ""
                                     , span [ class "has-text-evidence" ] [ text (String.fromInt i) ]
                                     , span [ class "is-discrete" ] [ text (" " ++ txt ++ "  " ++ space_) ]
-                                    , viewUsers True data.leads
+                                    , viewUsers data.session True data.leads
                                     ]
 
                               else
@@ -722,7 +722,7 @@ viewBlob data op_m =
                                     (\fs ->
                                         div [ class "is-inline-flex mt-3" ]
                                             [ A.icon1 "icon-user" (String.toLower T.firstLink ++ "  " ++ space_)
-                                            , viewUser True fs.username
+                                            , viewUser data.session True fs
                                             ]
                                     )
 

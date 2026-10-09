@@ -79,6 +79,7 @@ module Query.QueryNode exposing
     , tensionTemplateLitePayload
     , tidPayload
     , userPayload
+    , avatarPayload
     )
 
 import Codecs exposing (decodeColumnsJson)
@@ -114,6 +115,7 @@ import Schema.Object.BuildInfo
 import Schema.Object.Contract
 import Schema.Object.ContractAggregateResult
 import Schema.Object.Event
+import Schema.Object.File
 import Schema.Object.EventFragment
 import Schema.Object.Label
 import Schema.Object.Mandate
@@ -487,9 +489,17 @@ blobIdPayload =
 
 userPayload : SelectionSet User Schema.Object.User
 userPayload =
-    SelectionSet.map2 User
+    SelectionSet.map3 User
         Schema.Object.User.username
         Schema.Object.User.name
+        avatarPayload
+
+
+{-| Avatar file id of a user, rendered as `{file_server_url}/file/<id>`.
+-}
+avatarPayload : SelectionSet (Maybe String) Schema.Object.User
+avatarPayload =
+    Schema.Object.User.avatar identity (SelectionSet.map decodedId Schema.Object.File.id)
 
 
 pNodePayload : SelectionSet PNode Schema.Object.Node
@@ -1043,7 +1053,7 @@ membersLocalDecoder data =
             (\n ->
                 case n.first_link of
                     Just first_link ->
-                        Just [ Member first_link.username first_link.name [ node2role n ] ]
+                        Just [ Member first_link.username first_link.name first_link.avatar [ node2role n ] ]
 
                     Nothing ->
                         case n.children of
@@ -1068,7 +1078,7 @@ membersNodeDecoder nodes =
         toTuples m =
             case m.first_link of
                 Just fs ->
-                    [ ( fs.username, Member fs.username fs.name [ node2role m ] ) ]
+                    [ ( fs.username, Member fs.username fs.name fs.avatar [ node2role m ] ) ]
 
                 Nothing ->
                     []
@@ -1559,7 +1569,7 @@ projectFullPayload =
         |> with Schema.Object.Project.description
         |> with (Schema.Object.Project.parentnameid |> SelectionSet.map Just)
         |> with (Schema.Object.Project.nodes identity emiterOrReceiverPayload |> SelectionSet.map (withDefault []))
-        |> with (Schema.Object.Project.collaborators identity (SelectionSet.map Username Schema.Object.User.username) |> SelectionSet.map (withDefault []))
+        |> with (Schema.Object.Project.collaborators identity userPayload |> SelectionSet.map (withDefault []))
         |> with Schema.Object.Project.peerCanEditProject
         |> with Schema.Object.Project.guestCanEditProject
 

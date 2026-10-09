@@ -46,7 +46,6 @@ import ModelSchema
         , UserCtx
         , UserRights
         , UserRole
-        , Username
         )
 import Schema.Enum.Lang as Lang
 import Schema.Enum.NodeMode as NodeMode
@@ -191,7 +190,7 @@ projectDecoder =
         |> JDE.andMap (JD.maybe (JD.field "description" JD.string))
         |> JDE.andMap (JD.maybe (JD.field "parentnameid" JD.string))
         |> JDE.andMap (JD.field "nodes" (JD.list emitterOrReceiverDecoder) |> JDE.withDefault [])
-        |> JDE.andMap (JD.field "collaborators" (JD.list (JD.map Username (JD.field "username" JD.string))) |> JDE.withDefault [])
+        |> JDE.andMap (JD.field "collaborators" (JD.list userDecoder) |> JDE.withDefault [])
         |> JDE.andMap (JD.field "peerCanEditProject" JD.bool |> JDE.withDefault False)
         |> JDE.andMap (JD.field "guestCanEditProject" JD.bool |> JDE.withDefault False)
 
@@ -204,9 +203,10 @@ projectDecoder =
 
 userCtxDecoder : JD.Decoder UserCtx
 userCtxDecoder =
-    JD.map6 UserCtx
+    JD.map7 UserCtx
         (JD.maybe <| JD.field "name" JD.string)
         (JD.field "username" JD.string)
+        avatarDecoder
         (JD.field "lang" <| Lang.decoder)
         (JD.field "rights" <|
             JD.map3 UserRights
@@ -233,6 +233,7 @@ userCtxEncoder userCtx =
     JE.object
         [ ( "name", JEE.maybe JE.string userCtx.name )
         , ( "username", JE.string userCtx.username )
+        , ( "avatar", avatarEncoder userCtx.avatar )
         , ( "lang", JE.string <| Lang.toString userCtx.lang )
         , ( "rights"
           , JE.object
@@ -260,9 +261,22 @@ userCtxEncoder userCtx =
 
 userDecoder : JD.Decoder User
 userDecoder =
-    JD.map2 User
+    JD.map3 User
         (JD.field "username" JD.string)
         (JD.maybe <| JD.field "name" JD.string)
+        avatarDecoder
+
+
+{-| Optional nested `avatar: {id}`, as emitted by the backend.
+-}
+avatarDecoder : JD.Decoder (Maybe String)
+avatarDecoder =
+    JD.maybe (JD.field "avatar" (JD.field "id" JD.string))
+
+
+avatarEncoder : Maybe String -> JE.Value
+avatarEncoder =
+    JEE.maybe (\id -> JE.object [ ( "id", JE.string id ) ])
 
 
 usersEncoder : List User -> JE.Value
@@ -274,6 +288,7 @@ userEncoder : User -> List ( String, JE.Value )
 userEncoder u =
     [ ( "username", JE.string u.username )
     , ( "name", JEE.maybe JE.string u.name )
+    , ( "avatar", avatarEncoder u.avatar )
     ]
 
 

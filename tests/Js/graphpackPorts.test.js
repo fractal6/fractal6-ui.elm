@@ -28,7 +28,7 @@ function canvasDom() {
             </div>
         </div></div><div><div id="nextToChart"></div></div>`;
     Object.defineProperty(document.getElementById('canvasParent'), 'offsetWidth', { value: 600 });
-    const ctx = Object.fromEntries(['setTransform', 'fillRect', 'beginPath', 'fill', 'stroke', 'setLineDash', 'fillText']
+    const ctx = Object.fromEntries(['setTransform', 'fillRect', 'beginPath', 'fill', 'stroke', 'setLineDash', 'fillText', 'save', 'restore', 'clip', 'drawImage']
         .map(name => [name, jest.fn()]));
     ctx.measureText = text => ({ width: text.length * 10 });
     ctx.arc = jest.fn((x, y, r) => {

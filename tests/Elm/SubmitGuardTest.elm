@@ -17,7 +17,7 @@ import Fractale.Form exposing (Ev, initActionForm)
 import Fractale.User exposing (UserState(..))
 import Html.Attributes as Attr
 import Loading exposing (RequestResult(..))
-import ModelSchema exposing (Comment, Tension, Username, initUserctx)
+import ModelSchema exposing (Comment, Tension, User, Username, initUserctx)
 import Ports
 import Schema.Enum.Lang as Lang
 import Schema.Enum.NodeType as NodeType
@@ -58,14 +58,14 @@ session =
 
 comment : Comment
 comment =
-    Comment "0xc" "2026-01-01T00:00:00Z" Nothing (Username "author") "- [ ] task" [] []
+    Comment "0xc" "2026-01-01T00:00:00Z" Nothing (User "author" Nothing Nothing) "- [ ] task" [] []
 
 
 tension : Tension
 tension =
     Tension "0xt"
         comment.createdAt
-        comment.createdBy
+        (Username comment.createdBy.username)
         "Subject"
         TensionType.Operational
         Nothing
@@ -122,7 +122,7 @@ invitingRole =
         , NT.OnChangePost "name" "New role"
         , NT.OnChangePost "purpose" "Purpose"
         , NT.DoInvite
-        , NT.InviteInputMsg (UserInput.OnClickUser { username = "guest", name = Nothing })
+        , NT.InviteInputMsg (UserInput.OnClickUser { username = "guest", name = Nothing, avatar = Nothing })
         ]
 
 

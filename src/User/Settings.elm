@@ -21,12 +21,15 @@
 
 module User.Settings exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
+import Api.File as Api
 import Assets as A
 import Assets.Logo as Logo
 import Auth exposing (ErrState(..))
 import Browser.Navigation as Nav
 import Components.AuthModal as AuthModal
 import Dict
+import File exposing (File)
+import Json.Decode as JD
 import Form exposing (getd, isPostSendable, isPostSendableOr)
 import Form.Help as Help
 import Fractale.Codecs exposing (FractalBaseRoute(..))
@@ -39,7 +42,7 @@ import Fractale.View exposing (lang2str, viewProfileC, viewGoBack)
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, button, div, h2, hr, i, input, label, li, nav, option, select, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, name, placeholder, required, selected, style, target, title, type_, value)
+import Html.Attributes exposing (accept, attribute, checked, class, classList, disabled, for, href, id, name, placeholder, required, selected, style, target, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, withMaybeData)
@@ -52,7 +55,7 @@ import Query.QueryUser exposing (queryUserFull)
 import RemoteData
 import Requests exposing (updatePassword)
 import Schema.Enum.Lang as Lang
-import Session exposing (GlobalCmd(..), toF6Referer)
+import Session exposing (GlobalCmd(..), SessionCommon, toF6Referer)
 import Text as T
 import Time
 import Url exposing (Url)
@@ -116,6 +119,7 @@ type alias Model =
     , user : GqlData UserFull
     , user_result : GqlData UserFull
     , password_result : RestData UserCtx
+    , avatar_result : GqlData ()
     , menuFocus : MenuSettings
     , hasUnsavedData : Bool
     , switch_index : Int
@@ -217,6 +221,7 @@ init global flags =
             , user = Loading
             , user_result = NotAsked
             , password_result = RemoteData.NotAsked
+            , avatar_result = NotAsked
             , menuFocus = menu
             , hasUnsavedData = False
             , switch_index = -1
@@ -257,6 +262,10 @@ type Msg
     | SwitchNotifyByEmail Int Bool
     | OnPasswordUpdate
     | OnPasswordUpdateAck (RestData UserCtx)
+    | OnAvatarFile (Result String File)
+    | OnAvatarUploadAck (Result Api.ApiError Api.UploadResult)
+    | OnAvatarRemove String
+    | OnAvatarRemoveAck (Result Api.ApiError ())
       -- Common
     | NoMsg
     | LogErr String
@@ -381,6 +390,25 @@ update global message model =
                     Cmd.none
             )
 
+        OnAvatarFile (Ok file) ->
+            ( { model | avatar_result = Loading }
+            , Api.upload apis "avatar-upload" (Api.UserAvatar model.username) file OnAvatarUploadAck
+            , Cmd.none
+            )
+
+        OnAvatarFile (Err err) ->
+            ( { model | avatar_result = Failure [ err ] }, Cmd.none, Cmd.none )
+
+        -- Replace is an upload only: the backend drops the previous avatar.
+        OnAvatarUploadAck result ->
+            setAvatar global (Result.map (.id >> Just) result) model
+
+        OnAvatarRemove fid ->
+            ( { model | avatar_result = Loading }, Api.delete apis fid OnAvatarRemoveAck, Cmd.none )
+
+        OnAvatarRemoveAck result ->
+            setAvatar global (Result.map (always Nothing) result) model
+
         -- Common
         NoMsg ->
             ( model, Cmd.none, Cmd.none )
@@ -451,9 +479,40 @@ update global message model =
             ( { model | authModal = data }, out.cmds |> List.map (\m -> Cmd.map AuthModalMsg m) |> List.append (cmds ++ cmds_extra) |> Cmd.batch, Cmd.batch gcmds )
 
 
+{-| Update the preview and the session uctx (own avatar = `uctx.avatar`).
+-}
+setAvatar : Global.Model -> Result Api.ApiError (Maybe String) -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
+setAvatar global result model =
+    case result of
+        Ok avatar ->
+            ( { model | avatar_result = Success (), user = Loading.withMapData (\u -> { u | avatar = avatar }) model.user }
+            , Cmd.none
+            , case global.session.common.user of
+                LoggedIn uctx ->
+                    send (UpdateUserSession { uctx | avatar = avatar })
+
+                LoggedOut ->
+                    Cmd.none
+            )
+
+        Err err ->
+            ( { model | avatar_result = Failure [ Api.errorToString err ] }, Cmd.none, Cmd.none )
+
+
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ _ =
     [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
+    , Ports.avatarFileFromJs
+        (JD.decodeValue
+            (JD.oneOf
+                [ JD.field "file" File.decoder |> JD.map Ok
+                , JD.field "error" JD.string |> JD.map (always (Err T.avatarDecodeError))
+                ]
+            )
+            >> Result.mapError JD.errorToString
+            >> Result.andThen identity
+            >> OnAvatarFile
+        )
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
@@ -468,15 +527,15 @@ view : Global.Model -> Model -> Document Msg
 view global model =
     { title = model.username ++ "'s settings"
     , body =
-        [ view_ model
+        [ view_ global.session.common model
         , Lazy.lazy2 Help.view model.empty model.help |> Html.map HelpMsg
         , Lazy.lazy2 AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         ]
     }
 
 
-view_ : Model -> Html Msg
-view_ model =
+view_ : SessionCommon -> Model -> Html Msg
+view_ session model =
     div [ id "settings", class "columns is-centered top-section" ]
         [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
             [ div [ class "columns" ]
@@ -487,7 +546,7 @@ view_ model =
                 , div [ class "column" ]
                     [ case model.user of
                         Success user ->
-                            viewSettingsContent user model
+                            viewSettingsContent session user model
 
                         NotAsked ->
                             text ""
@@ -523,15 +582,17 @@ viewSettingsMenu model =
         ]
 
 
-viewSettingsContent : UserFull -> Model -> Html Msg
-viewSettingsContent user model =
+viewSettingsContent : SessionCommon -> UserFull -> Model -> Html Msg
+viewSettingsContent session user model =
     case model.menuFocus of
         ProfileMenu ->
             div [ class "columns" ]
                 [ div [ class "column is-6" ]
                     [ viewProfileSettings user model.user_result model.switch_index model.menuFocus model.form ]
                 , div [ class "column is-offset-1" ]
-                    [ viewProfileC user ]
+                    [ viewProfileC session user
+                    , viewAvatarSettings user model.avatar_result
+                    ]
                 ]
 
         AccountMenu ->
@@ -545,6 +606,36 @@ viewSettingsContent user model =
                 [ div [ class "column is-6" ]
                     [ viewEmailSettings user model.user_result model.switch_index model.menuFocus ]
                 ]
+
+
+{-| Upload/Remove under the profile preview. The file input is handled by `assets/js/avatars.js`.
+-}
+viewAvatarSettings : UserFull -> GqlData () -> Html Msg
+viewAvatarSettings user result =
+    let
+        isLoading =
+            Loading.isLoading result
+    in
+    div [ class "content" ]
+        [ div [ class "buttons" ]
+            [ label [ class "button is-small", classList [ ( "is-loading", isLoading ), ( "is-disabled", isLoading ) ] ]
+                [ input [ type_ "file", accept "image/*", class "is-hidden", attribute "data-avatar-input" "", disabled isLoading ] []
+                , A.icon1 "icon-image" T.uploadPicture
+                ]
+            , case user.avatar of
+                Just fid ->
+                    button [ class "button is-small", disabled isLoading, onClick (OnAvatarRemove fid) ] [ text T.remove ]
+
+                Nothing ->
+                    text ""
+            ]
+        , case result of
+            Failure err ->
+                viewGqlErrors err
+
+            _ ->
+                text ""
+        ]
 
 
 viewProfileSettings : UserFull -> GqlData UserFull -> Int -> MenuSettings -> UserProfileForm -> Html Msg

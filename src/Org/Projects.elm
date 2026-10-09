@@ -1037,7 +1037,7 @@ update global message model =
               }
             , Cmd.batch
                 [ Ports.bulma_driver "edit-project"
-                , List.map (\u -> Cmd.map UserInputMsg (send (UserInput.OnClickUser { username = u.username, name = Nothing }))) project.collaborators
+                , List.map (\u -> Cmd.map UserInputMsg (send (UserInput.OnClickUser u))) project.collaborators
                     |> Cmd.batch
                 ]
             , Cmd.none

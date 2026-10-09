@@ -693,7 +693,7 @@ nodeFromFragment parentid f =
     , source = Nothing
     , userCanJoin = Nothing
     , isRootArchived = Nothing
-    , first_link = Maybe.map (\fs -> { username = fs, name = Nothing }) f.first_link
+    , first_link = Maybe.map (\fs -> { username = fs, name = Nothing, avatar = Nothing }) f.first_link
     , n_open_tensions = 0
     , n_open_contracts = 0
     }

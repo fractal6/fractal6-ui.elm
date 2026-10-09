@@ -815,7 +815,7 @@ init global flags =
             , tensions_all = fromMaybeData session.data.tensions_all Loading
             , query = session.common.query
             , offset = ternary fs.refresh 0 (Dict.get "load" session.common.query |> withDefault [] |> List.head |> withDefault "" |> loadDecoder)
-            , authorsPanel = UserSearchPanel.load session.data.authorsPanel session.common.user
+            , authorsPanel = UserSearchPanel.load session.data.authorsPanel session.common
             , labelsPanel = LabelSearchPanel.load session.data.labelsPanel session.common.user
             , pattern = Dict.get "q" session.common.query |> withDefault [] |> List.head |> withDefault ""
             , pattern_init = Dict.get "q" session.common.query |> withDefault [] |> List.head |> withDefault ""
@@ -827,7 +827,7 @@ init global flags =
             , isCatMoreOpen = False
             , depthFilter = Dict.get "d" session.common.query |> withDefault [] |> List.head |> withDefault "" |> depthFilterDecoder
             , sortFilter = Dict.get "sort" session.common.query |> withDefault [] |> List.head |> withDefault "" |> sortFilterDecoder
-            , authors = Dict.get "u" session.common.query |> withDefault [] |> List.map (\x -> User x Nothing)
+            , authors = Dict.get "u" session.common.query |> withDefault [] |> List.map (\x -> User x Nothing Nothing)
             , labels = Dict.get "l" session.common.query |> withDefault [] |> List.map (\x -> Label "" x Nothing [])
             , tensions_count = fromMaybeData session.data.tensions_count Loading
             , pinned_sub = NotAsked
@@ -2621,7 +2621,7 @@ viewAssigneeTensions model =
                     in
                     span []
                         [ user
-                            |> Maybe.map (\u -> viewUserFull 1 True False u)
+                            |> Maybe.map (\u -> viewUserFull model.session 1 True False u)
                             |> withDefault (text "Loading...")
                         ]
 

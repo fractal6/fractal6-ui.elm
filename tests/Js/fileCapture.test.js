@@ -1,7 +1,7 @@
 // Files dropped on a [data-paste-capture] textarea reach Elm through the same
 // pastedFilesFromJs port as a paste, but with isPaste=false and their own name:
 // Elm stages them as attachment chips instead of inline `![](name)` placeholders.
-import { initFileCapture } from '../../assets/js/ports.js';
+import { initFileCapture } from '../../assets/js/fileCapture.js';
 
 const app = { ports: { pastedFilesFromJs: { send: jest.fn() } } };
 

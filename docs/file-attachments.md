@@ -57,7 +57,7 @@ is left in the queue, on purpose.
 
 ## Inline paste and drop
 
-Textareas carry `data-paste-capture="true"`; `initFileCapture` (`assets/js/ports.js`) attaches
+Textareas carry `data-paste-capture="true"`; `initFileCapture` (`assets/js/fileCapture.js`) attaches
 document-level `paste` / `dragover` / `dragleave` / `drop` listeners that forward files to Elm
 with the textarea id, through the same `pastedFilesFromJs` port. `dragover` is prevented (so
 `drop` fires), sets `dropEffect = 'copy'` and toggles `.is-dragover` on the textarea
@@ -112,7 +112,7 @@ Blob URLs are revoked through `REVOKE_OBJECT_URL` on ack, manual removal, and pr
 
 ## Not wired
 
-- Avatars: the transport has the anchors, no UI uses them.
+- Org avatars: the transport has the anchor, no UI uses it. User avatars: see [avatars.md](avatars.md).
 - Contract comments: no tension anchor the backend accepts, so no paste capture, no Attach.
 
 ## Files
@@ -122,7 +122,8 @@ Blob URLs are revoked through `REVOKE_OBJECT_URL` on ack, manual removal, and pr
 | `src/Api/File.elm` | REST upload/delete, `Anchor`, `ApiError`, decoders |
 | `src/Components/Comments.elm` | Per-cid queue, paste handling, chip views, `kickoffUploads` |
 | `src/Ports.elm` | `pastedFilesFromJs`, `insertAtCaret` |
-| `assets/js/ports.js` | `initFileCapture` (paste/drop capture), `INSERT_AT_CARET` |
+| `assets/js/fileCapture.js` | `initFileCapture` (paste/drop capture) |
+| `assets/js/ports.js` | `INSERT_AT_CARET` |
 | `assets/sass/components/_comments.scss` | `.is-dragover` drop-target highlight, chip styles |
 | `tests/Js/fileCapture.test.js` | jsdom check of the paste/drop listeners |
 | `assets/js/textutils.js` | `replaceRange`, shared with rich-text |

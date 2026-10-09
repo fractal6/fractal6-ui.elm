@@ -50,7 +50,7 @@ import Ports
 import Query.QueryNode exposing (queryNodeExt)
 import Query.QueryUser exposing (queryUserProfile)
 import Schema.Enum.NodeOrderable as NodeOrderable
-import Session exposing (CommonMsg, GlobalCmd(..))
+import Session exposing (CommonMsg, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
 import Url exposing (Url)
@@ -416,7 +416,7 @@ view global model =
     , body =
         [ case model.user of
             Success user ->
-                view_ global.session.common.user user model
+                view_ global.session.common user model
 
             NotAsked ->
                 text ""
@@ -435,16 +435,16 @@ view global model =
     }
 
 
-view_ : UserState -> UserProfile -> Model -> Html Msg
-view_ user_s user model =
+view_ : SessionCommon -> UserProfile -> Model -> Html Msg
+view_ session user model =
     div [ id "profile", class "top-section" ]
         [ div [ class "columns" ]
             [ div [ class "column is-3" ]
                 [ div [ class "columns is-centered m-0 pl-2" ]
-                    [ viewProfileC user ]
+                    [ viewProfileC session user ]
                 ]
             , div [ class "column is-7" ]
-                [ viewProfileRight user_s user model ]
+                [ viewProfileRight session.user user model ]
             ]
         ]
 

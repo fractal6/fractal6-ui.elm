@@ -78,7 +78,7 @@ orgaToUsersData : NodesDict -> UsersDict
 orgaToUsersData nd =
     nd
         |> Dict.toList
-        |> List.filterMap (\( k, n ) -> Maybe.map (\fs -> ( nearestCircleid k, { username = fs.username, name = fs.name } )) n.first_link)
+        |> List.filterMap (\( k, n ) -> Maybe.map (\fs -> ( nearestCircleid k, fs )) n.first_link)
         |> toMapOfList
 
 

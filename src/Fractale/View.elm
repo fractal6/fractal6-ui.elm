@@ -28,10 +28,12 @@ import Fractale.Codecs exposing (FractalBaseRoute(..), NodeFocus, eor2ur, getOrg
 import Fractale.Graph exposing (getParentFragmentFromRole, maxPinnedTensions)
 import Fractale.User exposing (UserState(..))
 import Generated.Route as Route exposing (toHref)
-import Html exposing (Html, a, br, div, hr, input, span, text, i)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, style, target, title, type_, value)
+import Html exposing (Html, a, br, div, hr, i, img, input, span, text)
+import Html.Attributes exposing (alt, attribute, class, classList, disabled, href, id, src, style, target, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Identicon
+import Svg
+import Svg.Attributes as SA
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
@@ -431,24 +433,24 @@ viewUsernameLink username =
     a [ href (toLink UsersBaseUri username []) ] [ text username ]
 
 
-viewUser0 : String -> Html msg
-viewUser0 username =
-    span [ class "mr-2", title username ]
-        [ a [ href (toLink UsersBaseUri username []) ]
-            [ getAvatar0 username ]
+viewUser0 : SessionCommon -> AvatarUser a -> Html msg
+viewUser0 session user =
+    span [ class "mr-2" ]
+        [ a [ href (toLink UsersBaseUri user.username []) ]
+            [ getAvatar0 session user ]
         ]
 
 
-viewUser2 : String -> Html msg
-viewUser2 username =
-    span [ class "mr-2", title username ]
-        [ a [ href (toLink UsersBaseUri username []) ]
-            [ getAvatar2 username ]
+viewUser2 : SessionCommon -> AvatarUser a -> Html msg
+viewUser2 session user =
+    span [ class "mr-2" ]
+        [ a [ href (toLink UsersBaseUri user.username []) ]
+            [ getAvatar2 session user ]
         ]
 
 
-viewUserFull : Int -> Bool -> Bool -> UserView a -> Html msg
-viewUserFull size isLinked_ isBoxed user =
+viewUserFull : SessionCommon -> Int -> Bool -> Bool -> UserView a -> Html msg
+viewUserFull session size isLinked_ isBoxed user =
     let
         isLinked =
             if String.contains "@" user.username then
@@ -483,11 +485,11 @@ viewUserFull size isLinked_ isBoxed user =
     in
     ob
         (ternary isBoxed
-            ([ title user.username, class ("box field " ++ pad), attribute "style" "display:inline;" ] ++ lk)
+            ([ class ("box field " ++ pad), attribute "style" "display:inline;" ] ++ lk)
             ([] ++ lk)
         )
         [ span [ class "mr-2", attribute "style" (ternary isBoxed "position:relative;top:6px;" "") ]
-            [ avatar user.username ]
+            [ avatar session user ]
         , span [ attribute "style" (ternary isBoxed "" "position:relative;top:-4px;") ] <|
             case user.name of
                 Just name ->
@@ -598,10 +600,10 @@ viewRole cls_ hasTooltip isSelf now_m link_m msg r =
         [ A.icon1 (role2icon r) (upH r.name) ]
 
 
-viewProfileC : UserCommon a -> Html msg
-viewProfileC user =
+viewProfileC : SessionCommon -> UserCommon a -> Html msg
+viewProfileC session user =
     div [ attribute "style" "max-width:333px;" ]
-        [ div [ class "content" ] [ getAvatar3 user.username ]
+        [ div [ class "content" ] [ getAvatar3 session user ]
         , div [ class "content" ]
             [ case user.name of
                 Just name ->
@@ -676,7 +678,7 @@ viewTensionDateAndUser session cls createdAt createdBy =
             ]
 
 
-viewTensionDateAndUserC : SessionCommon -> String -> Username -> Html msg
+viewTensionDateAndUserC : SessionCommon -> String -> { a | username : String } -> Html msg
 viewTensionDateAndUserC session createdAt createdBy =
     span [] <|
         List.intersperse (text " ") <|
@@ -881,24 +883,49 @@ lang2str x =
 --
 
 
-getAvatar0 : String -> Html msg
-getAvatar0 username =
-    span [ class "image circleBaseInline circle00" ] [ Identicon.identicon "14px" username ]
+type alias AvatarUser a =
+    { a | username : String, avatar : Maybe String }
 
 
-getAvatar1 : String -> Html msg
-getAvatar1 username =
-    span [ class "image circleBaseInline circle0" ] [ Identicon.identicon "18px" username ]
+{-| User avatar image (`{url}/file/<id>`) or the generated identicon. `data-user-card` feeds the hover card.
+-}
+getAvatar : Bool -> String -> String -> SessionCommon -> AvatarUser a -> Html msg
+getAvatar hasCard cls size session user =
+    span (class ("image circleBaseInline " ++ cls) :: ternary hasCard [ attribute "data-user-card" user.username ] [])
+        (case user.avatar of
+            Just fid ->
+                -- An empty svg sized like the identicon keeps the same flow/baseline (and the same CSS rules)
+                [ Svg.svg [ SA.width size, SA.height size ] []
+
+                -- loading must come before src (Firefox)
+                , img [ attribute "loading" "lazy", src (session.file_server_url ++ "/file/" ++ fid), alt "" ] []
+                ]
+
+            Nothing ->
+                [ Identicon.identicon size user.username ]
+        )
 
 
-getAvatar2 : String -> Html msg
-getAvatar2 username =
-    span [ class "image circleBaseInline circle1" ] [ Identicon.identicon "22px" username ]
+getAvatar0 : SessionCommon -> AvatarUser a -> Html msg
+getAvatar0 =
+    getAvatar True "circle00" "14px"
 
 
-getAvatar3 : String -> Html msg
-getAvatar3 username =
-    span [ class "image circleBaseInline circle3" ] [ Identicon.identicon "108px" username ]
+getAvatar1 : SessionCommon -> AvatarUser a -> Html msg
+getAvatar1 =
+    getAvatar True "circle0" "18px"
+
+
+getAvatar2 : SessionCommon -> AvatarUser a -> Html msg
+getAvatar2 =
+    getAvatar True "circle1" "22px"
+
+
+{-| Large profile picture (profile and settings pages): no hover card on itself.
+-}
+getAvatar3 : SessionCommon -> AvatarUser a -> Html msg
+getAvatar3 =
+    getAvatar False "circle3" "108px"
 
 
 getAvatarOrga : String -> Html msg

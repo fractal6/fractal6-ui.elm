@@ -37,6 +37,7 @@ import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Codecs exposing (CommentDraft, DraftStore, DraftUpdate(..), RecentActivityTab, TensionDraft, WindowPos, maxCommentDrafts)
 import Components.Navbar as Navbar
+import Components.UserCard as UserCard
 import Dict
 import Footbar
 import Fractale.Codecs exposing (FractalBaseRoute(..), NodeFocus, toLink, urlToFractalRoute)
@@ -88,6 +89,9 @@ type alias Model =
     , url : Url
     , key : Nav.Key
     , session : Session
+
+    -- Global Components
+    , userCard : UserCard.State
     }
 
 
@@ -101,7 +105,7 @@ init flags url key =
         ( session, cmds ) =
             fromLocalSession url flags
     in
-    ( Model flags url key session
+    ( Model flags url key session UserCard.init
     , Cmd.batch
         ([ Ports.log "Hello!"
          , Ports.bulma_driver ""
@@ -189,6 +193,7 @@ type Msg
     | UpdateSessionNewOrgaData (Maybe OrgaForm)
       -- Draft persistence
     | UpdateDraft DraftUpdate
+    | UserCardMsg UserCard.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -1019,6 +1024,11 @@ update msg model =
         ScrollToBottom ->
             ( model, Scroll.scrollToBottom VOID )
 
+        -- Global Components
+        UserCardMsg msg_ ->
+            UserCard.update apis msg_ model.userCard
+                |> Tuple.mapBoth (\c -> { model | userCard = c }) (Cmd.map UserCardMsg)
+
         -- Utils
         VOID ->
             ( model, Cmd.none )
@@ -1157,6 +1167,7 @@ subscriptions _ =
         , Ports.reloadNotifFromJs (always RefreshNotifCount)
         , Ports.navigateFromJs NavigateRaw
         , Ports.scrollPositionFromJs UpdateSessionScrollPosition
+        , Sub.map UserCardMsg UserCard.subscriptions
         , Time.every (15 * 60 * 1000) (\_ -> CheckServerVersion)
         ]
 
@@ -1174,11 +1185,12 @@ view { page, global, url, navbarHandlers, onClearNotif } =
         , session = global.session
         , navbarHandlers = navbarHandlers
         , onClearNotif = onClearNotif
+        , userCard = global.userCard
         }
 
 
-layout : { page : Document msg, url : Url, session : Session, navbarHandlers : Navbar.NavbarHandlers msg, onClearNotif : msg } -> Document msg
-layout { page, url, session, navbarHandlers, onClearNotif } =
+layout : { page : Document msg, url : Url, session : Session, navbarHandlers : Navbar.NavbarHandlers msg, onClearNotif : msg, userCard : UserCard.State } -> Document msg
+layout { page, url, session, navbarHandlers, onClearNotif, userCard } =
     { title = page.title
     , body =
         [ div [ id "app", classList [ ( "embed", session.common.viewMode == EmbedView ) ] ]
@@ -1187,6 +1199,7 @@ layout { page, url, session, navbarHandlers, onClearNotif } =
                 (viewNotif session.data.system_notification onClearNotif)
             , div [ id "body" ] page.body
             , Footbar.view session.common
+            , UserCard.view session.common userCard
             ]
         ]
     }

@@ -395,7 +395,7 @@ init global flags =
             , isTensionAdmin = withDefault False session.isAdmin
             , isAssigneeOpen = False
             , isLabelOpen = False
-            , assigneesPanel = UserSearchPanel.init tid AssignUser sessionCommon.user
+            , assigneesPanel = UserSearchPanel.init tid AssignUser sessionCommon
             , labelsPanel = LabelSearchPanel.init tid AssignLabel sessionCommon.user
             , projectsPanel = ProjectSearchPanel.init tid AssignProject sessionCommon.user
 
@@ -2068,7 +2068,7 @@ viewSidePane u t model =
                 )
                     ++ [ div []
                             [ if List.length assignees > 0 then
-                                viewUsers True assignees
+                                viewUsers model.session True assignees
 
                               else
                                 div [ class "help-label is-italic" ] [ text T.noneYet ]
@@ -2239,7 +2239,7 @@ viewSidePane u t model =
                                                     text ""
                                    , Maybe.map
                                         (\fs ->
-                                            div [ class "mt-2" ] [ span [ class "is-inline-flex mr-2" ] [ A.icon1 "icon-user" (T.firstLink ++ " :") ], viewUserFull 0 True False fs ]
+                                            div [ class "mt-2" ] [ span [ class "is-inline-flex mr-2" ] [ A.icon1 "icon-user" (T.firstLink ++ " :") ], viewUserFull model.session 0 True False fs ]
                                         )
                                         node.first_link
                                         |> withDefault (text "")

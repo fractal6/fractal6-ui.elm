@@ -317,7 +317,7 @@ init global flags =
             , filterLabels = []
             , filterAssignees = []
             , labelsPanel = LabelSearchPanel.load session.data.labelsPanel sessionCommon.user
-            , authorsPanel = UserSearchPanel.load session.data.authorsPanel sessionCommon.user
+            , authorsPanel = UserSearchPanel.load session.data.authorsPanel sessionCommon
             }
 
         cmds =

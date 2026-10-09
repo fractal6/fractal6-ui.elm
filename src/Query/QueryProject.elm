@@ -108,7 +108,7 @@ projectDataPayload =
                         >> List.sortBy .pos
                     )
             )
-        |> with (Schema.Object.Project.collaborators identity (SelectionSet.map Username Schema.Object.User.username) |> SelectionSet.map (withDefault []))
+        |> with (Schema.Object.Project.collaborators identity userPayload |> SelectionSet.map (withDefault []))
         |> with Schema.Object.Project.peerCanEditProject
         |> with Schema.Object.Project.guestCanEditProject
 

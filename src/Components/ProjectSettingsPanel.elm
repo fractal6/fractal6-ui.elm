@@ -37,7 +37,7 @@ import Iso8601 exposing (fromTime)
 import Loading exposing (GqlData, ModalData, RequestResult(..))
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (ProjectData, ProjectFull, Username)
+import ModelSchema exposing (ProjectData, ProjectFull, User)
 import Ports
 import Query.PatchNode exposing (updateOneProject)
 import Session exposing (Apis, GlobalCmd(..), SessionCommon)
@@ -667,17 +667,17 @@ viewCollaboratorsSection model project =
                 [ p [ class "is-italic" ] [ text "—" ] ]
 
              else
-                List.map viewCollaboratorTag project.collaborators
+                List.map (viewCollaboratorTag model.session) project.collaborators
             )
         , UserInput.view { label_text = text "", showEmail = False, placeholder_text = Just T.addACollaborator } model.userInput |> Html.map UserInputMsg
         ]
 
 
-viewCollaboratorTag : Username -> Html Msg
-viewCollaboratorTag user =
+viewCollaboratorTag : SessionCommon -> User -> Html Msg
+viewCollaboratorTag session user =
     div [ class "tagsinput tags has-addons m-0 mr-2 mb-2" ]
         [ span [ class "tag is-rounded" ]
-            [ viewUserFull 0 False False { username = user.username, name = Nothing } ]
+            [ viewUserFull session 0 False False user ]
         , span
             [ class "tag is-delete is-rounded"
             , onClick (OnRemoveCollaborator user.username)

@@ -181,6 +181,20 @@ port checkboxFromJs : (JD.Value -> a) -> Sub a
 port pastedFilesFromJs : (JD.Value -> a) -> Sub a
 
 
+{-| Re-encoded avatar picked in the settings: `{file}` or `{error}` (see `assets/js/avatars.js`).
+-}
+port avatarFileFromJs : (JD.Value -> a) -> Sub a
+
+
+
+-- User hover card
+
+
+{-| Username to show the card for, or null to hide it.
+-}
+port userCardFromJs : (Maybe String -> a) -> Sub a
+
+
 
 -- Scroll
 

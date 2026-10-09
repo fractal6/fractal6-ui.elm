@@ -24,6 +24,7 @@ module Query.QueryUser exposing
     , getIsSubscribe
     , isSubscribePayload
     , queryUser
+    , queryUserCard
     , queryUserFull
     , queryUserProfile
     , queryUserRoles
@@ -38,7 +39,7 @@ import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(.
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Query.QueryNode exposing (nodeIdPayload, nodeOrgaFilter, searchUserFilter)
+import Query.QueryNode exposing (avatarPayload, nodeIdPayload, nodeOrgaFilter, searchUserFilter, userPayload)
 import RemoteData
 import Schema.Enum.RoleType as RoleType
 import Schema.InputObject as Input
@@ -80,11 +81,29 @@ queryUserFull url username msg =
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
 
+{-| Light profile for the user hover card.
+-}
+queryUserCard url username msg =
+    makeGQLQuery url
+        (Query.getUser
+            (usernameFilter username)
+            (SelectionSet.succeed UserCard
+                |> with Schema.Object.User.username
+                |> with Schema.Object.User.name
+                |> with avatarPayload
+                |> with Schema.Object.User.bio
+                |> with Schema.Object.User.location
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse identity >> msg)
+
+
 userProfilePayload : SelectionSet UserProfile Schema.Object.User
 userProfilePayload =
     SelectionSet.succeed UserProfile
         |> with Schema.Object.User.username
         |> with Schema.Object.User.name
+        |> with avatarPayload
         |> with Schema.Object.User.lang
         |> with
             (Schema.Object.User.rights identity <|
@@ -119,6 +138,7 @@ userFullPayload =
     SelectionSet.succeed UserFull
         |> with Schema.Object.User.username
         |> with Schema.Object.User.name
+        |> with avatarPayload
         |> with
             (Schema.Object.User.rights identity <|
                 SelectionSet.map3 UserRights
@@ -203,13 +223,6 @@ userFilter userfrag a =
     }
 
 
-userPayload : SelectionSet User Schema.Object.User
-userPayload =
-    SelectionSet.succeed User
-        |> with Schema.Object.User.username
-        |> with Schema.Object.User.name
-
-
 
 --
 -- Query Users Roles
@@ -261,6 +274,7 @@ userRolesPayload nameid =
     SelectionSet.succeed Member
         |> with Schema.Object.User.username
         |> with Schema.Object.User.name
+        |> with avatarPayload
         -- Retired is alreaady ignored in queryMembersLocal
         |> with (Schema.Object.User.roles (nodeOrgaFilter nameid [ RoleType.Pending, RoleType.Guest, RoleType.Member ]) userRoleExtendedPayload |> withDefaultSelectionMap [])
 

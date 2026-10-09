@@ -1652,7 +1652,7 @@ viewComment session c form result delete_result highlightedCommentId userInput e
             [ class "media-left is-hidden-mobile"
             , classList [ ( "is-hidden", isMobile session.screen ) ]
             ]
-            [ viewUser2 c.createdBy.username ]
+            [ viewUser2 session c.createdBy ]
         , div
             [ class "media-content"
             , attribute "style" "width: 66.66667%;"
@@ -1667,7 +1667,7 @@ viewComment session c form result delete_result highlightedCommentId userInput e
                             [ --class "is-hidden-tablet"
                               classList [ ( "is-hidden", not (isMobile session.screen) ) ]
                             ]
-                            [ viewUser0 c.createdBy.username ]
+                            [ viewUser0 session c.createdBy ]
                         , viewTensionDateAndUserC session c.createdAt c.createdBy
                         , case c.updatedAt of
                             Just updatedAt ->
@@ -2094,7 +2094,7 @@ viewTensionCommentInput session tension (State model) =
     in
     div [ id "tensionCommentInput", class "media section p-0" ]
         [ div [ class "media-left is-hidden-mobile", classList [ ( "is-hidden", isMobile session.screen ) ] ]
-            [ viewUser2 form.uctx.username ]
+            [ viewUser2 session form.uctx ]
         , div [ class "media-content" ]
             [ div [ class "message commentMessage commentInput" ]
                 [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader opHeader "commentInput" form ]
@@ -2155,7 +2155,7 @@ viewContractCommentInput session (State model) =
             }
     in
     div [ id "tensionCommentInput", class "media section p-0" ]
-        [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 form.uctx.username ]
+        [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 session form.uctx ]
         , div [ class "media-content" ]
             [ div [ class "message commentMessage commentInput" ]
                 [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader opHeader "commentContractInput" form ]

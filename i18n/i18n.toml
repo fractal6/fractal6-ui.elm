@@ -1378,6 +1378,14 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Upload in progress"
   fr="Envoi en cours"
 
+[uploadPicture]
+  en="Upload a picture"
+  fr="Envoyer une photo"
+
+[avatarDecodeError]
+  en="This image could not be read. Try a PNG, JPEG or WebP file."
+  fr="Cette image n’a pas pu être lue. Essayez un fichier PNG, JPEG ou WebP."
+
 [attach]
   en="Attach"
   fr="Joindre"

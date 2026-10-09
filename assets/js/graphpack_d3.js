@@ -24,6 +24,7 @@ import { easePolyInOut } from 'd3-ease'
 import { hierarchy, packSiblings } from 'd3-hierarchy'
 //import { scaleOrdinal } from 'd3-scale'
 import { shadeColor, ptInTriangle } from './custom.js'
+import { showUserCard, hideUserCard, identicon } from './avatars'
 
 
 /*
@@ -131,6 +132,7 @@ export const GraphPack = {
     colorCircleRange: [],
     roleColors: {},
     usernameColor: "#8282cc",
+    userEmoticonBg: "#eeeeff",
     nameColor: "#474747",
     focusCircleColor: "#4a79ac", // blue>"#368ed3"
     focusCircleWidth: 4, // warning, can break stroke with canvas drawing.
@@ -199,6 +201,14 @@ export const GraphPack = {
     initTimer: null,
     tooltipFrame: null,
     buttonsTimer: null,
+
+    // Avatars (first links of the roles whose names are drawn)
+    fileServerUrl: typeof FILE_SERVER_URL !== "undefined" ? FILE_SERVER_URL : "",
+    avatarImages: {}, // file id -> {img, ok}
+    avatarFrame: null,
+    avatarHovered: null, // username whose avatar disc is under the pointer
+    avatarMinRayon: 6,
+    avatarMaxRayon: 30,
     observer: null,
 
     // Resizing
@@ -492,6 +502,15 @@ export const GraphPack = {
             }
             if (n.data.type_ === NodeType.Circle) {
                 this.drawCircleName(n, opac)
+                // Unnamed roles one level below: avatar only (their siblings' subtrees aren't drawn when a role is focused)
+                if (node === this.focusedNode && n.children) {
+                    for (var g of n.children) {
+                        if (g.ctx && g.data.type_ !== NodeType.Circle && g.data.first_link && !(this.motion && !g.opacity)) {
+                            ctx.globalAlpha = this.motion ? g.opacity : 1;
+                            this.drawRoleAvatar(g);
+                        }
+                    }
+                }
             } else {
                 this.drawRoleName(n, opac)
             }
@@ -609,8 +628,8 @@ export const GraphPack = {
             }
             ctx2d.fill();
 
-            // Username
-            if (node.data.first_link) {
+            // Avatar, or the username when there is none (or not loaded yet, or too small)
+            if (node.data.first_link && !this.drawRoleAvatar(node)) {
                 var text_username = null;
                 ctx2d.font = fontSize - 7 + "px " + this.fontstyleCircle;
                 text_username = "@" + node.data.first_link.username;
@@ -624,6 +643,93 @@ export const GraphPack = {
                 ctx2d.fill();
             }
         }
+    },
+
+    // Round avatar of the role's first link, in the lower part of the circle (in place of the @username line).
+    // Keeps its disc on node.ctx.avatar for the user card hit test.
+    drawRoleAvatar(node) {
+        var fl = node.data.first_link;
+        var r = Math.min(node.ctx.rayon * 0.40, this.avatarMaxRayon);
+        if (r < this.avatarMinRayon) return false
+        var av = fl.avatar?.id ? this.avatarImage(fl.avatar.id) : null;
+        var ctx2d = this.ctx2d;
+        var x = node.ctx.centerX;
+        var y = node.ctx.centerY + node.ctx.rayon * 0.5;
+        ctx2d.save();
+        ctx2d.beginPath();
+        ctx2d.arc(x, y, r, 0, 2 * Math.PI, true);
+        ctx2d.clip();
+        if (av?.ok) {
+            ctx2d.drawImage(av.img, x - r, y - r, 2 * r, 2 * r);
+        } else {
+            // Identicon (also while the image loads or when it fails), sized like the HTML ones (~0.95r)
+            var ic = identicon(fl.username);
+            var c = r * 0.95 / 5;
+            ctx2d.fillStyle = this.userEmoticonBg;
+            ctx2d.fillRect(x - r, y - r, 2 * r, 2 * r);
+            ctx2d.fillStyle = ic.color;
+            for (var [cx, cy] of ic.cells) ctx2d.fillRect(x - 2.5 * c + cx * c, y - 2.5 * c + cy * c, c, c);
+        }
+        ctx2d.restore();
+        node.ctx.avatar = { x, y, r };
+        return true
+    },
+
+    // One Image per file id, kept for the session (the browser cache does the rest).
+    // No crossOrigin: the canvas gets tainted, harmless since pixels are never read back.
+    avatarImage(id) {
+        var av = this.avatarImages[id];
+        if (!av) {
+            av = this.avatarImages[id] = { img: new Image(), ok: false };
+            av.img.onload = () => { av.ok = true; this.scheduleAvatarRedraw(); };
+            av.img.src = this.fileServerUrl + "/file/" + id;
+        }
+        return av
+    },
+
+    // Coalesce decoded avatars into one redraw; motion frames redraw anyway.
+    scheduleAvatarRedraw() {
+        if (this.avatarFrame !== null) return
+        this.avatarFrame = requestAnimationFrame(() => {
+            this.avatarFrame = null;
+            if (!this.isActive() || !this.graph || this.motion) return
+            var hovered = this.hoveredNode;
+            this.drawCanvas();
+            this.hoveredNode = null;
+            if (hovered) this.drawNodeHover(hovered, false);
+        });
+    },
+
+    // Role (child or grandchild of the zoomed node) whose avatar disc is under the pointer.
+    getAvatarUnderPointer(p) {
+        var z = this.zoomedNode;
+        if (!z?.children || this.motion) return null
+        for (var n of z.children) {
+            // Grandchildren are only drawn (fresh ctx) when the zoomed node is focused
+            for (var m of (z === this.focusedNode && n.children ? [n, ...n.children] : [n])) {
+                var a = m.ctx?.avatar;
+                if (a && (p.mouseX - a.x) ** 2 + (p.mouseY - a.y) ** 2 <= a.r ** 2) return m
+            }
+        }
+        return null
+    },
+
+    // On the avatar disc the user card wins over the node tooltip. Returns true while on a disc.
+    hoverAvatar(p) {
+        var n = this.getAvatarUnderPointer(p);
+        var username = n?.data.first_link.username || null;
+        if (username === this.avatarHovered) return !!username
+        if (username) {
+            var a = n.ctx.avatar;
+            var c = this.$canvas.getBoundingClientRect();
+            this.clearNodeTooltip();
+            showUserCard(username, { left: c.left + a.x - a.r, top: c.top + a.y - a.r, right: c.left + a.x + a.r, bottom: c.top + a.y + a.r });
+        } else {
+            hideUserCard();
+            if (this.hoveredNode) this.drawNodeTooltip(this.hoveredNode);
+        }
+        this.avatarHovered = username;
+        return !!username
     },
 
     // Draw node border + eventually tooltip
@@ -1043,6 +1149,7 @@ export const GraphPack = {
         this.link2Color = styles.getPropertyValue('--link2').trim()
         this.nameColor = styles.getPropertyValue('--text-evidence').trim()
         this.usernameColor = styles.getPropertyValue('--text').trim()
+        this.userEmoticonBg = styles.getPropertyValue('--user-emoticon-bg').trim() || this.userEmoticonBg
     },
 
     // Mapping function from a node depth to color.
@@ -1814,6 +1921,7 @@ export const GraphPack = {
             if (this.dragCandidate) return dragMoveEvent(e)
             if (this.isFrozen) return false
             var p = this.getPointerCtx(e);
+            if (this.hoverAvatar(p)) return false
             var node = this.getNodeUnderPointer(e, p);
 
             if (node === this.hoveredNode || this.checkIf(p, "InTooltip", this.hoveredNode)) return false
@@ -1833,6 +1941,10 @@ export const GraphPack = {
 
         // Keep the target while crossing into the tooltip, including outside the canvas bounds.
         var canvasMouseLeaveEvent = e => {
+            if (this.avatarHovered) {
+                this.avatarHovered = null;
+                hideUserCard();
+            }
             if (this.isZooming || this.dragCandidate || this.isFrozen) return false
             if (this.$tooltip.contains(e.relatedTarget)) return false
             var p = this.getPointerCtx(e);

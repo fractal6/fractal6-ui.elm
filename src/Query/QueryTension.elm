@@ -385,7 +385,7 @@ commentPayload =
         |> with (Schema.Object.Comment.id |> SelectionSet.map decodedId)
         |> with (Schema.Object.Comment.createdAt |> SelectionSet.map decodedTime)
         |> with (Schema.Object.Comment.updatedAt |> SelectionSet.map (Maybe.map decodedTime))
-        |> with (Schema.Object.Comment.createdBy identity (SelectionSet.map Username Schema.Object.User.username))
+        |> with (Schema.Object.Comment.createdBy identity userPayload)
         |> with Schema.Object.Comment.message
         |> with
             -- Aggregate Reactions

@@ -840,7 +840,7 @@ viewContractBox c op model =
                                 toLink MandateBaseUri role.nameid [ c.tension.id ]
                         in
                         div [ class "subtitle" ]
-                            ([ viewUserFull 1 True True { username = user, name = Nothing } ]
+                            ([ viewUserFull model.session 1 True True { username = user, name = Nothing, avatar = Nothing } ]
                                 ++ (if isYou then
                                         [ text ",", br [] [], text T.youHaveBeenInvitedRole, text " " ]
 
@@ -859,7 +859,7 @@ viewContractBox c op model =
                                 user == model.form.uctx.username
                         in
                         span []
-                            ([ viewUserFull 1 True True { username = user, name = Nothing } ]
+                            ([ viewUserFull model.session 1 True True { username = user, name = Nothing, avatar = Nothing } ]
                                 ++ (if isYou then
                                         [ text ",", br [] [], br [] [], text T.youHaveBeenInvitedOrga ]
 

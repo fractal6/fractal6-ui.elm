@@ -243,7 +243,7 @@ initModel session =
 
     -- Components
     , labelsPanel = LabelSearchPanel.init "" SelectLabel session.user
-    , assigneesPanel = UserSearchPanel.init "" SelectUser session.user
+    , assigneesPanel = UserSearchPanel.init "" SelectUser session
     , projectsPanel = ProjectSearchPanel.init "" SelectProject session.user
     , selectedProjects = []
     , inviteInput = UserInput.init [] True False session
@@ -1015,7 +1015,7 @@ update_ apis message model =
               }
             , out0
                 [ send (OnOpen t Nothing)
-                , UserInput.OnClickUser { username = u, name = Nothing } |> send |> Cmd.map InviteInputMsg
+                , UserInput.OnClickUser { username = u, name = Nothing, avatar = Nothing } |> send |> Cmd.map InviteInputMsg
                 , if isSuccess model.result then
                     send OnReset
 

@@ -206,7 +206,7 @@ treeMenuCounterTest =
                     { initNode
                         | nameid = "org"
                         , name = "Marketing/ Communication"
-                        , first_link = Just { username = "bob", name = Nothing }
+                        , first_link = Just { username = "bob", name = Nothing, avatar = Nothing }
                         , n_open_tensions = 7
                         , n_open_contracts = 2
                     }
@@ -357,7 +357,7 @@ refreshTests =
                         { initUserctx | username = "bob" }
 
                     node =
-                        { initNode | nameid = "org#c1", first_link = Just { username = "bob", name = Nothing } }
+                        { initNode | nameid = "org#c1", first_link = Just { username = "bob", name = Nothing, avatar = Nothing } }
 
                     panel =
                         ActionPanel.init { session | user = LoggedIn uctx }

@@ -550,6 +550,7 @@ type alias UserSearchPanelModel =
     --, search_lookup : String -> Cmd Msg
     -- Common
     , refresh_trial : Int
+    , session : SessionCommon
     }
 
 

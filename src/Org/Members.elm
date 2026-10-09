@@ -624,7 +624,7 @@ update global message model =
 
         OnRemoveUser username nameid ->
             ( { model | actionPanel = ActionPanel.setTargetid_ nameid model.actionPanel }
-            , Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpenModal (UnLinkAction { username = username, name = Nothing }))
+            , Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpenModal (UnLinkAction { username = username, name = Nothing, avatar = Nothing }))
             , Cmd.none
             )
 
@@ -1016,7 +1016,7 @@ viewGuest session guests invitations_d focus isPanelOpen ell =
 
 
 viewPending : SessionCommon -> List Member -> NodeFocus -> Bool -> Maybe Int -> String -> Html Msg
-viewPending _ pendings focus pending_hover pending_hover_i tid =
+viewPending session pendings focus pending_hover pending_hover_i tid =
     div []
         [ h2 [ class "subtitle has-text-weight-semibold", onMouseEnter (OnPendingHover True), onMouseLeave (OnPendingHover False) ]
             [ text T.pending
@@ -1038,7 +1038,7 @@ viewPending _ pendings focus pending_hover pending_hover_i tid =
                     List.indexedMap
                         (\i m ->
                             tr [ onMouseEnter (OnPendingRowHover (Just i)), onMouseLeave (OnPendingRowHover Nothing) ]
-                                [ td [] [ viewUserFull 1 True False m ]
+                                [ td [] [ viewUserFull session 1 True False m ]
                                 , if Just i == pending_hover_i then
                                     td [] [ div [ class "button is-small is-primary", onClick (OnGoToContract m.username) ] [ text T.goContract ] ]
 
@@ -1073,7 +1073,7 @@ viewMemberRow session focus m invitations_d hasInvitation isPanelOpen ell =
                 |> List.filter (\i -> List.member m.username (List.map .username i.candidates))
     in
     tr [ onMouseEnter (OnRowHover (Just ("member" ++ m.username))) ]
-        [ td [] [ viewUserFull 1 True False m ]
+        [ td [] [ viewUserFull session 1 True False m ]
         , td []
             [ case roles_ of
                 [] ->
@@ -1113,7 +1113,7 @@ viewGuestRow session focus m invitations_d hasInvitation isPanelOpen ell =
                 |> List.filter (\i -> List.member m.username (List.map .username i.candidates))
     in
     tr [ onMouseEnter (OnRowHover (Just ("guest" ++ m.username))) ]
-        [ td [] [ viewUserFull 1 True False m ]
+        [ td [] [ viewUserFull session 1 True False m ]
         , td [] [ viewMemberRoles session OverviewBaseUri m.roles isPanelOpen ]
         , if not hasInvitation then
             text ""
