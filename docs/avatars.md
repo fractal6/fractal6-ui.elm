@@ -24,7 +24,8 @@ the identicon's size, so both sit on the same baseline.
 
 ## Upload — `src/User/Settings.elm`
 
-- Hidden `<input type=file data-avatar-input>` under the profile preview, plus Remove.
+- Avatar row at the top of the profile form: current avatar (`getAvatar2`), hidden
+  `<input type=file data-avatar-input>` behind a "Change the avatar" button, plus Remove.
 - `assets/js/avatars.js` `initAvatarCapture` re-encodes the picked file (`reencodeAvatar`):
   center-crop 256x256, WebP 0.85, JPEG fallback on a filled canvas when WebP is ignored (Safari),
   EXIF orientation applied and stripped. Undecodable input (e.g. HEIC) never gets uploaded.

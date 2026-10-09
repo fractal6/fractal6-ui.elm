@@ -38,7 +38,7 @@ import Fractale.Form exposing (..)
 import Fractale.Graph exposing (..)
 import Fractale.HotUpdate exposing (..)
 import Fractale.User exposing (..)
-import Fractale.View exposing (lang2str, viewProfileC, viewGoBack)
+import Fractale.View exposing (getAvatar2, lang2str, viewProfileC, viewGoBack)
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, button, div, h2, hr, i, input, label, li, nav, option, select, span, text, textarea, ul)
@@ -588,11 +588,9 @@ viewSettingsContent session user model =
         ProfileMenu ->
             div [ class "columns" ]
                 [ div [ class "column is-6" ]
-                    [ viewProfileSettings user model.user_result model.switch_index model.menuFocus model.form ]
+                    [ viewProfileSettings session user model.user_result model.avatar_result model.menuFocus model.form ]
                 , div [ class "column is-offset-1" ]
-                    [ viewProfileC session user
-                    , viewAvatarSettings user model.avatar_result
-                    ]
+                    [ viewProfileC session user ]
                 ]
 
         AccountMenu ->
@@ -608,19 +606,21 @@ viewSettingsContent session user model =
                 ]
 
 
-{-| Upload/Remove under the profile preview. The file input is handled by `assets/js/avatars.js`.
+{-| Avatar row of the profile form. The file input is handled by `assets/js/avatars.js`.
 -}
-viewAvatarSettings : UserFull -> GqlData () -> Html Msg
-viewAvatarSettings user result =
+viewAvatarSettings : SessionCommon -> UserFull -> GqlData () -> Html Msg
+viewAvatarSettings session user result =
     let
         isLoading =
             Loading.isLoading result
     in
-    div [ class "content" ]
-        [ div [ class "buttons" ]
-            [ label [ class "button is-small", classList [ ( "is-loading", isLoading ), ( "is-disabled", isLoading ) ] ]
+    div [ class "field" ]
+        [ label [ class "label" ] [ text "Avatar" ]
+        , div [ class "buttons" ]
+            [ span [ class "mr-3" ] [ getAvatar2 session user ]
+            , label [ class "button is-small", classList [ ( "is-loading", isLoading ), ( "is-disabled", isLoading ) ] ]
                 [ input [ type_ "file", accept "image/*", class "is-hidden", attribute "data-avatar-input" "", disabled isLoading ] []
-                , A.icon1 "icon-image" T.uploadPicture
+                , A.icon1 "icon-image" T.changeAvatar
                 ]
             , case user.avatar of
                 Just fid ->
@@ -638,8 +638,8 @@ viewAvatarSettings user result =
         ]
 
 
-viewProfileSettings : UserFull -> GqlData UserFull -> Int -> MenuSettings -> UserProfileForm -> Html Msg
-viewProfileSettings user result switch_index menuFocus form =
+viewProfileSettings : SessionCommon -> UserFull -> GqlData UserFull -> GqlData () -> MenuSettings -> UserProfileForm -> Html Msg
+viewProfileSettings session user result avatar_result menuFocus form =
     let
         isLoading =
             Loading.isLoading result
@@ -649,6 +649,7 @@ viewProfileSettings user result switch_index menuFocus form =
     in
     div []
         [ h2 [ class "subtitle is-size-3" ] [ text (menuToString menuFocus |> Tuple.second) ]
+        , div [ class "mb-4" ] [ viewAvatarSettings session user avatar_result ]
         , div [ class "mb-4" ]
             [ div [ class "field" ]
                 [ label [ class "label" ] [ text T.name ]
