@@ -52,7 +52,7 @@ redraw after decodes (`scheduleAvatarRedraw`, skipped during motion). The disc i
   No events, links only.
 - `assets/js/avatars.js` `initUserCard`: delegated `pointerover`/`pointerout` on `[data-user-card]`,
   0.5s show delay, stays open while the pointer is on the card or a press started on it (text
-  selection), hidden on scroll and on a press elsewhere. The large profile picture (`getAvatar3`)
+  selection), hidden on scroll, on a press elsewhere and on a click on one of its links. The large profile picture (`getAvatar3`)
   has no card.
   Sends the username (or null) through `Ports.userCardFromJs`, then places the card once Elm
   rendered it (`cardPosition`: below the anchor, flipped above, clamped), re-placed on resize.

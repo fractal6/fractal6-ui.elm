@@ -225,6 +225,10 @@ export function initUserCard(app) {
         if (!card.pressed) hideUserCard(0);
     });
     document.addEventListener('pointerup', () => { card.pressed = false; });
+    // Following a link of the card closes it.
+    document.addEventListener('click', e => {
+        if (e.target && typeof e.target.closest === 'function' && e.target.closest('#userCard a')) hideUserCard(0);
+    });
 
     // The card is anchored in fixed coordinates.
     window.addEventListener('scroll', () => hideUserCard(0), { passive: true, capture: true });

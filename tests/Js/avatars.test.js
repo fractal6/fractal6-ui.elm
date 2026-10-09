@@ -172,4 +172,20 @@ describe('user card hover listener', () => {
         jest.advanceTimersByTime(0);
         expect(send).toHaveBeenLastCalledWith(null);
     });
+
+    test('clicking a link of the card closes it', () => {
+        fire('pointerover', avatar);
+        jest.advanceTimersByTime(500);
+        const $card = document.createElement('div');
+        $card.id = 'userCard';
+        $card.innerHTML = '<a href="#"><span></span></a>';
+        document.body.appendChild($card);
+
+        fire('pointerover', $card, avatar);
+        fire('pointerdown', $card);
+        fire('pointerup', $card);
+        fire('click', $card.querySelector('span'));
+        jest.advanceTimersByTime(0);
+        expect(send).toHaveBeenLastCalledWith(null);
+    });
 });
