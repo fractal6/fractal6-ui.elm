@@ -12,6 +12,11 @@
 #tensionsTab  {
 }
 
+// Overview activity panel: compact tension titles (between is-size-6 and is-size-7).
+#activities .tension-title {
+    font-size: 0.9rem;
+}
+
 #journalTab {
     .content {
         padding: 10px;

@@ -2672,7 +2672,7 @@ viewTensions tensionDir model =
             Success tensions ->
                 if List.length tensions > 0 then
                     tensions
-                        |> List.map (\t -> mediaTension TensionsBaseUri model.commonOp model.session model.node_focus.nameid t True True "is-size-6")
+                        |> List.map (\t -> mediaTension TensionsBaseUri model.commonOp model.session model.node_focus.nameid t True True)
                         |> div [ id "tensionsTab" ]
 
                 else if model.pattern_init /= "" then

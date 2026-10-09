@@ -172,7 +172,7 @@ viewBoard op commonOp header keys_title data =
                                             [ onDragLeave (op.onMoveEnterCol { pos = i, to_receiverid = t.receiver.nameid } True) ]
                                             []
                                     )
-                                    [ mediaTension op.baseUri commonOp op.session op.node_focus.nameid t True False "is-size-6" ]
+                                    [ mediaTension op.baseUri commonOp op.session op.node_focus.nameid t True False ]
                                 , ternary hasLastColumn draggingDiv (text "")
                                 ]
                             )

@@ -67,8 +67,8 @@ import Utils.String exposing (upH)
 --
 
 
-mediaTension : FractalBaseRoute -> CommonMsg msg -> SessionCommon -> String -> Tension -> Bool -> Bool -> String -> Html msg
-mediaTension baseUri commonOp session focusid tension showStatus showRecip size =
+mediaTension : FractalBaseRoute -> CommonMsg msg -> SessionCommon -> String -> Tension -> Bool -> Bool -> Html msg
+mediaTension baseUri commonOp session focusid tension showStatus showRecip =
     let
         n_comments =
             withDefault 0 tension.n_comments
@@ -80,12 +80,12 @@ mediaTension baseUri commonOp session focusid tension showStatus showRecip size 
             getTensionNode tension
     in
     div
-        [ class ("media mediaBox is-hoverable " ++ size) ]
+        [ class "media mediaBox is-hoverable is-size-6" ]
         [ mediaTensionIcon tension.type_
         , div [ class "media-content" ]
             [ div [ class "content mb-1" ]
                 [ a
-                    [ class ("has-text-weight-semibold discrete-link " ++ size)
+                    [ class "has-text-weight-semibold discrete-link tension-title"
                     , href (Route.Tension_Dynamic_Dynamic { param1 = rootnameid, param2 = tension.id } |> toHref)
                     , onClickSP commonOp.noMsg
                     ]
