@@ -156,6 +156,8 @@ export const GraphPack = {
     rayon: null,
     zoomCtx: null,
     circlesPadding: 4, // 1.8
+    circleDamping: 0.7, // big circles grow as r^damping beyond their minimum size (1 = no damping)
+    siblingsRotation: Math.PI / 8, // rotate packed siblings so equal circles (and their titles) don't line up horizontally
     minCardsSide: 220, // below that, the in-circle action cards are not shown
     fontsizeCircle_start: 22,
     fontsizeRole_start: 19,
@@ -1278,6 +1280,9 @@ export const GraphPack = {
     // minCircleRayon, so sparse circles (empty, one role, two roles) keep the same size.
     // Siblings are ordered by kind then drawn size, so a rename cannot reshape a circle.
     packLayout(node, pad) {
+        // Inner padding in content units, from the previous pass scale, so gaps keep the same on-screen size.
+        pad /= node.s || 1;
+        node.s = 1; // scale applied to this node's content
         if (node.children) {
             node.children.forEach(c => this.packLayout(c, pad));
             node.children.sort(this.nodeOrder);
@@ -1285,12 +1290,22 @@ export const GraphPack = {
             cs.forEach(c => c.r += pad);
             // packSiblings centers the arrangement on its enclosing circle.
             d3.packSiblings(cs);
+            var cos = Math.cos(this.siblingsRotation), sin = Math.sin(this.siblingsRotation);
+            cs.forEach(c => [c.x, c.y] = [c.x * cos - c.y * sin, c.x * sin + c.y * cos]);
             node.r = cs.reduce((r, c) => Math.max(r, Math.hypot(c.x, c.y) + c.r), 0) + pad;
             cs.forEach(c => c.r -= pad);
         } else {
             node.r = node.data.type_ === NodeType.Circle ? 0 : Math.sqrt(this.nodeSize(node.data, this.gStats));
         }
-        if (node.data.type_ === NodeType.Circle) node.r = Math.max(node.r, this.minCircleRayon(node, pad));
+        if (node.data.type_ === NodeType.Circle) {
+            var u = this.minCircleRayon(node, pad);
+            // Keep legacy sizing in shallow sibling groups; damp only where siblings span deep subtrees.
+            if (node.parent && node.parent.height > 3 && node.r > u) {
+                var r = u * (node.r / u) ** this.circleDamping;
+                node.s = r / node.r;
+                node.r = r;
+            } else node.r = Math.max(node.r, u);
+        }
         return node.r
     },
 
@@ -1307,13 +1322,16 @@ export const GraphPack = {
     packGraph(root) {
         this.packLayout(root, 0);
         this.packLayout(root, this.circlesPadding * root.r / (this.rayon * 2));
-        var k = this.rayon / root.r;
         root.x = root.y = this.rayon;
+        root.k = this.rayon / root.r; // k: scale of a node's children coordinates
+        root.r = this.rayon;
         root.eachBefore(n => {
-            n.r *= k;
             if (n.parent) {
+                var k = n.parent.k;
+                n.r *= k;
                 n.x = n.parent.x + k * n.x;
                 n.y = n.parent.y + k * n.y;
+                n.k = k * n.s;
             }
         });
         return root
