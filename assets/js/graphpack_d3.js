@@ -208,7 +208,7 @@ export const GraphPack = {
     avatarFrame: null,
     avatarHovered: null, // username whose avatar disc is under the pointer
     avatarMinRayon: 6,
-    avatarMaxRayon: 30,
+    avatarMaxRayon: 19, // .circle0 (38px), the members list avatar size
     observer: null,
 
     // Resizing
