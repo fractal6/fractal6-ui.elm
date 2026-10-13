@@ -22,14 +22,17 @@
 module Components.Attachments exposing
     ( Ack
     , Msg
+    , PendingStatus(..)
     , State
     , UploadProgress
     , handoff
     , hasActiveUploads
     , init
+    , prunePastesByMessage
     , retarget
     , setPasteTargets
     , stagedCount
+    , storeBatchFailures
     , subscriptions
     , update
     , uploadProgress
@@ -453,15 +456,8 @@ update_ apis message model =
                         batchDone =
                             batch1.done == List.length batch1.files
 
-                        -- Once the batch drained, its failures outlive it: kept under the
-                        -- comment and notified, as carriers (new tension, card panel) close.
-                        failed =
-                            ternary batchDone (List.filter (\p -> uploadError p /= Nothing) batch1.files) []
-
-                        failedByCid1 =
-                            ternary (List.isEmpty failed)
-                                model.failedByCid
-                                (Dict.update cid (Maybe.withDefault [] >> (\xs -> xs ++ failed) >> Just) model.failedByCid)
+                        ( failed, failedByCid1 ) =
+                            storeBatchFailures cid batch1 model.failedByCid
 
                         failedCmds =
                             failedNotif (List.filterMap (\p -> Maybe.map (Tuple.pair p.filename) (uploadError p)) failed)
@@ -515,7 +511,7 @@ pastedFilesDecoder =
 -- the markdown line). Returns the kept pendings and the blob URLs to revoke.
 
 
-prunePastesByMessage : String -> List PendingFile -> ( List PendingFile, List String )
+prunePastesByMessage : String -> List { a | filename : String, isPaste : Bool, objectUrl : String } -> ( List { a | filename : String, isPaste : Bool, objectUrl : String }, List String )
 prunePastesByMessage message pendings =
     let
         ( keep, drop ) =
@@ -602,7 +598,23 @@ uploadTracker cid =
     "upload-" ++ cid
 
 
-uploadError : PendingFile -> Maybe ApiFile.ApiError
+{-| Once `batch` drained, its failures outlive it: kept under `cid` and notified, as
+carriers (new tension, card panel) close. Returns the newly failed files and the store.
+-}
+storeBatchFailures : String -> { b | done : Int, files : List { a | status : PendingStatus } } -> Dict.Dict String (List { a | status : PendingStatus }) -> ( List { a | status : PendingStatus }, Dict.Dict String (List { a | status : PendingStatus }) )
+storeBatchFailures cid batch failedByCid =
+    let
+        failed =
+            ternary (batch.done == List.length batch.files) (List.filter (\p -> uploadError p /= Nothing) batch.files) []
+    in
+    ( failed
+    , ternary (List.isEmpty failed)
+        failedByCid
+        (Dict.update cid (Maybe.withDefault [] >> (\xs -> xs ++ failed) >> Just) failedByCid)
+    )
+
+
+uploadError : { a | status : PendingStatus } -> Maybe ApiFile.ApiError
 uploadError p =
     case p.status of
         UploadFailed err ->
