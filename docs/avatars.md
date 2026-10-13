@@ -1,7 +1,8 @@
-# User avatars
+# Avatars
 
 Users upload an avatar in their settings (Profile tab); it replaces the generated identicon
 everywhere, including the graphpack. Hovering any avatar shows a user hover card.
+Organisations (root nodes) have their own avatar, see [Org avatars](#org-avatars).
 
 ## Data
 
@@ -24,12 +25,13 @@ the identicon's size, so both sit on the same baseline.
 
 ## Upload — `src/User/Settings.elm`
 
-- Avatar row at the top of the profile form: current avatar (`getAvatar2`), hidden
-  `<input type=file data-avatar-input>` behind a "Change the avatar" button, plus Remove.
+- Avatar row at the top of the profile form, `Fractale.View.viewAvatarEdit` (shared with the org
+  settings): current avatar (`getAvatar2`), hidden `<input type=file data-avatar-input>` behind a
+  "Change the avatar" button, plus Remove.
 - `assets/js/avatars.js` `initAvatarCapture` re-encodes the picked file (`reencodeAvatar`):
   center-crop 256x256, WebP 0.85, JPEG fallback on a filled canvas when WebP is ignored (Safari),
   EXIF orientation applied and stripped. Undecodable input (e.g. HEIC) never gets uploaded.
-- Result through `Ports.avatarFileFromJs` (`{file}` or `{error}`), then `Api.File.upload
+- Result through `Ports.avatarFile` (decodes `{file}` or `{error}`), then `Api.File.upload
   (UserAvatar username)`. Replace = upload only (the backend drops the previous one);
   Remove = `Api.File.delete`.
 
@@ -60,12 +62,27 @@ redraw after decodes (`scheduleAvatarRedraw`, skipped during motion). The disc i
   wins over the node tooltip.
 - Touch: no hover, avatars keep linking to the profile.
 
+## Org avatars
+
+Root nodes only, circle shape like user avatars; no avatar = initials (or the original icon).
+
+- Data: `avatar : Maybe String` on `Node`, `RNode`, `OrgaNode`, `NodeExt`. `nodeAvatarPayload`
+  (`Query/QueryNode.elm`) selects `Node.avatar { id }` in the org, local graph and orga list
+  payloads. JSON: same nested `avatar: {id}` codecs (`Codecs.nodeEncoder`/`nodeDecoder`).
+- Rendering: `Fractale.View.getAvatarOrga cls url avatar fallback`. Inline icons use the
+  `img.orgaIcon` class (HelperBar path, TreeMenu root line); `viewOrga0`/`viewOrga` fill the
+  `circleBase` circle (`_shapes.scss`) in OrgaMenu, the org settings and the org cards (`mediaOrga`).
+- Upload: `src/Org/Settings.elm` `viewAvatarSettings` (GlobalMenu tab), Owner or root Coordinator
+  only. Same JS capture and port as users, then `Api.File.upload (OrgAvatar rootnameid)` / `delete`.
+  `setAvatar` refreshes the path, the session and the TreeMenu node (`DoUpdateNode`); TreeMenu reloads
+  the orga menu on a root avatar or archive change.
+
 ## Known gap
 
 Contract pages only have a username (`event.new`) and keep the identicon; the card still works.
 
 ## Tests
 
-- `tests/Elm/AvatarCodecTest.elm` — codecs with/without `avatar`, round trips.
+- `tests/Elm/AvatarCodecTest.elm` — user and node codecs with/without `avatar`, round trips.
 - `tests/Js/avatars.test.js` — identicon hash + LRU, re-encode + JPEG fallback, card placement, hover listener.
 - `tests/Js/graphpackHitTest.test.js` — avatar disc hit test, one redraw for N loads.

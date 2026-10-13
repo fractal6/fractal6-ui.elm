@@ -29,7 +29,6 @@ import Browser.Navigation as Nav
 import Components.AuthModal as AuthModal
 import Dict
 import File exposing (File)
-import Json.Decode as JD
 import Form exposing (getd, isPostSendable, isPostSendableOr)
 import Form.Help as Help
 import Fractale.Codecs exposing (FractalBaseRoute(..))
@@ -38,11 +37,11 @@ import Fractale.Form exposing (..)
 import Fractale.Graph exposing (..)
 import Fractale.HotUpdate exposing (..)
 import Fractale.User exposing (..)
-import Fractale.View exposing (getAvatar2, lang2str, viewProfileC, viewGoBack)
+import Fractale.View exposing (getAvatar2, lang2str, viewAvatarEdit, viewProfileC, viewGoBack)
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, button, div, h2, hr, i, input, label, li, nav, option, select, span, text, textarea, ul)
-import Html.Attributes exposing (accept, attribute, checked, class, classList, disabled, for, href, id, name, placeholder, required, selected, style, target, title, type_, value)
+import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, name, placeholder, required, selected, style, target, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, withMaybeData)
@@ -502,17 +501,7 @@ setAvatar global result model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ _ =
     [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
-    , Ports.avatarFileFromJs
-        (JD.decodeValue
-            (JD.oneOf
-                [ JD.field "file" File.decoder |> JD.map Ok
-                , JD.field "error" JD.string |> JD.map (always (Err T.avatarDecodeError))
-                ]
-            )
-            >> Result.mapError JD.errorToString
-            >> Result.andThen identity
-            >> OnAvatarFile
-        )
+    , Ports.avatarFile OnAvatarFile
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
@@ -606,38 +595,6 @@ viewSettingsContent session user model =
                 ]
 
 
-{-| Avatar row of the profile form. The file input is handled by `assets/js/avatars.js`.
--}
-viewAvatarSettings : SessionCommon -> UserFull -> GqlData () -> Html Msg
-viewAvatarSettings session user result =
-    let
-        isLoading =
-            Loading.isLoading result
-    in
-    div [ class "field" ]
-        [ label [ class "label" ] [ text "Avatar" ]
-        , div [ class "buttons" ]
-            [ span [ class "mr-3" ] [ getAvatar2 session user ]
-            , label [ class "button is-small", classList [ ( "is-loading", isLoading ), ( "is-disabled", isLoading ) ] ]
-                [ input [ type_ "file", accept "image/*", class "is-hidden", attribute "data-avatar-input" "", disabled isLoading ] []
-                , A.icon1 "icon-image" T.changeAvatar
-                ]
-            , case user.avatar of
-                Just fid ->
-                    button [ class "button is-small", disabled isLoading, onClick (OnAvatarRemove fid) ] [ text T.remove ]
-
-                Nothing ->
-                    text ""
-            ]
-        , case result of
-            Failure err ->
-                viewGqlErrors err
-
-            _ ->
-                text ""
-        ]
-
-
 viewProfileSettings : SessionCommon -> UserFull -> GqlData UserFull -> GqlData () -> MenuSettings -> UserProfileForm -> Html Msg
 viewProfileSettings session user result avatar_result menuFocus form =
     let
@@ -649,7 +606,7 @@ viewProfileSettings session user result avatar_result menuFocus form =
     in
     div []
         [ h2 [ class "subtitle is-size-3" ] [ text (menuToString menuFocus |> Tuple.second) ]
-        , div [ class "mb-4" ] [ viewAvatarSettings session user avatar_result ]
+        , div [ class "mb-4" ] [ viewAvatarEdit (getAvatar2 session user) user.avatar OnAvatarRemove avatar_result ]
         , div [ class "mb-4" ]
             [ div [ class "field" ]
                 [ label [ class "label" ] [ text T.name ]

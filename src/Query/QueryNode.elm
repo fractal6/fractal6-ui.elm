@@ -226,6 +226,7 @@ nodeOrgaExtPayload =
         |> with Schema.Object.Node.visibility
         |> with Schema.Object.Node.about
         |> with Schema.Object.Node.isRootArchived
+        |> with nodeAvatarPayload
         |> with
             (SelectionSet.map (unwrap2 0 .count) <|
                 Schema.Object.Node.childrenAggregate
@@ -272,9 +273,10 @@ queryOrgaNode url nameids msg =
     makeGQLQuery url
         (Query.queryNode
             (nodeExtFilter nameids NodeOrderable.UpdatedAt True)
-            (SelectionSet.map2 OrgaNode
+            (SelectionSet.map3 OrgaNode
                 Schema.Object.Node.name
                 Schema.Object.Node.nameid
+                nodeAvatarPayload
             )
         )
         (RemoteData.fromResult >> decodeResponse nodesDecoder >> msg)
@@ -426,6 +428,7 @@ nodeOrgaPayload =
         |> with (Schema.Object.Node.source identity blobIdPayload)
         |> with Schema.Object.Node.userCanJoin
         |> with Schema.Object.Node.isRootArchived
+        |> with nodeAvatarPayload
         |> with
             (SelectionSet.map (unwrap2 0 .count) <|
                 Schema.Object.Node.tensions_inAggregate (\a -> { a | filter = Present <| Input.buildTensionFilter (\x -> { x | status = Present { eq = Present TensionStatus.Open, in_ = Absent } }) }) <|
@@ -462,6 +465,7 @@ nodeOrgaPayload2 =
         |> with (Schema.Object.Node.source identity blobIdPayload)
         |> with Schema.Object.Node.userCanJoin
         |> with Schema.Object.Node.isRootArchived
+        |> with nodeAvatarPayload
         |> hardcoded 0
         |> hardcoded 0
 
@@ -500,6 +504,13 @@ userPayload =
 avatarPayload : SelectionSet (Maybe String) Schema.Object.User
 avatarPayload =
     Schema.Object.User.avatar identity (SelectionSet.map decodedId Schema.Object.File.id)
+
+
+{-| Avatar file id of an organisation (root nodes only).
+-}
+nodeAvatarPayload : SelectionSet (Maybe String) Schema.Object.Node
+nodeAvatarPayload =
+    Schema.Object.Node.avatar identity (SelectionSet.map decodedId Schema.Object.File.id)
 
 
 pNodePayload : SelectionSet PNode Schema.Object.Node
@@ -664,6 +675,7 @@ type alias LocalNode =
     , isTemplateTensionOnly : Maybe Bool
     , isPinnedTensionfetchRecursively : Maybe Bool
     , isRootArchived : Maybe Bool
+    , avatar : Maybe String
     , source : Maybe BlobId
     , parent : Maybe LocalRootNode
     , children : Maybe (List EmitterOrReceiver)
@@ -680,6 +692,7 @@ type alias LocalRootNode =
     , isTemplateTensionOnly : Maybe Bool
     , isPinnedTensionfetchRecursively : Maybe Bool
     , isRootArchived : Maybe Bool
+    , avatar : Maybe String
     , source : Maybe BlobId
     }
 
@@ -697,7 +710,7 @@ lgDecoder data =
                 case n.parent of
                     Just p ->
                         if p.isRoot then
-                            { root = RNode p.name p.nameid p.userCanJoin p.mode p.isTemplateTensionOnly p.isPinnedTensionfetchRecursively p.isRootArchived |> Just
+                            { root = RNode p.name p.nameid p.userCanJoin p.mode p.isTemplateTensionOnly p.isPinnedTensionfetchRecursively p.isRootArchived p.avatar |> Just
                             , path = [ shrinkNode p, shrinkNode n ]
                             , focus = ln2fn n
                             }
@@ -711,7 +724,7 @@ lgDecoder data =
 
                     Nothing ->
                         -- Assume Root node
-                        { root = RNode n.name n.nameid n.userCanJoin n.mode n.isTemplateTensionOnly n.isPinnedTensionfetchRecursively n.isRootArchived |> Just
+                        { root = RNode n.name n.nameid n.userCanJoin n.mode n.isTemplateTensionOnly n.isPinnedTensionfetchRecursively n.isRootArchived n.avatar |> Just
                         , path = [ shrinkNode n ]
                         , focus = ln2fn n
                         }
@@ -739,6 +752,7 @@ lgPayload isInit =
         |> with Schema.Object.Node.isTemplateTensionOnly
         |> with Schema.Object.Node.isPinnedTensionfetchRecursively
         |> with Schema.Object.Node.isRootArchived
+        |> with nodeAvatarPayload
         |> with (Schema.Object.Node.source identity blobIdPayload)
         |> with (Schema.Object.Node.parent identity lg2Payload)
         |> (\x ->
@@ -765,6 +779,7 @@ lg2Payload =
         |> with Schema.Object.Node.isTemplateTensionOnly
         |> with Schema.Object.Node.isPinnedTensionfetchRecursively
         |> with Schema.Object.Node.isRootArchived
+        |> with nodeAvatarPayload
         |> with (Schema.Object.Node.source identity blobIdPayload)
 
 

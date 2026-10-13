@@ -31,7 +31,7 @@ import Fractale.Error exposing (viewGqlErrors)
 import Fractale.Graph exposing (getNode, getParentId, localGraphFromOrga, withDescendants)
 import Fractale.HotUpdate exposing (hotNodeInsert, hotNodeMove, hotNodePull, hotNodePush)
 import Fractale.User exposing (UserState(..), uctxFromUser)
-import Fractale.View exposing (counter, nodeType2icon)
+import Fractale.View exposing (counter, getAvatarOrga, nodeType2icon)
 import Html exposing (Html, a, div, i, li, span, text, ul)
 import Html.Attributes exposing (attribute, class, classList, id, selected, target)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
@@ -549,13 +549,13 @@ update_ apis message model =
                         data =
                             hotNodeInsert n model.tree_result
 
-                        -- on root (un)archive, drop the orga menu session data and reload the menu
-                        isArchiveChange =
-                            Maybe.map .isRootArchived old_m /= Just n.isRootArchived
+                        -- on root (un)archive or avatar change, drop the orga menu session data and reload the menu
+                        isOrgaMenuChange =
+                            Maybe.map (\o -> ( o.isRootArchived, o.avatar )) old_m /= Just ( n.isRootArchived, n.avatar )
                     in
                     ( { model | tree_result = Success data } |> setTree
-                    , Out (ternary isArchiveChange [ Ports.reloadOrgaMenu ] [])
-                        (DoUpdateTree (Just data) :: ternary isArchiveChange [ DoUpdateOrgs Nothing ] [])
+                    , Out (ternary isOrgaMenuChange [ Ports.reloadOrgaMenu ] [])
+                        (DoUpdateTree (Just data) :: ternary isOrgaMenuChange [ DoUpdateOrgs Nothing ] [])
                         Nothing
                         Dict.empty
                     )
@@ -746,7 +746,7 @@ viewTreeMenu isPanelOpen model =
     div [ class "menu", onMouseLeave (ternary isPanelOpen NoMsg (OnNodeHover Nothing)) ]
         [ case model.tree_result of
             Success data ->
-                viewSubTree isPanelOpen 0 model.hover model.focus model.tree model.expanded_lines
+                viewSubTree model.session.file_server_url isPanelOpen 0 model.hover model.focus model.tree model.expanded_lines
 
             LoadingSlowly ->
                 ul [ class "menu-list" ]
@@ -776,8 +776,8 @@ viewTreeMenu isPanelOpen model =
         ]
 
 
-viewSubTree : Bool -> Int -> Maybe (List String) -> NodeFocus -> Tree Node -> ExpandedLines -> Html Msg
-viewSubTree isPanelOpen depth hover focus (Tree { node, children }) expanded_lines =
+viewSubTree : String -> Bool -> Int -> Maybe (List String) -> NodeFocus -> Tree Node -> ExpandedLines -> Html Msg
+viewSubTree url isPanelOpen depth hover focus (Tree { node, children }) expanded_lines =
     let
         roles =
             children |> List.filter (\(Tree c) -> List.member c.node.role_type [ Just RoleType.Coordinator, Just RoleType.Peer, Just RoleType.Bot ]) |> List.map (\(Tree c) -> c.node)
@@ -802,7 +802,7 @@ viewSubTree isPanelOpen depth hover focus (Tree { node, children }) expanded_lin
     in
     ul ([ class "menu-list" ] ++ ternary (depth == 0 && not isPanelOpen) [ onMouseLeave (OnNodeHover Nothing) ] [])
         [ li []
-            (Lazy.lazy5 viewCircleLine hover focus hasCollapsible isCollapsed node
+            (Lazy.lazy6 viewCircleLine url hover focus hasCollapsible isCollapsed node
                 :: (if isCollapsed then
                         []
 
@@ -810,7 +810,7 @@ viewSubTree isPanelOpen depth hover focus (Tree { node, children }) expanded_lin
                         List.map
                             (\(Tree c) ->
                                 showIf (c.node.role_type == Nothing) <|
-                                    viewSubTree isPanelOpen (depth + 1) hover focus (Tree c) expanded_lines
+                                    viewSubTree url isPanelOpen (depth + 1) hover focus (Tree c) expanded_lines
                             )
                             children
                    )
@@ -821,7 +821,7 @@ viewSubTree isPanelOpen depth hover focus (Tree { node, children }) expanded_lin
                     li [] [ viewRolesLine "roles" hover roles nid expanded_lines ]
                  ]
                     ++ (if isExpanded then
-                            List.map (\n -> li [] [ Lazy.lazy5 viewCircleLine hover focus False False n ]) roles
+                            List.map (\n -> li [] [ Lazy.lazy6 viewCircleLine url hover focus False False n ]) roles
 
                         else
                             []
@@ -832,8 +832,8 @@ viewSubTree isPanelOpen depth hover focus (Tree { node, children }) expanded_lin
         ]
 
 
-viewCircleLine : Maybe (List String) -> NodeFocus -> Bool -> Bool -> Node -> Html Msg
-viewCircleLine hover focus collapsible isCollapsed node =
+viewCircleLine : String -> Maybe (List String) -> NodeFocus -> Bool -> Bool -> Node -> Html Msg
+viewCircleLine url hover focus collapsible isCollapsed node =
     let
         isHover =
             hover == Just [ node.nameid ]
@@ -848,7 +848,8 @@ viewCircleLine hover focus collapsible isCollapsed node =
         ]
         [ div [ class "level is-mobile" ]
             [ div [ class "level-left treeMenu-node" ]
-                [ A.icon (nodeType2icon node.type_ ++ " icon-sm mr-2")
+                [ -- Only root nodes carry an avatar
+                  getAvatarOrga "orgaIcon mr-2" url node.avatar (A.icon (nodeType2icon node.type_ ++ " icon-sm mr-2"))
                 , span [ class "treeMenu-label" ]
                     [ text node.name
                     , showMaybe node.first_link

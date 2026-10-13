@@ -101,6 +101,9 @@ type alias Node =
     -- Root only: organisation archived flag
     , isRootArchived : Maybe Bool
 
+    -- Root only: organisation avatar file id
+    , avatar : Maybe String
+
     -- Aggregated
     , n_open_tensions : Int
     , n_open_contracts : Int
@@ -119,6 +122,7 @@ type alias NodeExt =
     , visibility : NodeVisibility.NodeVisibility
     , about : Maybe String
     , isRootArchived : Maybe Bool
+    , avatar : Maybe String
 
     -- aggregated
     , n_members : Int
@@ -178,6 +182,7 @@ type alias RNode =
     , isTemplateTensionOnly : Maybe Bool
     , isPinnedTensionfetchRecursively : Maybe Bool
     , isRootArchived : Maybe Bool
+    , avatar : Maybe String
     }
 
 
@@ -281,6 +286,7 @@ type alias NodeRights =
 type alias OrgaNode =
     { name : String
     , nameid : String
+    , avatar : Maybe String
     }
 
 
@@ -997,6 +1003,7 @@ initNode =
     , source = Nothing
     , userCanJoin = Nothing
     , isRootArchived = Nothing
+    , avatar = Nothing
     , n_open_tensions = 0
     , n_open_contracts = 0
     }

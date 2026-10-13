@@ -343,6 +343,7 @@ localGraphFromOrga nameid orga_d =
                                 , isTemplateTensionOnly = Nothing
                                 , isPinnedTensionfetchRecursively = Nothing
                                 , isRootArchived = n.isRootArchived
+                                , avatar = n.avatar
                                 }
                             )
 

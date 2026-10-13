@@ -169,14 +169,25 @@
     display: inline-block !important;
 }
 
-// Uploaded avatar fills the circle (the padding-top only centers the identicon).
-.image.circleBaseInline > img {
+// Uploaded avatar fills the circle (the padding-top only centers the identicon/initials).
+.image.circleBaseInline > img,
+.image.circleBase > img {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
     border-radius: 50%;
+}
+
+// Org avatar in place of an inline icon (breadcrumb, tree menu root).
+img.orgaIcon {
+    width: 1.5em;
+    height: 1.5em;
+    object-fit: cover;
+    border-radius: 50%;
+    vertical-align: middle;
+    flex-shrink: 0;
 }
 
 // User hover card, placed by assets/js/avatars.js (hidden until placed).
@@ -252,6 +263,12 @@
 
 .is-orga {
     background: var(--orga-emoticon-bg);
+}
+
+// Keep the avatar alpha visible.
+.is-orga:has(> img),
+.circleBaseInline:has(> img) {
+    background: transparent;
 }
 
 /*

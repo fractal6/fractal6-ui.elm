@@ -26,7 +26,7 @@ import Components.Out as O exposing (noOut, out0, out1)
 import Fractale.Codecs exposing (FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isProjectBaseUri, isTensionBaseUri, nearestCircleid, nid2rootid, nid2type, toLink)
 import Fractale.Graph exposing (getParent)
 import Fractale.User exposing (UserState(..))
-import Fractale.View exposing (counter, viewRole, visibility2icon)
+import Fractale.View exposing (counter, getAvatarOrga, viewRole, visibility2icon)
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, div, i, li, nav, p, span, text, ul)
 import Html.Attributes exposing (attribute, class, classList, href, id, title)
@@ -213,7 +213,7 @@ view op (State model) =
 viewPathContextEmbed : Op -> Model -> Html Msg
 viewPathContextEmbed op model =
     nav [ class "level" ]
-        [ div [ class "level-left" ] [ viewPath model.baseUri model.uriQuery op.isRootArchived op.path_data ]
+        [ div [ class "level-left" ] [ viewPath model.session.file_server_url model.baseUri model.uriQuery op.isRootArchived op.path_data ]
         ]
 
 
@@ -238,7 +238,7 @@ viewPathContext op model =
                 ( "icon-eye", T.watch, T.watchThisOrganisation )
     in
     nav [ class "level" ]
-        [ div [ class "level-left" ] [ viewPath model.baseUri model.uriQuery op.isRootArchived op.path_data ]
+        [ div [ class "level-left" ] [ viewPath model.session.file_server_url model.baseUri model.uriQuery op.isRootArchived op.path_data ]
         , div [ class "level-right" ]
             [ case op.path_data of
                 Just _ ->
@@ -381,8 +381,8 @@ viewNavTabs op model =
         ]
 
 
-viewPath : FractalBaseRoute -> Maybe String -> Bool -> Maybe LocalGraph -> Html Msg
-viewPath baseUri uriQuery isRootArchived maybePath =
+viewPath : String -> FractalBaseRoute -> Maybe String -> Bool -> Maybe LocalGraph -> Html Msg
+viewPath url baseUri uriQuery isRootArchived maybePath =
     div
         [ class "breadcrumb has-succeeds-separator wrapped-container"
         , attribute "aria-label" "breadcrumbs"
@@ -396,7 +396,7 @@ viewPath baseUri uriQuery isRootArchived maybePath =
 
                     icon =
                         --span [ class "button-light", onClick OnToggleTreeMenu ] [ A.icon0 "icon-layers icon-lg" ]
-                        A.icon0 "icon-layers icon-lg"
+                        getAvatarOrga "orgaIcon mr-2" url (Maybe.andThen .avatar g.root) (A.icon0 "icon-layers icon-lg")
 
                     archivedTag i =
                         showIf (i == 0 && isRootArchived) <|

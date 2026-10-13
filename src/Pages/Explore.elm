@@ -278,13 +278,13 @@ view_ global model =
     div [ id "explore", class "top-section" ]
         [ div [ class "columns is-centered" ]
             [ div [ class "column is-7" ]
-                [ viewPublicOrgas model ]
+                [ viewPublicOrgas global.session.common.file_server_url model ]
             ]
         ]
 
 
-viewPublicOrgas : Model -> Html Msg
-viewPublicOrgas model =
+viewPublicOrgas : String -> Model -> Html Msg
+viewPublicOrgas url model =
     div []
         [ h1 [ class "subtitle" ] [ textH T.exploreOrganisations ]
 
@@ -304,5 +304,5 @@ viewPublicOrgas model =
                     [ viewGqlErrors err ]
 
                 Success nodes ->
-                    List.map (\n -> Lazy.lazy3 mediaOrga model.commonOp Nothing n) nodes
+                    List.map (\n -> Lazy.lazy4 mediaOrga url model.commonOp Nothing n) nodes
         ]

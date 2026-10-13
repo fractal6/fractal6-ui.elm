@@ -333,7 +333,7 @@ view op (State model) =
             , classList [ ( "off", not model.isActive ) ]
             , onMouseLeave (OnOrgHover Nothing "")
             ]
-            [ viewOrgaMenu model.focus model.orgs_result op
+            [ viewOrgaMenu model.session.file_server_url model.focus model.orgs_result op
             , viewTooltip model.tooltip
             , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
             ]
@@ -363,12 +363,12 @@ viewTooltip maybeTooltip =
             text ""
 
 
-viewOrgaMenu : NodeFocus -> GqlData (List OrgaNode) -> Op -> Html Msg
-viewOrgaMenu focus orgs_result op =
+viewOrgaMenu : String -> NodeFocus -> GqlData (List OrgaNode) -> Op -> Html Msg
+viewOrgaMenu url focus orgs_result op =
     div []
         ((case orgs_result of
             Success data ->
-                List.map (\x -> Lazy.lazy2 viewOrga focus x) data
+                List.map (\x -> Lazy.lazy3 viewOrga url focus x) data
 
             LoadingSlowly ->
                 [ div [ class "m-3 image circleBase circle1 ph-circle" ] []
@@ -395,8 +395,8 @@ viewOrgaMenu focus orgs_result op =
         )
 
 
-viewOrga : NodeFocus -> OrgaNode -> Html Msg
-viewOrga focus x =
+viewOrga : String -> NodeFocus -> OrgaNode -> Html Msg
+viewOrga url focus x =
     div
         [ id ("orga-" ++ x.nameid)
         , class "orgaMenu"
@@ -404,5 +404,5 @@ viewOrga focus x =
         , onMouseEnter (OnOrgHover (Just x.nameid) x.name)
         , onMouseLeave (OnOrgHover Nothing "")
         ]
-        [ viewOrga0 True x.nameid
+        [ viewOrga0 True url x.avatar x.nameid
         ]

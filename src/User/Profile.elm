@@ -444,13 +444,13 @@ view_ session user model =
                     [ viewProfileC session user ]
                 ]
             , div [ class "column is-7" ]
-                [ viewProfileRight session.user user model ]
+                [ viewProfileRight session.file_server_url session.user user model ]
             ]
         ]
 
 
-viewProfileRight : UserState -> UserProfile -> Model -> Html Msg
-viewProfileRight user_s user model =
+viewProfileRight : String -> UserState -> UserProfile -> Model -> Html Msg
+viewProfileRight url user_s user model =
     div []
         [ div [ class "level" ]
             [ div [ class "level-left" ]
@@ -507,7 +507,7 @@ viewProfileRight user_s user model =
                         , viewOrgaTabs model.orgaTab (List.any isOrgaArchived orgas) model.sortFilter
                         , orgas
                             |> List.filter (\o -> isOrgaArchived o == (model.orgaTab == ArchivedOrgaTab))
-                            |> viewUserOrgas model.commonOp user model.orgaLookup
+                            |> viewUserOrgas url model.commonOp user model.orgaLookup
                         ]
 
                 Failure err ->
@@ -606,8 +606,8 @@ viewSortFilter sortFilter =
         ]
 
 
-viewUserOrgas : CommonMsg Msg -> UserCommon a -> Maybe (List String) -> List NodeExt -> Html Msg
-viewUserOrgas commonOp user orgaLookup orgas =
+viewUserOrgas : String -> CommonMsg Msg -> UserCommon a -> Maybe (List String) -> List NodeExt -> Html Msg
+viewUserOrgas url commonOp user orgaLookup orgas =
     let
         filtered =
             case orgaLookup of
@@ -618,5 +618,5 @@ viewUserOrgas commonOp user orgaLookup orgas =
                     orgas
     in
     filtered
-        |> List.map (\root -> mediaOrga commonOp (Just user) root)
+        |> List.map (\root -> mediaOrga url commonOp (Just user) root)
         |> div [ class "nodesList" ]

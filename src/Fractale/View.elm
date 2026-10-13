@@ -24,17 +24,19 @@ module Fractale.View exposing (..)
 import Assets as A
 import Components.LabelSearchPanel exposing (viewLabels)
 import Dict exposing (Dict)
+import Fractale.Error exposing (viewGqlErrors)
 import Fractale.Codecs exposing (FractalBaseRoute(..), NodeFocus, eor2ur, getOrgaRoles, getTensionNode, nid2rootid, nid2type, toLink)
 import Fractale.Graph exposing (getParentFragmentFromRole, maxPinnedTensions)
 import Fractale.User exposing (UserState(..))
 import Generated.Route as Route exposing (toHref)
-import Html exposing (Html, a, br, div, hr, i, img, input, span, text)
-import Html.Attributes exposing (alt, attribute, class, classList, disabled, href, id, src, style, target, title, type_, value)
+import Html exposing (Html, a, br, button, div, hr, i, img, input, label, span, text)
+import Html.Attributes exposing (accept, alt, attribute, class, classList, disabled, href, id, src, style, target, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Identicon
 import Svg
 import Svg.Attributes as SA
 import List.Extra as LE
+import Loading exposing (GqlData, RequestResult(..))
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (EmitterOrReceiver, Label, Node, NodeExt, NodeLifecycle(..), PinTension, RoleExtCommon, TaggedPin, Tension, TensionLight, User, UserCommon, UserRoleCommon, UserView, Username)
@@ -502,8 +504,8 @@ viewUserFull session size isLinked_ isBoxed user =
         ]
 
 
-viewOrga0 : Bool -> String -> Html msg
-viewOrga0 isLinked nameid =
+viewOrga0 : Bool -> String -> Maybe String -> String -> Html msg
+viewOrga0 isLinked url avatar nameid =
     let
         rid =
             nid2rootid nameid
@@ -513,16 +515,16 @@ viewOrga0 isLinked nameid =
             [ class "image circleBase circle1 is-orga"
             , href (toLink OverviewBaseUri rid [])
             ]
-            [ getAvatarOrga rid ]
+            [ getAvatarOrga "" url avatar (viewOrgaInitials rid) ]
 
     else
         span
             [ class "image circleBase circle1 is-orga" ]
-            [ getAvatarOrga rid ]
+            [ getAvatarOrga "" url avatar (viewOrgaInitials rid) ]
 
 
-viewOrga : Bool -> String -> Html msg
-viewOrga isLinked nameid =
+viewOrga : Bool -> String -> Maybe String -> String -> Html msg
+viewOrga isLinked url avatar nameid =
     let
         rid =
             nid2rootid nameid
@@ -532,12 +534,12 @@ viewOrga isLinked nameid =
             [ class "image circleBase circle2 is-orga"
             , href (toLink OverviewBaseUri rid [])
             ]
-            [ getAvatarOrga rid ]
+            [ getAvatarOrga "" url avatar (viewOrgaInitials rid) ]
 
     else
         span
             [ class "image circleBase circle2 is-orga" ]
-            [ getAvatarOrga rid ]
+            [ getAvatarOrga "" url avatar (viewOrgaInitials rid) ]
 
 
 viewRoleExt : CommonMsg msg -> String -> Maybe String -> RoleExtCommon a -> Html msg
@@ -759,11 +761,11 @@ viewNodeRefShort baseUri nid =
     a [ href ref ] [ text name ]
 
 
-mediaOrga : CommonMsg msg -> Maybe (UserCommon a) -> NodeExt -> Html msg
-mediaOrga commonOp user_m root =
+mediaOrga : String -> CommonMsg msg -> Maybe (UserCommon a) -> NodeExt -> Html msg
+mediaOrga url commonOp user_m root =
     div [ class "box pb-3" ]
         [ div [ class "media mediaBox" ]
-            [ div [ class "media-left" ] [ viewOrga True root.nameid ]
+            [ div [ class "media-left" ] [ viewOrga True url root.avatar root.nameid ]
             , div [ class "media-content" ]
                 ([ div [ class "columns" ]
                     [ div [ class "column is-8" ]
@@ -928,8 +930,53 @@ getAvatar3 =
     getAvatar False "circle3" "108px"
 
 
-getAvatarOrga : String -> Html msg
-getAvatarOrga name =
+{-| Org avatar image (`{url}/file/<id>`), or the fallback. Without `cls`, it fills its `.image.circleBase` wrapper.
+-}
+getAvatarOrga : String -> String -> Maybe String -> Html msg -> Html msg
+getAvatarOrga cls url avatar fallback =
+    case avatar of
+        Just fid ->
+            -- loading must come before src (Firefox)
+            img [ class cls, attribute "loading" "lazy", src (url ++ "/file/" ++ fid), alt "" ] []
+
+        Nothing ->
+            fallback
+
+
+{-| Avatar settings row: preview, file input (handled by `assets/js/avatars.js`), Remove, errors.
+-}
+viewAvatarEdit : Html msg -> Maybe String -> (String -> msg) -> GqlData () -> Html msg
+viewAvatarEdit preview avatar onRemove result =
+    let
+        isLoading =
+            Loading.isLoading result
+    in
+    div [ class "field" ]
+        [ label [ class "label" ] [ text "Avatar" ]
+        , div [ class "buttons" ]
+            [ span [ class "mr-3" ] [ preview ]
+            , label [ class "button is-small", classList [ ( "is-loading", isLoading ), ( "is-disabled", isLoading ) ] ]
+                [ input [ type_ "file", accept "image/*", class "is-hidden", attribute "data-avatar-input" "", disabled isLoading ] []
+                , A.icon1 "icon-image" T.changeAvatar
+                ]
+            , case avatar of
+                Just fid ->
+                    button [ class "button is-small", disabled isLoading, onClick (onRemove fid) ] [ text T.remove ]
+
+                Nothing ->
+                    text ""
+            ]
+        , case result of
+            Failure err ->
+                viewGqlErrors err
+
+            _ ->
+                text ""
+        ]
+
+
+viewOrgaInitials : String -> Html msg
+viewOrgaInitials name =
     let
         initial =
             name

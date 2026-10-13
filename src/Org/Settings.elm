@@ -21,6 +21,7 @@
 
 module Org.Settings exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
+import Api.File as Api
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
@@ -37,15 +38,16 @@ import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel exposing (viewUsers)
 import Dict
+import File exposing (File)
 import Form.Help as Help
 import Form.NewTension as NTF
-import Fractale.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nid2rootid, toLink)
+import Fractale.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, getCoordoRoles, isOwner, nameidFromFlags, nearestCircleid, nid2rootid, toLink)
 import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
 import Fractale.Form exposing (..)
 import Fractale.Graph exposing (..)
 import Fractale.HotUpdate exposing (..)
 import Fractale.User exposing (..)
-import Fractale.View exposing (helperButton, tensionIcon2, tensionIcon3, viewGoRoot, viewRoleExt, viewTensionTypePicker)
+import Fractale.View exposing (helperButton, tensionIcon2, tensionIcon3, viewAvatarEdit, viewGoRoot, viewOrga, viewRoleExt, viewTensionTypePicker)
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, button, div, h2, h3, hr, i, input, label, li, nav, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr, ul)
@@ -249,6 +251,7 @@ type alias Model =
     , lexicon_input : String
     , mandate_input : String
     , lexicon_result : RestData Bool
+    , avatar_result : GqlData ()
 
     -- Common
     , modal_confirm : ModalConfirm Msg
@@ -484,6 +487,7 @@ init global flags =
             , lexicon_input = Dict.get "Tension" session.common.lexicon |> withDefault ""
             , mandate_input = Dict.get "Mandate" session.common.lexicon |> withDefault ""
             , lexicon_result = RemoteData.NotAsked
+            , avatar_result = NotAsked
 
             -- Common
             , refresh_trial = 0
@@ -650,6 +654,10 @@ type Msg
     | OnMandateInput String
     | SubmitLexicon
     | GotLexicon (RestData Bool)
+    | OnAvatarFile (Result String File)
+    | OnAvatarUploadAck (Result Api.ApiError Api.UploadResult)
+    | OnAvatarRemove String
+    | OnAvatarRemoveAck (Result Api.ApiError ())
       -- Color Picker
     | OpenColor
     | CloseColor
@@ -1967,6 +1975,25 @@ update global message model =
                 _ ->
                     ( { model | lexicon_result = result }, Cmd.none, Cmd.none )
 
+        OnAvatarFile (Ok file) ->
+            ( { model | avatar_result = Loading }
+            , Api.upload apis "avatar-upload" (Api.OrgAvatar model.node_focus.rootnameid) file OnAvatarUploadAck
+            , Cmd.none
+            )
+
+        OnAvatarFile (Err err) ->
+            ( { model | avatar_result = Failure [ err ] }, Cmd.none, Cmd.none )
+
+        -- Replace is an upload only: the backend drops the previous avatar.
+        OnAvatarUploadAck result ->
+            setAvatar (Result.map (.id >> Just) result) model
+
+        OnAvatarRemove fid ->
+            ( { model | avatar_result = Loading }, Api.delete apis fid OnAvatarRemoveAck, Cmd.none )
+
+        OnAvatarRemoveAck result ->
+            setAvatar (Result.map (always Nothing) result) model
+
         -- Color Picker
         OpenColor ->
             ( { model | colorPicker = ColorPicker.open model.colorPicker }
@@ -2142,10 +2169,30 @@ update global message model =
             ( { model | actionPanel = data }, out.cmds |> List.map (\m -> Cmd.map ActionPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
 
+{-| Update the root avatar in the path (page + session), the tree menu and the orga menu.
+-}
+setAvatar : Result Api.ApiError (Maybe String) -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
+setAvatar result model =
+    case result of
+        Ok avatar ->
+            let
+                newPath =
+                    withMapData (\p -> { p | root = Maybe.map (\r -> { r | avatar = avatar }) p.root }) model.path_data
+            in
+            ( { model | avatar_result = Success (), path_data = newPath }
+            , Cmd.map TreeMenuMsg <| send (TreeMenu.UpdateNode model.node_focus.rootnameid (\n -> { n | avatar = avatar }))
+            , send (UpdateSessionPath (withMaybeData newPath))
+            )
+
+        Err err ->
+            ( { model | avatar_result = Failure [ Api.errorToString err ] }, Cmd.none, Cmd.none )
+
+
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
     [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     , Ports.cancelColorFromJs (always CloseColor)
+    , Ports.avatarFile OnAvatarFile
     ]
         ++ (HelperBar.subscriptions |> List.map (\s -> Sub.map HelperBarMsg s))
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
@@ -2283,6 +2330,7 @@ viewSettingsContent model =
             div []
                 [ h2 [ class "subtitle is-size-3" ] [ text T.organisationSettings ]
                 , viewCircleEditLinks model
+                , viewAvatarSettings model.session model.node_focus.rootnameid model.path_data model.avatar_result
                 , hr [] []
                 , viewOrgaSettings model.lexicon model.orga_rights model.switch_result model.switch_index
                 , hr [] []
@@ -2312,6 +2360,26 @@ viewCircleEditLinks model =
 
         _ ->
             text ""
+
+
+{-| Org avatar row, for Owner/Coordinator of the root circle.
+-}
+viewAvatarSettings : SessionCommon -> String -> GqlData LocalGraph -> GqlData () -> Html Msg
+viewAvatarSettings session rootnameid path_data result =
+    let
+        avatar =
+            withMaybeData path_data |> Maybe.andThen .root |> Maybe.andThen .avatar
+
+        canEdit =
+            case session.user of
+                LoggedIn uctx ->
+                    isOwner uctx rootnameid || List.any (\r -> nearestCircleid r.nameid == rootnameid) (getCoordoRoles uctx.roles)
+
+                LoggedOut ->
+                    False
+    in
+    showIf canEdit <|
+        viewAvatarEdit (viewOrga False session.file_server_url avatar rootnameid) avatar OnAvatarRemove result
 
 
 

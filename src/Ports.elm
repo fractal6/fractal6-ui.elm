@@ -23,6 +23,7 @@ port module Ports exposing (..)
 
 import Codecs exposing (DraftStore, RecentActivityTab, WindowPos, draftStoreEncoder, labelDecoder, labelsEncoder, modalDataDecoder, nodeDecoder, nodeEncoder, nodesEncoder, recentActivityTabToString, userCtxDecoder, userCtxEncoder, userDecoder, usersEncoder, windowEncoder)
 import Dict
+import File exposing (File)
 import Json.Decode as JD
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
@@ -39,6 +40,7 @@ import ModelSchema
         , notifCountEncoder
         )
 import Schemas.TreeMenu as TreeMenuSchema
+import Text as T
 
 
 
@@ -184,6 +186,21 @@ port pastedFilesFromJs : (JD.Value -> a) -> Sub a
 {-| Re-encoded avatar picked in the settings: `{file}` or `{error}` (see `assets/js/avatars.js`).
 -}
 port avatarFileFromJs : (JD.Value -> a) -> Sub a
+
+
+avatarFile : (Result String File -> msg) -> Sub msg
+avatarFile toMsg =
+    avatarFileFromJs
+        (JD.decodeValue
+            (JD.oneOf
+                [ JD.field "file" File.decoder |> JD.map Ok
+                , JD.field "error" JD.string |> JD.map (always (Err T.avatarDecodeError))
+                ]
+            )
+            >> Result.mapError JD.errorToString
+            >> Result.andThen identity
+            >> toMsg
+        )
 
 
 
