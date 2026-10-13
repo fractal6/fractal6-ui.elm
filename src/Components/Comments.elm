@@ -1532,7 +1532,7 @@ viewNewTensionCommentInput session opts (State model) =
                 [ div [ class "control" ] [ viewCommentTextarea session "textAreaModal" opts model.tension_form model.userInput model.emojiPicker model.attachments ]
                 , div [ class "is-flex is-flex-wrap-wrap is-align-items-center is-justify-content-space-between mt-1", style "gap" "0.4rem" ]
                     [ showIf opts.attachmentsEnabled <|
-                        Html.map AttachmentsMsg (Attachments.viewPendingsRow True "textAreaModal" model.attachments)
+                        Html.map AttachmentsMsg (Attachments.viewPendingsRow True Nothing "textAreaModal" model.attachments)
                     , showIf opts.hasTips <|
                         span
                             [ class "is-hidden-mobile help ml-auto"
@@ -1581,7 +1581,7 @@ viewUpdateInput session comment form_ result userInput emojiPicker attachments =
             [ div [ class "field" ]
                 [ div [ class "control" ]
                     [ viewCommentTextarea session "updateCommentInput" defaultCommentOpts form userInput emojiPicker attachments ]
-                , Html.map AttachmentsMsg (Attachments.viewPendingsRow False "updateCommentInput" attachments)
+                , Html.map AttachmentsMsg (Attachments.viewPendingsRow False (Just comment.id) "updateCommentInput" attachments)
                 ]
             , case result of
                 Failure err ->
@@ -1657,7 +1657,7 @@ viewTensionCommentInput session tension (State model) =
                     [ div [ class "field" ]
                         [ div [ class "control" ]
                             [ viewCommentTextarea session "commentInput" defaultCommentOpts form model.userInput model.emojiPicker model.attachments ]
-                        , Html.map AttachmentsMsg (Attachments.viewPendingsRow False "commentInput" model.attachments)
+                        , Html.map AttachmentsMsg (Attachments.viewPendingsRow False Nothing "commentInput" model.attachments)
                         ]
                     , case model.tension_patch of
                         Failure err ->

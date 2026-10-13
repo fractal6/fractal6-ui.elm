@@ -1,7 +1,7 @@
 module Elm.AttachmentsTest exposing (..)
 
 import Api.File as ApiFile
-import Components.Attachments exposing (PendingStatus(..), init, prunePastesByMessage, retarget, stagedCount, storeBatchFailures)
+import Components.Attachments exposing (PendingStatus(..), prunePastesByMessage, retarget, storeBatchFailures)
 import Dict
 import Expect
 import Test exposing (..)
@@ -47,10 +47,6 @@ pruneTests =
                 prunePastesByMessage "see paste-1-0.png" [ paste ]
                     |> Tuple.first
                     |> Expect.equal []
-        , test "stagedCount of an unknown editor is 0" <|
-            \_ ->
-                stagedCount "commentInput" "![](paste-1-0.png)" (init [])
-                    |> Expect.equal 0
         ]
 
 

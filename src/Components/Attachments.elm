@@ -75,7 +75,7 @@ type alias Model =
     -- pendingByEditor: files queued in an editor before its carrier (cid) exists.
     -- activeByCid:     files being uploaded to a saved comment (FIFO drain, one in flight).
     -- Paste filenames (`paste-<Date.now()>-<i><ext>`) are generated in
-    -- ports.js so the File object's own .name matches the multipart upload
+    -- fileCapture.js so the File object's own .name matches the multipart upload
     -- and the markdown placeholder.
     { pendingByEditor : Dict.Dict String (List PendingFile)
     , activeByCid : Dict.Dict String UploadBatch
@@ -359,7 +359,7 @@ update_ apis message model =
 
             else
                 let
-                    -- ports.js sets each File's name to `paste-<Date.now()>-<i><ext>`
+                    -- fileCapture.js sets each File's name to `paste-<Date.now()>-<i><ext>`
                     -- and ships a parallel blob URL and dim. We just read them off.
                     ( triples, tooLarge ) =
                         List.map3 (\fi url d -> ( fi, url, d ))
@@ -438,13 +438,14 @@ update_ apis message model =
                                             []
                                    )
 
-                        status =
+                        -- A failed file keeps its chip while the batch goes on.
+                        ( status, logCmd ) =
                             case result of
                                 Ok up ->
-                                    Uploaded up.id
+                                    ( Uploaded up.id, [] )
 
                                 Err err ->
-                                    UploadFailed err
+                                    ( UploadFailed err, [ Ports.logErr ("file upload failed for " ++ filename ++ ": " ++ ApiFile.errorToString err) ] )
 
                         batch1 =
                             { batch
@@ -468,17 +469,9 @@ update_ apis message model =
                         ack =
                             Just { cid = cid, filename = filename, saved = Result.toMaybe result, batchDone = batchDone }
                     in
-                    case result of
-                        Ok _ ->
-                            ( { model | activeByCid = activeByCid1, failedByCid = failedByCid1 }
-                            , Out (nextCmd :: revokeCmd) failedCmds ack
-                            )
-
-                        Err err ->
-                            -- Keep the failed chip visible while continuing the batch.
-                            ( { model | activeByCid = activeByCid1, failedByCid = failedByCid1 }
-                            , Out (nextCmd :: Ports.logErr ("file upload failed for " ++ filename ++ ": " ++ ApiFile.errorToString err) :: revokeCmd) failedCmds ack
-                            )
+                    ( { model | activeByCid = activeByCid1, failedByCid = failedByCid1 }
+                    , Out (nextCmd :: logCmd ++ revokeCmd) failedCmds ack
+                    )
 
         OnUploadProgress cid progress ->
             case progress of
@@ -654,13 +647,16 @@ subscriptions (State model) =
 
 
 {-| Staged files stay in the editor; with `showActive` (modal editors), the uploads
-handed off by `targetId` remain here too.
+handed off by `targetId` remain here too. `forCid` scopes those uploads to one
+comment (the edit editor id is shared by every comment).
 -}
-viewPendingsRow : Bool -> String -> State -> Html Msg
-viewPendingsRow showActive targetId (State model) =
+viewPendingsRow : Bool -> Maybe String -> String -> State -> Html Msg
+viewPendingsRow showActive forCid targetId (State model) =
     let
         batches =
-            Dict.values model.activeByCid |> List.filter (\batch -> batch.editorId == targetId)
+            model.activeByCid
+                |> Dict.filter (\cid batch -> batch.editorId == targetId && withDefault cid forCid == cid)
+                |> Dict.values
 
         pendings =
             Dict.get targetId model.pendingByEditor |> withDefault []
