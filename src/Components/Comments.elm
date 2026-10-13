@@ -155,6 +155,9 @@ type alias Model =
     , pendingByEditor : Dict.Dict String (List PendingFile)
     , activeByCid : Dict.Dict String UploadBatch
 
+    -- failedByCid: failed uploads of a drained batch, kept under the comment until dismissed.
+    , failedByCid : Dict.Dict String (List PendingFile)
+
     -- pasteTargets: editor ids this instance renders. The paste port is
     -- broadcast to every mounted Comments, so foreign pastes must be ignored.
     , pasteTargets : List String
@@ -242,6 +245,7 @@ initModel nameid tensionid session =
     -- File attachments
     , pendingByEditor = Dict.empty
     , activeByCid = Dict.empty
+    , failedByCid = Dict.empty
     , pasteTargets = threadEditors
 
     -- Common
@@ -459,6 +463,7 @@ type Msg
     | OnUploadProgress String Http.Progress -- cid, progress
     | OnDeleteAttachment String String -- cid, fileId
     | OnDeleteAttachmentAck String String (Result ApiFile.ApiError ())
+    | OnDismissFailed String String -- cid, filename
       -- Components
     | UserInputMsg UserInput.Msg
     | EmojiPickerMsg EmojiPicker.Msg
@@ -1055,8 +1060,8 @@ update_ apis message model =
 
         OnFilesSelected targetId f rest ->
             let
-                files =
-                    f :: rest
+                ( files, tooLarge ) =
+                    List.partition (\fi -> File.size fi <= maxUploadBytes) (f :: rest)
 
                 pendings =
                     List.map
@@ -1073,24 +1078,37 @@ update_ apis message model =
                 pendingByEditor1 =
                     Dict.update targetId (Maybe.withDefault [] >> (\xs -> xs ++ pendings) >> Just) model.pendingByEditor
             in
-            ( { model | pendingByEditor = pendingByEditor1 }, noOut )
+            ( { model | pendingByEditor = pendingByEditor1 }, out1 (tooLargeNotif tooLarge) )
 
         OnPastedFiles { targetId, files, objectUrls, dims, isPaste } ->
             if not (List.member targetId model.pasteTargets) then
                 -- Paste meant for another mounted Comments instance.
                 ( model, noOut )
 
+            else if List.isEmpty files then
+                -- The clipboard advertised files the browser could not read.
+                ( model, out1 [ errorNotif T.clipboardNotAttachable [] ] )
+
             else
                 let
                     -- ports.js sets each File's name to `paste-<Date.now()>-<i><ext>`
-                    -- and ships a parallel blob URL. We just read both off.
-                    pairs =
-                        List.map2 Tuple.pair files (objectUrls ++ List.repeat (List.length files) "")
+                    -- and ships a parallel blob URL and dim. We just read them off.
+                    ( triples, tooLarge ) =
+                        List.map3 (\fi url d -> ( fi, url, d ))
+                            files
+                            (objectUrls ++ List.repeat (List.length files) "")
+                            (dims ++ List.repeat (List.length files) "")
+                            |> List.partition (\( fi, _, _ ) -> File.size fi <= maxUploadBytes)
+
+                    revokeCmds =
+                        tooLarge
+                            |> List.filter (\( _, url, _ ) -> url /= "")
+                            |> List.map (\( _, url, _ ) -> Ports.revokeObjectUrl url)
 
                     newPendings =
-                        pairs
+                        triples
                             |> List.map
-                                (\( fi, url ) ->
+                                (\( fi, url, _ ) ->
                                     { filename = File.name fi
                                     , file = fi
                                     , isPaste = isPaste
@@ -1111,13 +1129,13 @@ update_ apis message model =
                                     Ports.insertAtCaret targetId ("![" ++ ternary (d == "") "" ("|" ++ d) ++ "](" ++ p.filename ++ ") ")
                                 )
                                 newPendings
-                                dims
+                                (List.map (\( _, _, d ) -> d) triples)
 
                         else
                             []
                 in
                 ( { model | pendingByEditor = pendingByEditor1 }
-                , out0 insertCmds
+                , out2 (insertCmds ++ revokeCmds) (tooLargeNotif (List.map (\( fi, _, _ ) -> fi) tooLarge))
                 )
 
         OnRemovePending targetId filename ->
@@ -1171,6 +1189,33 @@ update_ apis message model =
 
                         batchOut =
                             ternary (batch1.done == List.length batch1.files) (Just UploadsDone) Nothing
+
+                        -- Once the batch drained, its failures outlive it: kept under the
+                        -- comment and notified, as carriers (new tension, card panel) close.
+                        failed =
+                            ternary (batchOut == Nothing) [] (List.filter isUploadFailed batch1.files)
+
+                        failedByCid1 =
+                            ternary (List.isEmpty failed)
+                                model.failedByCid
+                                (Dict.update cid (Maybe.withDefault [] >> (\xs -> xs ++ failed) >> Just) model.failedByCid)
+
+                        failedNotif =
+                            ternary (List.isEmpty failed)
+                                []
+                                [ errorNotif T.attachmentsFailed
+                                    (List.filterMap
+                                        (\p ->
+                                            case p.status of
+                                                UploadFailed err ->
+                                                    Just (p.filename ++ ": " ++ ApiFile.errorToString err)
+
+                                                _ ->
+                                                    Nothing
+                                        )
+                                        failed
+                                    )
+                                ]
                     in
                     case result of
                         Ok up ->
@@ -1206,8 +1251,8 @@ update_ apis message model =
                                 ( nextCmd, activeByCid1 ) =
                                     drainNext apis cid batch1 model.activeByCid
                             in
-                            ( { model | comments = comments1, activeByCid = activeByCid1 }
-                            , Out (nextCmd :: revokeCmd) [] batchOut
+                            ( { model | comments = comments1, activeByCid = activeByCid1, failedByCid = failedByCid1 }
+                            , Out (nextCmd :: revokeCmd) failedNotif batchOut
                             )
 
                         Err err ->
@@ -1216,8 +1261,8 @@ update_ apis message model =
                                 ( nextCmd, activeByCid1 ) =
                                     drainNext apis cid batch1 model.activeByCid
                             in
-                            ( { model | activeByCid = activeByCid1 }
-                            , Out (nextCmd :: Ports.logErr ("file upload failed for " ++ filename ++ ": " ++ ApiFile.errorToString err) :: revokeCmd) [] batchOut
+                            ( { model | activeByCid = activeByCid1, failedByCid = failedByCid1 }
+                            , Out (nextCmd :: Ports.logErr ("file upload failed for " ++ filename ++ ": " ++ ApiFile.errorToString err) :: revokeCmd) failedNotif batchOut
                             )
 
         OnUploadProgress cid progress ->
@@ -1252,6 +1297,9 @@ update_ apis message model =
 
                 Err err ->
                     ( model, out0 [ Ports.logErr ("file delete failed: " ++ ApiFile.errorToString err) ] )
+
+        OnDismissFailed cid filename ->
+            ( { model | failedByCid = Dict.update cid (Maybe.map (List.filter (\p -> p.filename /= filename))) model.failedByCid }, noOut )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -1445,6 +1493,37 @@ uploadTracker cid =
     "upload-" ++ cid
 
 
+{-| ponytail: hardcoded client cap, can drift from the backend `storage.max_upload_bytes`;
+expose that setting to the client if they must match.
+-}
+maxUploadBytes : Int
+maxUploadBytes =
+    100 * 1024 * 1024
+
+
+isUploadFailed : PendingFile -> Bool
+isUploadFailed p =
+    case p.status of
+        UploadFailed _ ->
+            True
+
+        _ ->
+            False
+
+
+errorNotif : String -> List String -> GlobalCmd
+errorNotif header lines =
+    DoPushSystemNotif
+        { cls = "is-danger"
+        , content = div [] [ text header, showIf (lines /= []) (ul [] (List.map (\l -> li [] [ text l ]) lines)) ]
+        }
+
+
+tooLargeNotif : List File.File -> List GlobalCmd
+tooLargeNotif files =
+    ternary (List.isEmpty files) [] [ errorNotif T.filesTooLarge (List.map File.name files) ]
+
+
 {-| True when an inner widget already closes on Escape (so parents must not).
 -}
 hasEscConsumer : State -> Bool
@@ -1487,7 +1566,7 @@ viewCommentsContract session (State model) =
         [ model.comments
             |> List.map
                 (\c ->
-                    viewComment session c model.comment_form model.comment_result model.comment_delete_result model.highlightedCommentId model.userInput model.emojiPicker model.pendingByEditor (Dict.get c.id model.activeByCid) (List.member c.id model.fadingOut)
+                    viewComment session c model.comment_form model.comment_result model.comment_delete_result model.highlightedCommentId model.userInput model.emojiPicker model.pendingByEditor (Dict.get c.id model.activeByCid) [] (List.member c.id model.fadingOut)
                 )
             |> div []
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
@@ -1497,7 +1576,7 @@ viewCommentsContract session (State model) =
 viewCommentsTension : SessionCommon -> { t | governed_node : Maybe GovernedNode, draft_node_type : Maybe NodeType.NodeType } -> State -> Html Msg
 viewCommentsTension session tension (State model) =
     div []
-        [ viewComments_ session tension model.history model.comments model.comment_form model.comment_result model.comment_delete_result model.expandedEvents model.highlightedCommentId model.userInput model.emojiPicker model.pendingByEditor model.activeByCid model.fadingOut
+        [ viewComments_ session tension model.history model.comments model.comment_form model.comment_result model.comment_delete_result model.expandedEvents model.highlightedCommentId model.userInput model.emojiPicker model.pendingByEditor model.activeByCid model.failedByCid model.fadingOut
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
 
@@ -1516,9 +1595,10 @@ viewComments_ :
     -> EmojiPicker.State
     -> Dict.Dict String (List PendingFile)
     -> Dict.Dict String UploadBatch
+    -> Dict.Dict String (List PendingFile)
     -> List String
     -> Html Msg
-viewComments_ session tension history comments comment_form comment_result comment_delete_result expandedEvents highlightedCommentId userInput emojiPicker pendingByEditor activeByCid fadingOut =
+viewComments_ session tension history comments comment_form comment_result comment_delete_result expandedEvents highlightedCommentId userInput emojiPicker pendingByEditor activeByCid failedByCid fadingOut =
     let
         nodeType =
             getTensionNode tension |> Maybe.map .type_ |> withDefault NodeType.Role
@@ -1560,7 +1640,7 @@ viewComments_ session tension history comments comment_form comment_result comme
                 Nothing ->
                     case LE.getAt e.i comments of
                         Just c ->
-                            viewComment session c comment_form comment_result comment_delete_result highlightedCommentId userInput emojiPicker pendingByEditor (Dict.get c.id activeByCid) (List.member c.id fadingOut)
+                            viewComment session c comment_form comment_result comment_delete_result highlightedCommentId userInput emojiPicker pendingByEditor (Dict.get c.id activeByCid) (Dict.get c.id failedByCid |> withDefault []) (List.member c.id fadingOut)
 
                         Nothing ->
                             text ""
@@ -1635,8 +1715,8 @@ viewComments_ session tension history comments comment_form comment_result comme
         |> div []
 
 
-viewComment : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> ( String, GqlData IdPayload ) -> String -> UserInput.State -> EmojiPicker.State -> Dict.Dict String (List PendingFile) -> Maybe UploadBatch -> Bool -> Html Msg
-viewComment session c form result delete_result highlightedCommentId userInput emojiPicker pendingByEditor uploadBatch isFadingOut =
+viewComment : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> ( String, GqlData IdPayload ) -> String -> UserInput.State -> EmojiPicker.State -> Dict.Dict String (List PendingFile) -> Maybe UploadBatch -> List PendingFile -> Bool -> Html Msg
+viewComment session c form result delete_result highlightedCommentId userInput emojiPicker pendingByEditor uploadBatch failed isFadingOut =
     let
         isAuthor =
             c.createdBy.username == form.uctx.username
@@ -1745,7 +1825,7 @@ viewComment session c form result delete_result highlightedCommentId userInput e
                                 -- Ctrl + double click to edit, caret at the clicked line
                                 div (ternary isAuthor [ Dom.onCtrlDblClick (OnUpdateComment c) ] [])
                                     [ renderMarkdown session.file_server_url "is-human" message ]
-                        , viewSavedAttachments session c uploadBatch
+                        , viewSavedAttachments session c uploadBatch failed
                         , div [ class "emoji-reactions" ] <|
                             List.map
                                 (\r ->
@@ -1839,18 +1919,18 @@ viewPendingsRow targetId pendings activeByCid =
             [ A.icon1 "icon-paperclip icon-xs" T.attach ]
          ]
             ++ (if List.member targetId modalEditors then
-                    List.concatMap (\batch -> List.map (viewPendingChip targetId False batch.fraction) batch.files) batches
+                    List.concatMap (\batch -> List.map (viewPendingChip Nothing batch.fraction) batch.files) batches
 
                 else
                     []
                )
             -- Staged pastes are removed through their markdown placeholder, not a chip.
-            ++ List.map (viewPendingChip targetId True 0) (List.filter (not << .isPaste) pendings)
+            ++ List.map (\p -> viewPendingChip (Just (OnRemovePending targetId p.filename)) 0 p) (List.filter (not << .isPaste) pendings)
         )
 
 
-viewPendingChip : String -> Bool -> Float -> PendingFile -> Html Msg
-viewPendingChip targetId removable fraction p =
+viewPendingChip : Maybe Msg -> Float -> PendingFile -> Html Msg
+viewPendingChip onRemove fraction p =
     let
         ( statusEl, progressFraction ) =
             case p.status of
@@ -1866,7 +1946,16 @@ viewPendingChip targetId removable fraction p =
                 UploadFailed _ ->
                     ( A.icon "icon-alert-triangle has-text-danger", Nothing )
     in
-    span [ class "tag attachment-chip", title p.filename ]
+    span
+        [ class "tag attachment-chip"
+        , title <|
+            case p.status of
+                UploadFailed err ->
+                    p.filename ++ ": " ++ ApiFile.errorToString err
+
+                _ ->
+                    p.filename
+        ]
         [ case progressFraction of
             Just amount ->
                 progress
@@ -1881,22 +1970,26 @@ viewPendingChip targetId removable fraction p =
                 text ""
         , statusEl
         , span [ class "attachment-name ml-1" ] [ text p.filename ]
-        , showIf removable <|
-            button
-                [ class "delete is-small ml-2"
-                , type_ "button"
-                , title T.remove
-                , attribute "aria-label" (T.remove ++ " " ++ p.filename)
-                , onClick (OnRemovePending targetId p.filename)
-                ]
-                []
+        , case onRemove of
+            Just msg ->
+                button
+                    [ class "delete is-small ml-2"
+                    , type_ "button"
+                    , title T.remove
+                    , attribute "aria-label" (T.remove ++ " " ++ p.filename)
+                    , onClick msg
+                    ]
+                    []
+
+            Nothing ->
+                text ""
         ]
 
 
 {-| Saved files and the active batch belonging to this comment, without duplicate chips.
 -}
-viewSavedAttachments : SessionCommon -> Comment -> Maybe UploadBatch -> Html Msg
-viewSavedAttachments session c uploadBatch =
+viewSavedAttachments : SessionCommon -> Comment -> Maybe UploadBatch -> List PendingFile -> Html Msg
+viewSavedAttachments session c uploadBatch failed =
     let
         viewer =
             (uctxFromUser session.user).username
@@ -1944,7 +2037,7 @@ viewSavedAttachments session c uploadBatch =
                             ]
                     )
     in
-    if List.isEmpty chips && uploadBatch == Nothing then
+    if List.isEmpty chips && uploadBatch == Nothing && List.isEmpty failed then
         text ""
 
     else
@@ -1953,10 +2046,13 @@ viewSavedAttachments session c uploadBatch =
                 ++ [ case uploadBatch of
                         Just batch ->
                             div [ class "pending-files is-flex is-flex-wrap-wrap is-align-items-center" ]
-                                (List.map (viewPendingChip batch.editorId False batch.fraction) batch.files)
+                                (List.map (viewPendingChip Nothing batch.fraction) batch.files)
 
                         Nothing ->
                             text ""
+                   , showIf (failed /= []) <|
+                        div [ class "pending-files is-flex is-flex-wrap-wrap is-align-items-center" ]
+                            (List.map (\p -> viewPendingChip (Just (OnDismissFailed c.id p.filename)) 0 p) failed)
                    ]
             )
 

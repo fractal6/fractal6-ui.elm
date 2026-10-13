@@ -109,11 +109,43 @@ test('a paste whose size cannot be read still goes through, dimensionless', asyn
     expect(app.ports.pastedFilesFromJs.send.mock.calls[0][0].dims).toEqual(['']);
 });
 
-test('a non-image paste carries no dimension', async () => {
+test('a non-image paste is staged as an attachment, under its own name', async () => {
     const ta = document.getElementById('commentInput');
-    const cd = { items: [{ kind: 'file', getAsFile: () => new File(['x'], 'a.pdf', { type: 'application/pdf' }) }] };
+    const video = new File(['x'], 'clip.mp4', { type: 'video/mp4' });
+    const cd = { items: [{ kind: 'file', getAsFile: () => video }], types: ['Files'] };
 
-    fire(ta, 'paste', cd);
+    expect(fire(ta, 'paste', cd).defaultPrevented).toBe(true);
     await flush();
-    expect(app.ports.pastedFilesFromJs.send.mock.calls[0][0].dims).toEqual(['']);
+    expect(app.ports.pastedFilesFromJs.send).toHaveBeenCalledTimes(1);
+    expect(app.ports.pastedFilesFromJs.send).toHaveBeenCalledWith({
+        targetId: 'commentInput',
+        files: [video],
+        objectUrls: [],
+        dims: [],
+        isPaste: false,
+    });
+});
+
+test('clipboard files only reachable through .files are still captured', async () => {
+    const ta = document.getElementById('commentInput');
+    const file = new File(['x'], 'a.pdf', { type: 'application/pdf' });
+    fire(ta, 'paste', { items: [{ kind: 'file', getAsFile: () => null }], files: [file], types: ['Files'] });
+    await flush();
+    expect(app.ports.pastedFilesFromJs.send.mock.calls[0][0].files).toEqual([file]);
+});
+
+test('advertised but unreadable clipboard files are reported as an empty paste', async () => {
+    const ta = document.getElementById('commentInput');
+    const cd = { items: [{ kind: 'file', getAsFile: () => null }], files: [], types: ['Files'] };
+
+    expect(fire(ta, 'paste', cd).defaultPrevented).toBe(true);
+    await flush();
+    expect(app.ports.pastedFilesFromJs.send.mock.calls[0][0].files).toEqual([]);
+});
+
+test('a text paste is left to the browser', async () => {
+    const ta = document.getElementById('commentInput');
+    expect(fire(ta, 'paste', { items: [{ kind: 'string' }], files: [], types: ['text/plain'] }).defaultPrevented).toBe(false);
+    await flush();
+    expect(app.ports.pastedFilesFromJs.send).not.toHaveBeenCalled();
 });

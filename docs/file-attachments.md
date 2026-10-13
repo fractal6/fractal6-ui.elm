@@ -66,10 +66,15 @@ keep their native behaviour.
 
 The payload's `isPaste` splits the two flows:
 
-- **paste** (`isPaste: true`) — files renamed, blob preview, `![|WxH](name)` inserted at the
-  caret.
-- **drop** (`isPaste: false`) — original filename, no rename, no placeholder: staged as a plain
-  attachment chip, exactly like the Attach button (`OnFilesSelected`).
+- **image paste** (`isPaste: true`) — files renamed, blob preview, `![|WxH](name)` inserted at
+  the caret.
+- **drop, or non-image paste** (`isPaste: false`) — original filename (renamed only if the
+  clipboard gave none), no placeholder: staged as a plain attachment chip, exactly like the
+  Attach button (`OnFilesSelected`). A pasted video or PDF must not become an `<img>`.
+
+Clipboard files are read from `items`, falling back to `files`. When the clipboard advertises
+`Files` but none is readable (e.g. a file copied from the Windows explorer), an empty `files`
+list is sent so Elm can report it.
 
 Two constraints on the paste step:
 
@@ -97,6 +102,20 @@ Then, in Elm:
    `comment.files`, mirroring what the server stored.
 
 Blob URLs are revoked through `REVOKE_OBJECT_URL` on ack, manual removal, and pruning.
+
+## Errors
+
+Every failure surfaces as a danger system notification (`DoPushSystemNotif`, via `gcmds`), so
+it is seen even when the carrier (new tension modal, card panel) has already closed:
+
+- **Too large** — files over `maxUploadBytes` (hardcoded 100 MB, may drift from the backend
+  `storage.max_upload_bytes`) are rejected at staging, before any request.
+- **Unreadable clipboard** — empty paste payload → `T.clipboardNotAttachable`.
+- **Upload failed** — when a batch drains, its failed files are notified with
+  `ApiFile.errorToString` and kept in `failedByCid`: shown under the comment as warning chips
+  (error in the tooltip) until dismissed (`OnDismissFailed`).
+
+A failed paste leaves its `![](paste-…)` placeholder in the saved message (not handled yet).
 
 ## Views
 
