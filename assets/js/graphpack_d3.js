@@ -761,7 +761,15 @@ export const GraphPack = {
             ctx2d.strokeStyle = color;
             ctx2d.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon + 0.1 + w / 2, 0, 2 * Math.PI, true);
             ctx2d.stroke();
-            //ctx2d.save();
+            // Canvas has no z-index: redraw names clipped to the (opaque) border ring,
+            // so titles stay on top without double-drawing (and bolding) them elsewhere.
+            ctx2d.save();
+            ctx2d.beginPath();
+            ctx2d.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon + 0.1 + w, 0, 2 * Math.PI);
+            ctx2d.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon + 0.1, 0, 2 * Math.PI);
+            ctx2d.clip("evenodd");
+            this.drawNodeNames(this.zoomedNode);
+            ctx2d.restore();
         }
 
         // Draw tooltip
