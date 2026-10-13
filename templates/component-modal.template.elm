@@ -23,27 +23,27 @@ module ${module_name} exposing (Msg(..), State, init, subscriptions, update, vie
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Bulk exposing (UserState(..), uctxFromUser)
-import Bulk.Error exposing (viewGqlErrors)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Dict exposing (Dict)
-import Extra exposing (space_, ternary, textH, unwrap, unwrap2)
-import Extra.Events exposing (onClickPD)
+import Components.Out as O exposing (noOut, out0, out1, out2)
+import Dict
 import Form exposing (isPostEmpty, isPostSendable)
-import Global exposing (send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
-import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Iso8601 exposing (fromTime)
-import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, withMaybeData)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.User exposing (UserState(..), uctxFromUser)
+import Html exposing (Html, a, button, div, p, text, textarea)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, target, value)
+import Html.Events exposing (onClick, onInput)
+import Loading exposing (GqlData, ModalData, RequestResult(..), withMaybeData)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (MyData, Post, UserCtx)
+import ModelSchema exposing (Post, UserCtx)
 import Ports
-import Query.AddData exposing (getData)
-import Session exposing (Apis, GlobalCmd(..), Session)
+import Schema.Enum.TensionEvent as TensionEvent
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.DomEvents exposing (onClickPD)
+import Utils.String exposing (space_)
 
 
 
@@ -63,18 +63,18 @@ type alias Model =
     , form : MyForm -- user inputs
 
     -- Common
-    , session: Session
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     }
 
 
-initModel : Session -> Model
-initModel  session =
+initModel : SessionCommon -> Model
+initModel session =
     { isActive = False
     , isActive2 = False
     , data_result = NotAsked
-    , form = initForm user
+    , form = initForm session.user
 
     -- Common
     , session = session
@@ -106,7 +106,7 @@ initForm user =
     }
 
 
-init : Session -> State
+init : SessionCommon -> State
 init session =
     initModel session |> State
 
@@ -195,30 +195,7 @@ type Msg
 
 
 type alias Out =
-    { cmds : List (Cmd Msg)
-    , gcmds : List GlobalCmd
-    , result : Maybe ( Bool, MyData ) -- define what data is to be returned
-    }
-
-
-noOut : Out
-noOut =
-    Out [] [] Nothing
-
-
-out0 : List (Cmd Msg) -> Out
-out0 cmds =
-    Out cmds [] Nothing
-
-
-out1 : List GlobalCmd -> Out
-out1 cmds =
-    Out [] cmds Nothing
-
-
-out2 : List (Cmd Msg) -> List GlobalCmd -> Out
-out2 cmds gcmds =
-    Out cmds gcmds Nothing
+    O.Out Msg ( Bool, MyData ) -- define what data is to be returned
 
 
 update : Apis -> Msg -> State -> ( State, Out )
@@ -287,7 +264,7 @@ update_ apis message model =
             else
                 ( model, noOut )
 
-        DoDataQuery time ->
+        DoDataQuery _ ->
             ( model, out0 [ send OnQueryData ] )
 
         OnQueryData ->
@@ -316,7 +293,7 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, out2 [ sendSleep OnQueryData 500 ] [ DoUpdateToken ] )
 
                 OkAuth d ->
-                    ( data, Out [] [] (Just ( True, d )) )
+                    ( data, O.Out [] [] (Just ( True, d )) )
 
                 _ ->
                     ( data, noOut )
@@ -393,10 +370,9 @@ viewModal op model =
             [ case model.data_result of
                 Success data ->
                     let
+                        -- example: build the link from the data
                         link =
-                            data.id
-
-                        -- example @tofix
+                            data
                     in
                     div [ class "notification is-success-light" ]
                         [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
@@ -409,7 +385,7 @@ viewModal op model =
                                 , onClickPD (OnClose { reset = True, link = link })
                                 , target "_blank"
                                 ]
-                                [ textH T.checkItOut_masc ]
+                                [ text T.checkItOut_masc ]
                             ]
                         ]
 
@@ -436,7 +412,7 @@ viewModalContent op model =
     div [ class "modal-card" ]
         [ div [ class "modal-card-head" ]
             [ div [ class "modal-card-title is-wrapped is-size-6 has-text-weight-semibold" ]
-                [ textH "EditMe" ]
+                [ text "EditMe" ]
             ]
         , div [ class "modal-card-body" ]
             [ div [ class "field" ]
@@ -450,7 +426,7 @@ viewModalContent op model =
                         , onInput <| OnChangePost "message"
                         ]
                         []
-                    , p [ class "help-label" ] [ textH T.tensionMessageHelp ]
+                    , p [ class "help-label" ] [ text T.tensionMessageHelp ]
                     ]
                 ]
             ]
@@ -467,7 +443,7 @@ viewModalContent op model =
                         [ class "button is-light"
                         , onClick (OnCloseSafe "" "")
                         ]
-                        [ textH T.cancel ]
+                        [ text T.cancel ]
                     ]
                 , div [ class "level-right" ]
                     [ button
@@ -476,8 +452,17 @@ viewModalContent op model =
                         , disabled (not isSendable_)
                         , onClick (OnSubmit (isSendable_ && not isLoading) <| DoDataQuery)
                         ]
-                        [ textH T.submit ]
+                        [ text T.submit ]
                     ]
                 ]
             ]
         ]
+
+
+
+-- Placeholder: replace with your query (src/Query/).
+
+
+getData : Apis -> MyForm -> (GqlData MyData -> Msg) -> Cmd Msg
+getData _ _ _ =
+    Cmd.none

@@ -25,6 +25,7 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (QuickDoc)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
+import Components.Out as O exposing (noOut, out0, out2)
 import Dict
 import Form exposing (isPostSendable)
 import Form.NewTension as NT
@@ -286,30 +287,7 @@ type Msg
 
 
 type alias Out =
-    { cmds : List (Cmd Msg)
-    , gcmds : List GlobalCmd
-    , result : Maybe ( Bool, User )
-    }
-
-
-noOut : Out
-noOut =
-    Out [] [] Nothing
-
-
-out0 : List (Cmd Msg) -> Out
-out0 cmds =
-    Out cmds [] Nothing
-
-
-out1 : List GlobalCmd -> Out
-out1 cmds =
-    Out [] cmds Nothing
-
-
-out2 : List (Cmd Msg) -> List GlobalCmd -> Out
-out2 cmds gcmds =
-    Out cmds gcmds Nothing
+    O.Out Msg ( Bool, User )
 
 
 update : Apis -> Msg -> State -> ( State, Out )

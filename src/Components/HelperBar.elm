@@ -22,6 +22,7 @@
 module Components.HelperBar exposing (Msg(..), State, init, subscriptions, update, view)
 
 import Assets as A
+import Components.Out as O exposing (noOut, out0, out1)
 import Fractale.Codecs exposing (FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isProjectBaseUri, isTensionBaseUri, nearestCircleid, nid2rootid, nid2type, toLink)
 import Fractale.Graph exposing (getParent)
 import Fractale.User exposing (UserState(..))
@@ -128,30 +129,7 @@ type Msg
 
 
 type alias Out =
-    { cmds : List (Cmd Msg)
-    , gcmds : List GlobalCmd
-    , result : Maybe Bool
-    }
-
-
-noOut : Out
-noOut =
-    Out [] [] Nothing
-
-
-out0 : List (Cmd Msg) -> Out
-out0 cmds =
-    Out cmds [] Nothing
-
-
-out1 : List GlobalCmd -> Out
-out1 cmds =
-    Out [] cmds Nothing
-
-
-out2 : List (Cmd Msg) -> List GlobalCmd -> Out
-out2 cmds gcmds =
-    Out cmds gcmds Nothing
+    O.Out Msg Bool
 
 
 update : Apis -> Msg -> State -> ( State, Out )

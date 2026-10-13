@@ -24,6 +24,7 @@ module Components.ConfirmContract exposing (Msg(..), State, init, subscriptions,
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
+import Components.Out as O exposing (noOut, out0, out2)
 import Dict
 import Form exposing (isPostEmpty)
 import Fractale.Codecs exposing (contractIdCodec, nid2eor, nid2rootid)
@@ -225,33 +226,9 @@ type Msg
 
 
 type alias Out =
-    { cmds : List (Cmd Msg)
-    , gcmds : List GlobalCmd
-
     --Bool : Does the parent modal should be closed
     --Contract : the result Contract
-    , result : Maybe ( Bool, IdPayload )
-    }
-
-
-noOut : Out
-noOut =
-    Out [] [] Nothing
-
-
-out0 : List (Cmd Msg) -> Out
-out0 cmds =
-    Out cmds [] Nothing
-
-
-out1 : List GlobalCmd -> Out
-out1 cmds =
-    Out [] cmds Nothing
-
-
-out2 : List (Cmd Msg) -> List GlobalCmd -> Out
-out2 cmds gcmds =
-    Out cmds gcmds Nothing
+    O.Out Msg ( Bool, IdPayload )
 
 
 update : Apis -> Msg -> State -> ( State, Out )
@@ -278,7 +255,7 @@ update_ apis message model =
                 res =
                     withMaybeMapData (\r -> ( True, r )) model.data_result
             in
-            ( close model, Out (Ports.close_modal :: cmds) gcmds res )
+            ( close model, O.Out (Ports.close_modal :: cmds) gcmds res )
 
         OnReset ->
             ( reset model, noOut )
@@ -334,7 +311,7 @@ update_ apis message model =
                             Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.target, param2 = model.form.tid, param3 = d.id } |> toHref
                     in
                     ( data
-                    , Out [ send (OnCloseSafe "" "") ]
+                    , O.Out [ send (OnCloseSafe "" "") ]
                         [ DoPushSystemNotif
                             { cls = "is-success"
                             , content =

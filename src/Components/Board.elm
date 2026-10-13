@@ -27,6 +27,7 @@ import Browser.Events as Events
 import Components.LabelSearchPanel exposing (viewLabels)
 import Components.LinkTensionPanel as LinkTensionPanel exposing (ColTarget)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
+import Components.Out as O exposing (noOut, out0, out1, out2)
 import Components.ProjectColumnModal as ProjectColumnModal exposing (ModalType(..))
 import Dict exposing (Dict)
 import Fractale.Codecs exposing (NodeFocus, getTensionNode, nid2rootid)
@@ -235,30 +236,7 @@ type Msg
 
 
 type alias Out =
-    { cmds : List (Cmd Msg)
-    , gcmds : List GlobalCmd
-    , result : Maybe ( Bool, GqlData String ) -- define what data is to be returned
-    }
-
-
-noOut : Out
-noOut =
-    Out [] [] Nothing
-
-
-out0 : List (Cmd Msg) -> Out
-out0 cmds =
-    Out cmds [] Nothing
-
-
-out1 : List GlobalCmd -> Out
-out1 cmds =
-    Out [] cmds Nothing
-
-
-out2 : List (Cmd Msg) -> List GlobalCmd -> Out
-out2 cmds gcmds =
-    Out cmds gcmds Nothing
+    O.Out Msg ( Bool, GqlData String ) -- define what data is to be returned
 
 
 update : Apis -> Msg -> State -> ( State, Out )
@@ -850,7 +828,7 @@ update_ apis message model =
                         Nothing ->
                             model.project
             in
-            ( { model | projectColumnModal = data, project = pj }, Out (List.map (\m -> Cmd.map ProjectColumnModalMsg m) out.cmds) out.gcmds Nothing )
+            ( { model | projectColumnModal = data, project = pj }, O.Out (List.map (\m -> Cmd.map ProjectColumnModalMsg m) out.cmds) out.gcmds Nothing )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->

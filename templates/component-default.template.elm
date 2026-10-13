@@ -20,28 +20,22 @@
 
 module ${module_name} exposing (Msg(..), State, init, subscriptions, update, view)
 
-import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Dict exposing (Dict)
-import Extra exposing (ternary, textH, upH)
+import Components.Out as O exposing (noOut, out0, out1, out2)
+import Dict
 import Form exposing (isPostEmpty)
-import Global exposing (send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button,  div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span,  text, textarea,  ul)
-import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
-import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Iso8601 exposing (fromTime)
-import List.Extra as LE
-import Maybe exposing (withDefault)
-import Bulk exposing (UserState(..), uctxFromUser)
-import Bulk.Error exposing (viewGqlErrors)
-import ModelSchema exposing (MyData, Post, UserCtx)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.User exposing (UserState(..), uctxFromUser)
+import Html exposing (Html, div, text)
+import Html.Attributes exposing (class)
+import Loading exposing (GqlData, ModalData, RequestResult(..), withMaybeData)
+import ModelSchema exposing (Post, UserCtx)
 import Ports
-import Query.AddData exposing (getData)
-import Session exposing (Apis, Session, GlobalCmd(..))
-import Text as T
+import Schema.Enum.TensionEvent as TensionEvent
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Time
+import Utils.Cmd exposing (send, sendNow, sendSleep)
 
 -- ------------------------------
 -- M O D E L
@@ -54,16 +48,16 @@ type alias Model =
     { data_result : GqlData MyData -- result of any query
     , form : MyForm -- user inputs
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     }
 
 
-initModel : Session -> Model
+initModel : SessionCommon -> Model
 initModel session =
     { data_result = NotAsked
-    , form = initForm user
+    , form = initForm session.user
     -- Common
     , session = session
     , refresh_trial = 0
@@ -89,7 +83,7 @@ initForm user =
     , post = Dict.empty
     }
 
-init : Session -> State
+init : SessionCommon -> State
 init session =
     initModel session |> State
 
@@ -142,6 +136,7 @@ type Msg
     =
     -- Data
       OnLoad
+    | OnReset
     | OnSubmit (Time.Posix -> Msg)
     | OnChangePost String String
     | DoDataQuery Time.Posix
@@ -157,29 +152,8 @@ type Msg
 
 
 type alias Out =
-    { cmds : List (Cmd Msg)
-    , gcmds : List GlobalCmd
-    , result : Maybe ( Bool, MyData ) -- define what data is to be returned
-    }
+    O.Out Msg ( Bool, MyData ) -- define what data is to be returned
 
-
-noOut : Out
-noOut =
-    Out [] [] Nothing
-
-
-out0 : List (Cmd Msg) -> Out
-out0 cmds =
-    Out cmds [] Nothing
-
-
-out1 : List GlobalCmd -> Out
-out1 cmds =
-    Out [] cmds Nothing
-
-out2 : List (Cmd Msg) -> List GlobalCmd -> Out
-out2 cmds gcmds =
-    Out cmds gcmds Nothing
 
 update :Apis -> Msg -> State -> ( State, Out )
 update apis message (State model) =
@@ -193,6 +167,9 @@ update_ apis message model =
         OnLoad ->
             (model, out0 [send <| OnSubmit DoDataQuery ])
 
+        OnReset ->
+            ( resetModel model, noOut )
+
         OnSubmit next ->
             ( model , out0 [ sendNow next ])
 
@@ -205,7 +182,7 @@ update_ apis message model =
             , out0 [getData apis model.form OnDataAck]
             )
 
-        DoDataQuery time ->
+        DoDataQuery _ ->
             (model , out0 [ send OnQueryData ])
 
         OnDataAck result ->
@@ -223,7 +200,7 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, out2 [ sendSleep OnQueryData 500 ] [ DoUpdateToken ] )
 
                 OkAuth d ->
-                    ( data, Out [] [] (Just ( True, d )) )
+                    ( data, O.Out [] [] (Just ( True, d )) )
 
                 _ ->
                     ( data, noOut )
@@ -248,8 +225,8 @@ update_ apis message model =
 
 
 
-subscriptions :  List (Sub Msg)
-subscriptions =
+subscriptions : State -> List (Sub Msg)
+subscriptions _ =
     [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     ]
 
@@ -278,8 +255,17 @@ view op (State model) =
         ]
 
 viewData : MyData -> Op -> Model -> Html Msg
-viewData data op model =
+viewData data _ _ =
     div []
     [
         text data
     ]
+
+
+
+-- Placeholder: replace with your query (src/Query/).
+
+
+getData : Apis -> MyForm -> (GqlData MyData -> Msg) -> Cmd Msg
+getData _ _ _ =
+    Cmd.none

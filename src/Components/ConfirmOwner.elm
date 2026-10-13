@@ -24,6 +24,7 @@ module Components.ConfirmOwner exposing (Msg(..), State, init, subscriptions, up
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
+import Components.Out as O exposing (noOut, out0, out2)
 import Dict exposing (Dict)
 import Form exposing (isPostEmpty)
 import Fractale.Codecs exposing (NodeFocus)
@@ -149,30 +150,7 @@ type Msg
 
 
 type alias Out =
-    { cmds : List (Cmd Msg)
-    , gcmds : List GlobalCmd
-    , result : Maybe ( Bool, () ) -- define what data is to be returned
-    }
-
-
-noOut : Out
-noOut =
-    Out [] [] Nothing
-
-
-out0 : List (Cmd Msg) -> Out
-out0 cmds =
-    Out cmds [] Nothing
-
-
-out1 : List GlobalCmd -> Out
-out1 cmds =
-    Out [] cmds Nothing
-
-
-out2 : List (Cmd Msg) -> List GlobalCmd -> Out
-out2 cmds gcmds =
-    Out cmds gcmds Nothing
+    O.Out Msg ( Bool, () ) -- define what data is to be returned
 
 
 update : Apis -> Msg -> State -> ( State, Out )

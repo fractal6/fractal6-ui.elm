@@ -28,6 +28,7 @@ import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.Comments as Comments exposing (OutType(..), viewCommentInputHeader)
 import Components.LabelSearchPanel as LabelSearchPanel exposing (viewLabels)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
+import Components.Out as O exposing (noOut, out0, out1)
 import Components.UserSearchPanel as UserSearchPanel exposing (viewUsers)
 import Dict exposing (Dict)
 import Form exposing (isPostEmpty, isPostSendable)
@@ -214,36 +215,13 @@ type Msg
 
 
 type alias Out =
-    { cmds : List (Cmd Msg)
-    , gcmds : List GlobalCmd
-    , result : Maybe CardPanelResult
-    }
+    O.Out Msg CardPanelResult
 
 
 type CardPanelResult
     = UpdateCard ProjectCard
     | ConvertDraft String ProjectDraft
     | DeleteDraft String
-
-
-noOut : Out
-noOut =
-    Out [] [] Nothing
-
-
-out0 : List (Cmd Msg) -> Out
-out0 cmds =
-    Out cmds [] Nothing
-
-
-out1 : List GlobalCmd -> Out
-out1 cmds =
-    Out [] cmds Nothing
-
-
-out2 : List (Cmd Msg) -> List GlobalCmd -> Out
-out2 cmds gcmds =
-    Out cmds gcmds Nothing
 
 
 update : Apis -> Msg -> State -> ( State, Out )
@@ -453,7 +431,7 @@ update_ apis message model =
                         , title_result = result
                         , isTitleEdit = False
                       }
-                    , Out [] [] (Just (UpdateCard newCard))
+                    , O.Out [] [] (Just (UpdateCard newCard))
                     )
 
                 _ ->
@@ -518,17 +496,17 @@ update_ apis message model =
                         , message_result = result
                         , isMessageEdit = False
                       }
-                    , Out [] [] (Just (UpdateCard newCard))
+                    , O.Out [] [] (Just (UpdateCard newCard))
                     )
 
                 _ ->
                     ( { model | message_result = result }, noOut )
 
         DoConvertDraft cardid d ->
-            ( model, Out [ send OnClose ] [] (Just <| ConvertDraft cardid d) )
+            ( model, O.Out [ send OnClose ] [] (Just <| ConvertDraft cardid d) )
 
         DoRemoveDraft cardid ->
-            ( model, Out [ send OnClose ] [] (Just <| DeleteDraft cardid) )
+            ( model, O.Out [ send OnClose ] [] (Just <| DeleteDraft cardid) )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -627,7 +605,7 @@ update_ apis message model =
                             ( model.tension_result, card, Nothing )
             in
             ( { model | labelsPanel = panel, tension_result = tension_r, card = newCard }
-            , Out (out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m)) out.gcmds mout
+            , O.Out (out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m)) out.gcmds mout
             )
 
         DoAssigneeEdit ->
@@ -688,7 +666,7 @@ update_ apis message model =
                             ( model.tension_result, card, Nothing )
             in
             ( { model | assigneesPanel = panel, tension_result = tension_r, card = newCard }
-            , Out (out.cmds |> List.map (\m -> Cmd.map UserSearchPanelMsg m)) out.gcmds mout
+            , O.Out (out.cmds |> List.map (\m -> Cmd.map UserSearchPanelMsg m)) out.gcmds mout
             )
 
         CommentsMsg msg ->
@@ -723,7 +701,7 @@ update_ apis message model =
             ( ternary (out.result == Just UploadsDone && not model.isOpen)
                 (resetModel model)
                 { model | comments = data, tension_result = tension_result, draftSaveTimer = draftTimer }
-            , Out (draftSaveCmd :: (out.cmds |> List.map (\m -> Cmd.map CommentsMsg m))) out.gcmds Nothing
+            , O.Out (draftSaveCmd :: (out.cmds |> List.map (\m -> Cmd.map CommentsMsg m))) out.gcmds Nothing
             )
 
         SaveDraftDelayed timerValue ->

@@ -25,6 +25,7 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
+import Components.Out as O exposing (noOut, out0, out2)
 import Components.TreeMenu as TreeMenu exposing (viewSelectorTree)
 import Dict exposing (Dict)
 import Form exposing (isPostEmpty)
@@ -214,30 +215,7 @@ type Msg
 
 
 type alias Out =
-    { cmds : List (Cmd Msg)
-    , gcmds : List GlobalCmd
-    , result : Maybe ( String, List ProjectCard )
-    }
-
-
-noOut : Out
-noOut =
-    Out [] [] Nothing
-
-
-out0 : List (Cmd Msg) -> Out
-out0 cmds =
-    Out cmds [] Nothing
-
-
-out1 : List GlobalCmd -> Out
-out1 cmds =
-    Out [] cmds Nothing
-
-
-out2 : List (Cmd Msg) -> List GlobalCmd -> Out
-out2 cmds gcmds =
-    Out cmds gcmds Nothing
+    O.Out Msg ( String, List ProjectCard )
 
 
 update : Apis -> Msg -> State -> ( State, Out )
@@ -433,7 +411,7 @@ update_ apis message model =
             case result of
                 Success d ->
                     ( { model | add_result = Success True }
-                    , Out [ send OnClose ] [] (Just ( model.noStatusCol.id, d ))
+                    , O.Out [ send OnClose ] [] (Just ( model.noStatusCol.id, d ))
                     )
 
                 _ ->

@@ -23,6 +23,7 @@ module Components.AuthModal exposing (Msg(..), State, UserAuthForm, init, subscr
 
 import Assets as A
 import Auth exposing (ErrState(..))
+import Components.Out as O exposing (noOut, out0, out2)
 import Dict exposing (Dict)
 import Form exposing (isPostSendable)
 import Fractale.Error exposing (viewAuthNeeded, viewHttpErrors)
@@ -130,30 +131,7 @@ type Msg
 
 
 type alias Out =
-    { cmds : List (Cmd Msg)
-    , gcmds : List GlobalCmd
-    , result : Maybe ( Bool, UserCtx ) -- define what data is to be returned
-    }
-
-
-noOut : Out
-noOut =
-    Out [] [] Nothing
-
-
-out0 : List (Cmd Msg) -> Out
-out0 cmds =
-    Out cmds [] Nothing
-
-
-out1 : List GlobalCmd -> Out
-out1 cmds =
-    Out [] cmds Nothing
-
-
-out2 : List (Cmd Msg) -> List GlobalCmd -> Out
-out2 cmds gcmds =
-    Out cmds gcmds Nothing
+    O.Out Msg ( Bool, UserCtx ) -- define what data is to be returned
 
 
 update : Apis -> Msg -> State -> ( State, Out )
@@ -241,7 +219,7 @@ update_ apis message model =
                             Nothing
             in
             ( { model | modalAuth = Inactive }
-            , Out [ Ports.close_auth_modal ] (ternary (link /= "") [ DoNavigate link ] []) ret
+            , O.Out [ Ports.close_auth_modal ] (ternary (link /= "") [ DoNavigate link ] []) ret
             )
 
         ChangeAuthPost field value ->
@@ -278,17 +256,17 @@ update_ apis message model =
                             case model.modalType of
                                 SigninModal ->
                                     ( { model | modalAuth = Inactive }
-                                    , Out [ send (DoCloseAuthModal "") ] [ DoUpdateUserSession uctx ] (Just ( model.refreshAfter, uctx ))
+                                    , O.Out [ send (DoCloseAuthModal "") ] [ DoUpdateUserSession uctx ] (Just ( model.refreshAfter, uctx ))
                                     )
 
                                 SignupModal puid ->
                                     ( { model | modalAuth = Active form result }
-                                    , Out [] [ DoUpdateUserSession uctx ] (Just ( False, uctx ))
+                                    , O.Out [] [ DoUpdateUserSession uctx ] (Just ( False, uctx ))
                                     )
 
                                 RefreshModal ->
                                     ( { model | modalAuth = Inactive }
-                                    , Out [ send (DoCloseAuthModal "") ] [ DoUpdateUserSession uctx ] (Just ( model.refreshAfter, uctx ))
+                                    , O.Out [ send (DoCloseAuthModal "") ] [ DoUpdateUserSession uctx ] (Just ( model.refreshAfter, uctx ))
                                     )
 
                                 AuthNeeded ->

@@ -29,6 +29,7 @@ import Components.Comments as Comments exposing (OutType(..))
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc, NodeView(..), viewAboutInput2, viewMandateInput)
+import Components.Out as O exposing (noOut, out0, out2)
 import Components.ProjectSearchPanel as ProjectSearchPanel exposing (ProjectActionResult(..))
 import Components.TreeMenu exposing (viewSelectorTree)
 import Components.UserInput as UserInput
@@ -730,30 +731,7 @@ type OutResult
 
 
 type alias Out =
-    { cmds : List (Cmd Msg)
-    , gcmds : List GlobalCmd
-    , result : Maybe OutResult
-    }
-
-
-noOut : Out
-noOut =
-    Out [] [] Nothing
-
-
-out0 : List (Cmd Msg) -> Out
-out0 cmds =
-    Out cmds [] Nothing
-
-
-out1 : List GlobalCmd -> Out
-out1 cmds =
-    Out [] cmds Nothing
-
-
-out2 : List (Cmd Msg) -> List GlobalCmd -> Out
-out2 cmds gcmds =
-    Out cmds gcmds Nothing
+    O.Out Msg OutResult
 
 
 mapGlobalOutcmds : List GlobalCmd -> ( List (Cmd Msg), List (Cmd Global.Msg) )
@@ -922,7 +900,7 @@ update_ apis message model =
                             in
                             if data.sources == [] && data.refresh_trial == 0 then
                                 ( { data | refresh_trial = 1 }
-                                , Out [ sendSleep (OnOpen (FromPath p) d) 500 ] [ DoUpdateToken ] Nothing
+                                , O.Out [ sendSleep (OnOpen (FromPath p) d) 500 ] [ DoUpdateToken ] Nothing
                                 )
 
                             else if data.sources == [] then
@@ -1443,7 +1421,7 @@ update_ apis message model =
                     in
                     case model.activeTab of
                         NewTensionTab ->
-                            ( setResult resultT data, Out cmds gcmds output )
+                            ( setResult resultT data, O.Out cmds gcmds output )
 
                         NewRoleTab ->
                             let
@@ -1451,7 +1429,7 @@ update_ apis message model =
                                     getNewNameid NodeType.Role model.nodeDoc
                             in
                             -- The new node may first-link the current user
-                            ( setResult resultT data, Out cmds (DoFetchNode newNameid :: DoUpdateToken :: gcmds) output )
+                            ( setResult resultT data, O.Out cmds (DoFetchNode newNameid :: DoUpdateToken :: gcmds) output )
 
                         NewCircleTab ->
                             let
@@ -1459,7 +1437,7 @@ update_ apis message model =
                                     getNewNameid NodeType.Circle model.nodeDoc
                             in
                             -- The new node may first-link the current user
-                            ( setResult resultT data, Out cmds (DoFetchNode newNameid :: DoUpdateToken :: gcmds) output )
+                            ( setResult resultT data, O.Out cmds (DoFetchNode newNameid :: DoUpdateToken :: gcmds) output )
 
                 DuplicateErr ->
                     ( setResult (Failure [ T.duplicateNameError ]) model, noOut )
@@ -1520,7 +1498,7 @@ update_ apis message model =
             -- into a Board view (e.g. Org/Project). Failures are logged.
             case result of
                 Success cards ->
-                    ( model, Out [] [] (Just (ProjectCardsAck cards)) )
+                    ( model, O.Out [] [] (Just (ProjectCardsAck cards)) )
 
                 Failure err ->
                     ( model, out0 [ Ports.logErr (String.join " | " err) ] )
@@ -1707,7 +1685,7 @@ update_ apis message model =
         DoModalConfirm3Discard ->
             -- Close modal, reset form, do NOT save draft
             ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }
-            , Out [ send (OnClose { reset = True, link = model.modal_confirm3_link }) ] [ DoUpdateDraft ClearNewTension ] Nothing
+            , O.Out [ send (OnClose { reset = True, link = model.modal_confirm3_link }) ] [ DoUpdateDraft ClearNewTension ] Nothing
             )
 
         DoModalConfirm3SaveDraft ->
@@ -1723,7 +1701,7 @@ update_ apis message model =
                     TensionDraft draftTitle draftMessage ""
             in
             ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }
-            , Out [ send (OnClose { reset = True, link = model.modal_confirm3_link }) ] [ DoUpdateDraft (SaveNewTension draft) ] Nothing
+            , O.Out [ send (OnClose { reset = True, link = model.modal_confirm3_link }) ] [ DoUpdateDraft (SaveNewTension draft) ] Nothing
             )
 
         DoModalConfirm3KeepEditing ->
@@ -1760,10 +1738,10 @@ update_ apis message model =
                         TensionDraft draftTitle draftMessage ""
                 in
                 if draftMessage == "" || isTemplateUnmodified model then
-                    ( model, Out [] [ DoUpdateDraft ClearNewTension ] Nothing )
+                    ( model, O.Out [] [ DoUpdateDraft ClearNewTension ] Nothing )
 
                 else
-                    ( model, Out [] [ DoUpdateDraft (SaveNewTension draft) ] Nothing )
+                    ( model, O.Out [] [ DoUpdateDraft (SaveNewTension draft) ] Nothing )
 
             else
                 ( model, noOut )

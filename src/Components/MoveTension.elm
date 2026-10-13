@@ -26,6 +26,7 @@ import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
 import Components.ConfirmContract as ConfirmContract
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
+import Components.Out as O exposing (noOut, out0, out2)
 import Components.TreeMenu exposing (viewSelectorTree)
 import Dict
 import Form exposing (isPostEmpty)
@@ -277,34 +278,10 @@ type Msg
 
 
 type alias Out =
-    { cmds : List (Cmd Msg)
-    , gcmds : List GlobalCmd
-
     --Bool: return True if modal is to be closed
     --Tuple: if it has a blob, and returns (old_nameid, new_receiverid,  new_nameid).
     --        else (simple tension) just (old_receiverid, new_receiverid, "")
-    , result : Maybe ( Bool, Maybe ( String, ( String, String, String ) ) )
-    }
-
-
-noOut : Out
-noOut =
-    Out [] [] Nothing
-
-
-out0 : List (Cmd Msg) -> Out
-out0 cmds =
-    Out cmds [] Nothing
-
-
-out1 : List GlobalCmd -> Out
-out1 cmds =
-    Out [] cmds Nothing
-
-
-out2 : List (Cmd Msg) -> List GlobalCmd -> Out
-out2 cmds gcmds =
-    Out cmds gcmds Nothing
+    O.Out Msg ( Bool, Maybe ( String, ( String, String, String ) ) )
 
 
 update : Apis -> Msg -> State -> ( State, Out )
@@ -337,7 +314,7 @@ update_ apis message model =
                         ( { model | isActive2 = True }, [ DoNavigate data.link ] )
             in
             ( { newModel | isActive = False }
-            , Out
+            , O.Out
                 [ Ports.close_modal
                 , ternary data.reset (sendSleep OnReset 333) Cmd.none
                 , sendSleep (SetIsActive2 False) 500
@@ -494,7 +471,7 @@ update_ apis message model =
                                                 T.notImplemented
                         in
                         ( data
-                        , Out [ send (OnCloseSafe "" "") ]
+                        , O.Out [ send (OnCloseSafe "" "") ]
                             [ DoPushSystemNotif
                                 { cls = "is-success"
                                 , content =

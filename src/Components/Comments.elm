@@ -50,6 +50,7 @@ import Browser.Events as Events
 import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.EmojiPicker as EmojiPicker
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
+import Components.Out as O exposing (noOut, out0, out2)
 import Components.UserInput as UserInput
 import Dict
 import File
@@ -385,7 +386,7 @@ collapseFileUrls fileServerUrl message =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.tension_form.id model.focusid model.session
+    initModel model.focusid model.tension_form.id model.session
 
 
 canSubmitTensionComment : Maybe TensionStatus.TensionStatus -> Model -> Bool
@@ -474,36 +475,13 @@ type alias PastedFiles =
 
 
 type alias Out =
-    { cmds : List (Cmd Msg)
-    , gcmds : List GlobalCmd
-    , result : Maybe OutType
-    }
+    O.Out Msg OutType
 
 
 type OutType
     = TensionCommentAdded (Maybe TensionStatus.TensionStatus)
     | PostChanged ( String, String )
     | UploadsDone
-
-
-noOut : Out
-noOut =
-    Out [] [] Nothing
-
-
-out0 : List (Cmd Msg) -> Out
-out0 cmds =
-    Out cmds [] Nothing
-
-
-out1 : List GlobalCmd -> Out
-out1 cmds =
-    Out [] cmds Nothing
-
-
-out2 : List (Cmd Msg) -> List GlobalCmd -> Out
-out2 cmds gcmds =
-    Out cmds gcmds Nothing
 
 
 update : Apis -> Msg -> State -> ( State, Out )
@@ -575,7 +553,7 @@ update_ apis message model =
                     else
                         { form | post = Dict.insert field value form.post }
             in
-            ( { model | tension_form = tension_form }, Out [] [] (Just (PostChanged ( field, value ))) )
+            ( { model | tension_form = tension_form }, O.Out [] [] (Just (PostChanged ( field, value ))) )
 
         OnChangeContractComment field value ->
             let
@@ -589,7 +567,7 @@ update_ apis message model =
                     else
                         { form | post = Dict.insert field value form.post }
             in
-            ( { model | contract_form = contract_form }, Out [] [] (Just (PostChanged ( field, value ))) )
+            ( { model | contract_form = contract_form }, O.Out [] [] (Just (PostChanged ( field, value ))) )
 
         SubmitTensionComment status_m time ->
             -- Reject stale submissions while busy or after an acknowledgement resets the form.
@@ -665,7 +643,7 @@ update_ apis message model =
                         , pendingByEditor = pendingByEditor1
                         , activeByCid = activeByCid1
                       }
-                    , Out (Ports.bulma_driver "" :: uploadCmd :: revokeCmds) [ DoUpdateDraft (ClearComment model.tension_form.id) ] (Just (TensionCommentAdded model.tension_form.status))
+                    , O.Out (Ports.bulma_driver "" :: uploadCmd :: revokeCmds) [ DoUpdateDraft (ClearComment model.tension_form.id) ] (Just (TensionCommentAdded model.tension_form.status))
                     )
 
                 _ ->
@@ -1207,7 +1185,7 @@ update_ apis message model =
                                     drainNext apis cid batch1 model.activeByCid
                             in
                             ( { model | comments = comments1, activeByCid = activeByCid1 }
-                            , Out (nextCmd :: revokeCmd) [] batchOut
+                            , O.Out (nextCmd :: revokeCmd) [] batchOut
                             )
 
                         Err err ->
@@ -1217,7 +1195,7 @@ update_ apis message model =
                                     drainNext apis cid batch1 model.activeByCid
                             in
                             ( { model | activeByCid = activeByCid1 }
-                            , Out (nextCmd :: Ports.logErr ("file upload failed for " ++ filename ++ ": " ++ ApiFile.errorToString err) :: revokeCmd) [] batchOut
+                            , O.Out (nextCmd :: Ports.logErr ("file upload failed for " ++ filename ++ ": " ++ ApiFile.errorToString err) :: revokeCmd) [] batchOut
                             )
 
         OnUploadProgress cid progress ->

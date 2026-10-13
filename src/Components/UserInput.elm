@@ -25,6 +25,7 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (userDecoder)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
+import Components.Out as O exposing (noOut, out0, out2)
 import Fractale.Error exposing (viewGqlErrors)
 import Fractale.Form exposing (UserForm, initUserForm)
 import Fractale.User exposing (UserState(..), uctxFromUser)
@@ -217,32 +218,8 @@ type Msg
 
 
 type alias Out =
-    { cmds : List (Cmd Msg)
-    , gcmds : List GlobalCmd
-
     -- Return True on user select and False on unselect
-    , result : Maybe ( Bool, List UserForm ) -- define what data is to be returned
-    }
-
-
-noOut : Out
-noOut =
-    Out [] [] Nothing
-
-
-out0 : List (Cmd Msg) -> Out
-out0 cmds =
-    Out cmds [] Nothing
-
-
-out1 : List GlobalCmd -> Out
-out1 cmds =
-    Out [] cmds Nothing
-
-
-out2 : List (Cmd Msg) -> List GlobalCmd -> Out
-out2 cmds gcmds =
-    Out cmds gcmds Nothing
+    O.Out Msg ( Bool, List UserForm ) -- define what data is to be returned
 
 
 update : Apis -> Msg -> State -> ( State, Out )
@@ -297,17 +274,17 @@ update_ apis message model =
                 data =
                     clickUser user model
             in
-            ( data, Out [] [] (Just ( True, data.form )) )
+            ( data, O.Out [] [] (Just ( True, data.form )) )
 
         OnClickEmail email ->
             let
                 data =
                     clickEmail email model
             in
-            ( data, Out [] [] (Just ( True, data.form )) )
+            ( data, O.Out [] [] (Just ( True, data.form )) )
 
         OnUnselect i ->
-            ( unselect i model, Out [] [] (Just ( False, LE.getAt i model.form |> List.singleton |> List.filterMap identity )) )
+            ( unselect i model, O.Out [] [] (Just ( False, LE.getAt i model.form |> List.singleton |> List.filterMap identity )) )
 
         DoQueryUser ->
             ( setDataResult LoadingSlowly model

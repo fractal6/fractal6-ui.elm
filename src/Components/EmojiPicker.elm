@@ -22,11 +22,11 @@
 port module Components.EmojiPicker exposing (Msg(..), State, init, isOpen_, subscriptions, update, viewEmojiSeeker)
 
 import Components.EmojiData exposing (Emoji, searchEmojis)
+import Components.Out as O exposing (noOut)
 import Html exposing (Html, div, p, span, text)
 import Html.Attributes exposing (attribute, class, classList, title)
 import List.Extra as LE
 import Ports
-import Session exposing (GlobalCmd(..))
 import Text as T
 import Utils.DomEvents exposing (onMousedownPD)
 
@@ -84,40 +84,32 @@ type Msg
 
 
 type alias Out =
-    { cmds : List (Cmd Msg)
-    , gcmds : List GlobalCmd
-    , result : Maybe String
-    }
-
-
-out0 : Out
-out0 =
-    { cmds = [], gcmds = [], result = Nothing }
+    O.Out Msg String
 
 
 update : Msg -> State -> ( State, Out )
 update msg (State model) =
     case msg of
         OnOpen ->
-            ( State (resetAll { model | isOpen = True }), out0 )
+            ( State (resetAll { model | isOpen = True }), noOut )
 
         OnClose ->
-            ( State (resetAll { model | isOpen = False }), out0 )
+            ( State (resetAll { model | isOpen = False }), noOut )
 
         OnChangePattern pattern ->
             ( State (resetNav { model | pattern = pattern, results = searchEmojis Nothing pattern })
-            , out0
+            , noOut
             )
 
         OnClickEmoji emoji ->
             ( State (resetAll { model | isOpen = False })
-            , { out0 | result = Just emoji }
+            , { noOut | result = Just emoji }
             )
 
         OnArrowMove dir ->
             if model.isOpen && not (List.isEmpty model.results) then
                 if not model.isArrowMode then
-                    ( State { model | activePos = 0, isArrowMode = True }, out0 )
+                    ( State { model | activePos = 0, isArrowMode = True }, noOut )
 
                 else
                     let
@@ -148,10 +140,10 @@ update msg (State model) =
                             else
                                 clamp 0 (n - 1) (model.activePos + delta)
                     in
-                    ( State { model | activePos = newPos }, out0 )
+                    ( State { model | activePos = newPos }, noOut )
 
             else
-                ( State model, out0 )
+                ( State model, noOut )
 
         OnSelectActive ->
             case LE.getAt model.activePos model.results of
@@ -159,10 +151,10 @@ update msg (State model) =
                     update (OnClickEmoji e.unicode) (State model)
 
                 Nothing ->
-                    ( State model, out0 )
+                    ( State model, noOut )
 
         NoMsg ->
-            ( State model, out0 )
+            ( State model, noOut )
 
 
 subscriptions : State -> List (Sub Msg)

@@ -28,7 +28,14 @@ private, so parents cannot poke at internals. `init` builds it, setter functions
 
 **Out record.** `update : Apis -> Msg -> State -> ( State, Out )` where `Out` carries
 `cmds` (local), `gcmds` (application-wide `GlobalCmd`s) and an optional `result` for the
-parent. The `noOut` / `out0` / `out1` / `out2` helpers cover the common shapes.
+parent. Shared in `Components/Out.elm` with the `noOut` / `out0` / `out1` / `out2` helpers;
+each component aliases it: `type alias Out = O.Out Msg MyResult` (build a result with
+`O.Out cmds gcmds (Just r)`). `TreeMenu` keeps its own `Out` (extra `nodeRenames` field).
+
+**Template interface.** Components are generated from `templates/` (`melm.py`). The template
+helpers (`resetModel`, `setDataResult`, `updatePost`, `hasData`, `canExitSafe`, `isActive_`,
+…) are the common component interface: they may stay unused in a given component and are not
+reported as dead code. Keep the template flows calling them so they stay exercised.
 
 **Submit guard.** `OnSubmit isSendable next` is only a routing gate: the `isSendable` flag is
 baked into the rendered handler and is stale on a double click/tap (the second click lands

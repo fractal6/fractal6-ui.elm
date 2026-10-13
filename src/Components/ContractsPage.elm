@@ -25,6 +25,7 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Components.Comments as Comments
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
+import Components.Out as O exposing (noOut, out0, out1, out2)
 import Dict
 import Form exposing (isPostEmpty)
 import Fractale.Codecs exposing (FractalBaseRoute(..), contractIdCodec, memberIdDecodec, nid2eor, nid2rootid, nodeIdCodec, toLink)
@@ -272,30 +273,7 @@ type Msg
 
 
 type alias Out =
-    { cmds : List (Cmd Msg)
-    , gcmds : List GlobalCmd
-    , result : Maybe ( Bool, List IdPayload ) -- define what data is to be returned
-    }
-
-
-noOut : Out
-noOut =
-    Out [] [] Nothing
-
-
-out0 : List (Cmd Msg) -> Out
-out0 cmds =
-    Out cmds [] Nothing
-
-
-out1 : List GlobalCmd -> Out
-out1 cmds =
-    Out [] cmds Nothing
-
-
-out2 : List (Cmd Msg) -> List GlobalCmd -> Out
-out2 cmds gcmds =
-    Out cmds gcmds Nothing
+    O.Out Msg ( Bool, List IdPayload ) -- define what data is to be returned
 
 
 update : Apis -> Msg -> State -> ( State, Out )
@@ -382,7 +360,7 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, out2 [ sendSleep DoQueryContracts 500 ] [ DoUpdateToken ] )
 
                 OkAuth d ->
-                    ( data, Out [] [] (Just ( True, List.map (\c -> { id = c.id }) d )) )
+                    ( data, O.Out [] [] (Just ( True, List.map (\c -> { id = c.id }) d )) )
 
                 _ ->
                     ( data, noOut )
@@ -404,7 +382,7 @@ update_ apis message model =
                 OkAuth d ->
                     -- Memory Optimization; Do no store comments twice.
                     ( { data | contract_result = Success { d | comments = Nothing } }
-                    , Out
+                    , O.Out
                         [ Cmd.map CommentsMsg (send <| Comments.SetContractid d.id)
                         , Cmd.map CommentsMsg (send <| Comments.SetComments (withDefault [] d.comments))
                         ]
@@ -430,7 +408,7 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, out2 [ sendSleep (DoDeleteContract model.form.cid) 500 ] [ DoUpdateToken ] )
 
                 OkAuth _ ->
-                    ( data, Out [ sendSleep (DoPopContract model.form.cid) 500 ] [] (Just ( True, [] )) )
+                    ( data, O.Out [ sendSleep (DoPopContract model.form.cid) 500 ] [] (Just ( True, [] )) )
 
                 _ ->
                     ( data, noOut )

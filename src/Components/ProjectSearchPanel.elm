@@ -24,6 +24,7 @@ module Components.ProjectSearchPanel exposing (..)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
+import Components.Out as O exposing (noOut, out0, out1)
 import Dict
 import Fractale.Codecs exposing (FractalBaseRoute(..), nid2rootid, toLink)
 import Fractale.Error exposing (viewGqlErrors)
@@ -204,30 +205,7 @@ type ProjectActionResult
 
 
 type alias Out =
-    { cmds : List (Cmd Msg)
-    , gcmds : List GlobalCmd
-    , result : Maybe ProjectActionResult
-    }
-
-
-noOut : Out
-noOut =
-    Out [] [] Nothing
-
-
-out0 : List (Cmd Msg) -> Out
-out0 cmds =
-    Out cmds [] Nothing
-
-
-out1 : List GlobalCmd -> Out
-out1 cmds =
-    Out [] cmds Nothing
-
-
-out2 : List (Cmd Msg) -> List GlobalCmd -> Out
-out2 cmds gcmds =
-    Out cmds gcmds Nothing
+    O.Out Msg ProjectActionResult
 
 
 update : Apis -> Msg -> State -> ( State, Out )
@@ -306,7 +284,7 @@ update_ apis message model =
                                         }
                                 in
                                 ( setClickResult NotAsked newModel
-                                , Out [ sendSleep ResetClickResult 333 ] [] (Just (ProjectAdded tp))
+                                , O.Out [ sendSleep ResetClickResult 333 ] [] (Just (ProjectAdded tp))
                                 )
 
                             AssignProject ->
@@ -341,7 +319,7 @@ update_ apis message model =
                 case model.action of
                     SelectProject ->
                         ( setClickResult NotAsked newModel
-                        , Out [ sendSleep ResetClickResult 333 ] [] (Just (ProjectRemoved project.id))
+                        , O.Out [ sendSleep ResetClickResult 333 ] [] (Just (ProjectRemoved project.id))
                         )
 
                     AssignProject ->

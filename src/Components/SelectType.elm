@@ -24,6 +24,7 @@ module Components.SelectType exposing (Msg(..), State, init, subscriptions, upda
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
+import Components.Out as O exposing (noOut, out0, out2)
 import Dict
 import Fractale.Error exposing (viewGqlErrors)
 import Fractale.Form exposing (Ev, TensionForm, initTensionForm)
@@ -176,30 +177,7 @@ type Msg
 
 
 type alias Out =
-    { cmds : List (Cmd Msg)
-    , gcmds : List GlobalCmd
-    , result : Maybe ( Bool, TensionType.TensionType ) -- define what data is to be returned
-    }
-
-
-noOut : Out
-noOut =
-    Out [] [] Nothing
-
-
-out0 : List (Cmd Msg) -> Out
-out0 cmds =
-    Out cmds [] Nothing
-
-
-out1 : List GlobalCmd -> Out
-out1 cmds =
-    Out [] cmds Nothing
-
-
-out2 : List (Cmd Msg) -> List GlobalCmd -> Out
-out2 cmds gcmds =
-    Out cmds gcmds Nothing
+    O.Out Msg ( Bool, TensionType.TensionType ) -- define what data is to be returned
 
 
 update : Apis -> Msg -> State -> ( State, Out )
@@ -295,7 +273,7 @@ update_ apis message model =
 
                 OkAuth _ ->
                     ( data
-                    , Out [ send (OnCloseSafe "" "") ]
+                    , O.Out [ send (OnCloseSafe "" "") ]
                         [ DoPushSystemNotif
                             { cls = "is-success"
                             , content =

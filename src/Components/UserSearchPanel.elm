@@ -25,6 +25,7 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
 import Codecs exposing (userDecoder)
+import Components.Out as O exposing (noOut, out0, out1, out2)
 import Dict
 import Fractale.Codecs exposing (FractalBaseRoute(..), toLink)
 import Fractale.Error exposing (viewGqlErrors)
@@ -216,30 +217,7 @@ type Msg
 
 
 type alias Out =
-    { cmds : List (Cmd Msg)
-    , gcmds : List GlobalCmd
-    , result : Maybe ( Bool, User )
-    }
-
-
-noOut : Out
-noOut =
-    Out [] [] Nothing
-
-
-out0 : List (Cmd Msg) -> Out
-out0 cmds =
-    Out cmds [] Nothing
-
-
-out1 : List GlobalCmd -> Out
-out1 cmds =
-    Out [] cmds Nothing
-
-
-out2 : List (Cmd Msg) -> List GlobalCmd -> Out
-out2 cmds gcmds =
-    Out cmds gcmds Nothing
+    O.Out Msg ( Bool, User )
 
 
 update : Apis -> Msg -> State -> ( State, Out )
@@ -358,7 +336,7 @@ update_ apis message model =
                                        )
                         in
                         ( { data | assignees_data = Success users }
-                        , Out [ sendSleep ResetClickResult 333 ] [] (Just ( data.form.isNew, data.form.assignee ))
+                        , O.Out [ sendSleep ResetClickResult 333 ] [] (Just ( data.form.isNew, data.form.assignee ))
                         )
 
         OnAssigneeAck result ->
@@ -376,7 +354,7 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, out2 [ sendSleep (SetAssignee data.form) 500 ] [ DoUpdateToken ] )
 
                 OkAuth _ ->
-                    ( data, Out [] [] (Just ( data.form.isNew, data.form.assignee )) )
+                    ( data, O.Out [] [] (Just ( data.form.isNew, data.form.assignee )) )
 
                 _ ->
                     ( data, noOut )
