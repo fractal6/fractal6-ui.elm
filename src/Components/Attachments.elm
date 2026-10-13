@@ -326,7 +326,7 @@ update_ apis message model =
         OnFilesSelected targetId f rest ->
             let
                 ( files, tooLarge ) =
-                    List.partition (\fi -> File.size fi <= maxUploadBytes) (f :: rest)
+                    List.partition (\fi -> File.size fi <= ApiFile.maxUploadBytes) (f :: rest)
 
                 pendings =
                     List.map
@@ -343,7 +343,7 @@ update_ apis message model =
                 pendingByEditor1 =
                     Dict.update targetId (Maybe.withDefault [] >> (\xs -> xs ++ pendings) >> Just) model.pendingByEditor
             in
-            ( { model | pendingByEditor = pendingByEditor1 }, out1 (tooLargeNotif tooLarge) )
+            ( { model | pendingByEditor = pendingByEditor1 }, out1 (failedNotif (List.map (\fi -> ( File.name fi, ApiFile.TooLarge )) tooLarge)) )
 
         OnPastedFiles { targetId, files, objectUrls, dims, isPaste } ->
             if not (List.member targetId model.pasteTargets) then
@@ -363,7 +363,7 @@ update_ apis message model =
                             files
                             (objectUrls ++ List.repeat (List.length files) "")
                             (dims ++ List.repeat (List.length files) "")
-                            |> List.partition (\( fi, _, _ ) -> File.size fi <= maxUploadBytes)
+                            |> List.partition (\( fi, _, _ ) -> File.size fi <= ApiFile.maxUploadBytes)
 
                     revokeCmds =
                         tooLarge
@@ -398,7 +398,7 @@ update_ apis message model =
                             []
                 in
                 ( { model | pendingByEditor = pendingByEditor1 }
-                , out2 (insertCmds ++ revokeCmds) (tooLargeNotif (List.map (\( fi, _, _ ) -> fi) tooLarge))
+                , out2 (insertCmds ++ revokeCmds) (failedNotif (List.map (\( fi, _, _ ) -> ( File.name fi, ApiFile.TooLarge )) tooLarge))
                 )
 
         OnRemovePending targetId filename ->
@@ -456,29 +456,15 @@ update_ apis message model =
                         -- Once the batch drained, its failures outlive it: kept under the
                         -- comment and notified, as carriers (new tension, card panel) close.
                         failed =
-                            ternary batchDone (List.filter isUploadFailed batch1.files) []
+                            ternary batchDone (List.filter (\p -> uploadError p /= Nothing) batch1.files) []
 
                         failedByCid1 =
                             ternary (List.isEmpty failed)
                                 model.failedByCid
                                 (Dict.update cid (Maybe.withDefault [] >> (\xs -> xs ++ failed) >> Just) model.failedByCid)
 
-                        failedNotif =
-                            ternary (List.isEmpty failed)
-                                []
-                                [ errorNotif T.attachmentsFailed
-                                    (List.filterMap
-                                        (\p ->
-                                            case p.status of
-                                                UploadFailed err ->
-                                                    Just (p.filename ++ ": " ++ ApiFile.errorToString err)
-
-                                                _ ->
-                                                    Nothing
-                                        )
-                                        failed
-                                    )
-                                ]
+                        failedCmds =
+                            failedNotif (List.filterMap (\p -> Maybe.map (Tuple.pair p.filename) (uploadError p)) failed)
 
                         ( nextCmd, activeByCid1 ) =
                             drainNext apis cid batch1 model.activeByCid
@@ -489,13 +475,13 @@ update_ apis message model =
                     case result of
                         Ok _ ->
                             ( { model | activeByCid = activeByCid1, failedByCid = failedByCid1 }
-                            , Out (nextCmd :: revokeCmd) failedNotif ack
+                            , Out (nextCmd :: revokeCmd) failedCmds ack
                             )
 
                         Err err ->
                             -- Keep the failed chip visible while continuing the batch.
                             ( { model | activeByCid = activeByCid1, failedByCid = failedByCid1 }
-                            , Out (nextCmd :: Ports.logErr ("file upload failed for " ++ filename ++ ": " ++ ApiFile.errorToString err) :: revokeCmd) failedNotif ack
+                            , Out (nextCmd :: Ports.logErr ("file upload failed for " ++ filename ++ ": " ++ ApiFile.errorToString err) :: revokeCmd) failedCmds ack
                             )
 
         OnUploadProgress cid progress ->
@@ -616,22 +602,14 @@ uploadTracker cid =
     "upload-" ++ cid
 
 
-{-| ponytail: hardcoded client cap, can drift from the backend `storage.max_upload_bytes`;
-expose that setting to the client if they must match.
--}
-maxUploadBytes : Int
-maxUploadBytes =
-    100 * 1024 * 1024
-
-
-isUploadFailed : PendingFile -> Bool
-isUploadFailed p =
+uploadError : PendingFile -> Maybe ApiFile.ApiError
+uploadError p =
     case p.status of
-        UploadFailed _ ->
-            True
+        UploadFailed err ->
+            Just err
 
         _ ->
-            False
+            Nothing
 
 
 errorNotif : String -> List String -> GlobalCmd
@@ -642,9 +620,13 @@ errorNotif header lines =
         }
 
 
-tooLargeNotif : List File.File -> List GlobalCmd
-tooLargeNotif files =
-    ternary (List.isEmpty files) [] [ errorNotif T.filesTooLarge (List.map File.name files) ]
+{-| One notification for every failed upload (client-side oversize included), [] when none.
+-}
+failedNotif : List ( String, ApiFile.ApiError ) -> List GlobalCmd
+failedNotif fails =
+    ternary (List.isEmpty fails)
+        []
+        [ errorNotif T.attachmentsFailed (List.map (\( name, err ) -> name ++ ": " ++ ApiFile.errorToString err) fails) ]
 
 
 subscriptions : State -> List (Sub Msg)
@@ -740,11 +722,11 @@ viewPendingChip onRemove fraction p =
     span
         [ class "tag attachment-chip"
         , title <|
-            case p.status of
-                UploadFailed err ->
+            case uploadError p of
+                Just err ->
                     p.filename ++ ": " ++ ApiFile.errorToString err
 
-                _ ->
+                Nothing ->
                     p.filename
         ]
         [ case progressFraction of

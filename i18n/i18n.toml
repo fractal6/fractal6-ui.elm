@@ -1390,10 +1390,6 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Attach"
   fr="Joindre"
 
-[filesTooLarge]
-  en="Files too large (max 100 MB), not attached:"
-  fr="Fichiers trop volumineux (max 100 Mo), non joints :"
-
 [attachmentsFailed]
   en="Some attachments could not be uploaded:"
   fr="Certaines pièces jointes n’ont pas pu être envoyées :"

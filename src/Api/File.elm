@@ -25,6 +25,7 @@ module Api.File exposing
     , UploadResult
     , delete
     , errorToString
+    , maxUploadBytes
     , upload
     )
 
@@ -75,6 +76,14 @@ type ApiError
     | Other Int String -- status + body
 
 
+{-| ponytail: hardcoded client cap, can drift from the backend `storage.max_upload_bytes`;
+expose that setting to the client if they must match.
+-}
+maxUploadBytes : Int
+maxUploadBytes =
+    100 * 1024 * 1024
+
+
 errorToString : ApiError -> String
 errorToString err =
     case err of
@@ -82,7 +91,7 @@ errorToString err =
             "File uploads are disabled on this instance."
 
         TooLarge ->
-            "File too large."
+            "File too large (max " ++ String.fromInt (maxUploadBytes // (1024 * 1024)) ++ " MB)."
 
         Unauthorized ->
             "You need to sign in to upload files."
