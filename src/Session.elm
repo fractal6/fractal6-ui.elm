@@ -213,7 +213,7 @@ type alias SessionData =
     , tensions_all : Maybe TensionsDict
     , tensions_count : Maybe TensionsCount
     , tension_head : Maybe TensionHead
-    , project_data : Maybe ProjectData
+    , project_data : Maybe ProjectData -- Not populated yet (no UpdateSessionProject sent): reserved for multi-view projects, as tension_head
     , orgs_data : Maybe (List OrgaNode)
     , tree_data : Maybe NodesDict
     , node_quickSearch : Maybe NodesQuickSearch

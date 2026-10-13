@@ -430,7 +430,6 @@ eventToIcon ev =
 --
 -- <View Event>
 --
---
 
 
 viewEvent : SessionCommon -> Maybe String -> NodeType.NodeType -> Event -> Html msg

@@ -41,7 +41,7 @@ import Dict
 import Fifo exposing (Fifo)
 import Form.Help as Help
 import Form.NewTension as NTF
-import Fractale.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, id3Changed, nameidFromFlags, nearestCircleid, toLink)
+import Fractale.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusFromPath, focusState, id3Changed, nameidFromFlags, nearestCircleid, toLink)
 import Fractale.Error exposing (viewGqlErrors, viewGqlErrorsLight)
 import Fractale.Form exposing (..)
 import Fractale.Graph exposing (..)
@@ -270,23 +270,31 @@ init global flags =
         projectid =
             "0x" ++ flags.param2
 
-        newFocus =
+        newFocus_ =
             NodeFocus rootnameid rootnameid NodeType.Circle
-
-        path_data =
-            session.common.path_data
-                |> Maybe.map (\x -> Success x)
-                |> withDefault Loading
 
         -- What has changed
         fs =
-            focusState ProjectBaseUri session.referer global.url session.common.node_focus newFocus
+            focusState ProjectBaseUri session.referer global.url session.common.node_focus newFocus_
 
         -- Session snapshot shared by the page model and every component init.
         -- Lexicon is dropped on a real org switch so views fall back to defaults
         -- until GotOrgaInfo lands the new org's lexicon.
         sessionCommon =
             freshSessionOnOrgaSwitch fs session.common
+
+        -- Keep the current focused circle (as for tensions), the project URL only encodes the org.
+        newFocus =
+            if fs.orgChange then
+                newFocus_
+
+            else
+                session.common.path_data
+                    |> Maybe.map focusFromPath
+                    |> withDefault newFocus_
+
+        path_data =
+            ternary fs.orgChange Loading (fromMaybeData session.common.path_data Loading)
 
         model =
             { node_focus = newFocus
@@ -296,7 +304,7 @@ init global flags =
             , project_data = ternary fs.orgChange Loading (fromMaybeData session.data.project_data Loading)
             , linkTensionPanel = LinkTensionPanel.init projectid sessionCommon
             , cardPanel = CardPanel.init path_data newFocus sessionCommon
-            , projectSettingsPanel = ProjectSettingsPanel.init projectid newFocus.nameid sessionCommon
+            , projectSettingsPanel = ProjectSettingsPanel.init projectid rootnameid sessionCommon
             , board = Board.init projectid newFocus sessionCommon
 
             -- Common
@@ -321,7 +329,7 @@ init global flags =
             }
 
         cmds =
-            [ ternary fs.focusChange (queryLocalGraph session.apis newFocus.nameid True (GotPath True)) Cmd.none
+            [ ternary (isLoading path_data) (queryLocalGraph session.apis newFocus.nameid True (GotPath True)) Cmd.none
             , send DoLoad
             , Ports.hide "footBar"
             , sendSleep PassedSlowLoadTreshold 500
@@ -329,6 +337,7 @@ init global flags =
             , Cmd.map TreeMenuMsg (send TreeMenu.OnLoad)
             ]
 
+        -- Always True until GotProject sends UpdateSessionProject (see Session.project_data).
         refresh =
             Maybe.map (\x -> id3Changed x.id global.url) session.data.project_data |> withDefault True
     in
