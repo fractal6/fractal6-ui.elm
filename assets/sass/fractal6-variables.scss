@@ -117,6 +117,7 @@ $f6-light-theme: (
 
   // GraphPack
   // --
+  gp-name-color: var(--bulma-text-20), // same as text-evidence
   gp-lvl-0-bg: $background-header-light,
   gp-lvl-1-bg: #e5e5e5,
   gp-lvl-2-bg: #bababa,
@@ -211,7 +212,9 @@ $f6-dark-theme: (
   code-color: $background-header-dark,
 
   // GraphPack
+  // @NOTE: must be in postcss.config.js cssVarSafeList
   // --
+  gp-name-color: var(--bulma-text-90), // brighter than text-evidence to read over the circles
   gp-lvl-0-bg: $background-header-dark,
   gp-lvl-1-bg: #3d3d52,    // Medium blue-gray
   gp-lvl-2-bg: #565673,    // Lighter blue-gray

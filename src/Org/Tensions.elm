@@ -2261,7 +2261,7 @@ viewSearchBar model =
                     ]
                 ]
             ]
-        , div [ class "tabs no-overflow is-md" ]
+        , div [ class "tabs is-md" ]
             [ ul []
                 [ li [ classList [ ( "is-active", model.viewMode == ListView ) ] ]
                     [ a [ onClickPD (ChangeViewFilter ListView), target "_blank" ]

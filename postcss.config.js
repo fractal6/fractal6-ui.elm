@@ -11,8 +11,9 @@ const cssVarSafeList = [
     // --
     '--body-background-color',
     '--bulma-radius-large', '--bulma-text', '--text', '--text-weak', '--text-evidence', '--link', '--link2',
+    '--bulma-text-10', '--bulma-text-90',
     //Circles
-    '--gp-lvl-0-bg', '--gp-lvl-1-bg', '--gp-lvl-2-bg', '--gp-lvl-3-bg', '--gp-lvl-4-bg', '--gp-lvl-5-bg', '--gp-lvl-6-bg', '--gp-lvl-7-bg',
+    '--gp-name-color', '--gp-lvl-0-bg', '--gp-lvl-1-bg', '--gp-lvl-2-bg', '--gp-lvl-3-bg', '--gp-lvl-4-bg', '--gp-lvl-5-bg', '--gp-lvl-6-bg', '--gp-lvl-7-bg',
     // Roles
     '--owner', '--member', '--coordinator', '--peer', '--bot', '--guest', '--pending', '--retired',
 

@@ -132,6 +132,28 @@ export const GraphPack = {
     colorCircleRange: [],
     roleColors: {},
     usernameColor: "#8282cc",
+    // Custom role colors (ColorPicker palette) retuned per theme:
+    // light: too light to see on the light circles, dark: too flashy or too close to the circle titles.
+    paletteTones: {
+        light: {
+            "#DDDDDD": "#cad0d8",
+            "#AAAAAA": "#9ca2a9",
+            "#7FDBFF": "#6dd1f8",
+            "#FFDC00": "#f7d000",
+        },
+        dark: {
+            "#DDDDDD": "#969da7",
+            "#AAAAAA": "#71757d",
+            "#7FDBFF": "#5fb7da",
+            "#39CCCC": "#32b3b3",
+            "#2ECC40": "#2bb43b",
+            "#01FF70": "#10d163",
+            "#FFDC00": "#d9b700",
+            "#FF851B": "#e77a1b",
+            "#FF4136": "#e93e34",
+            "#F012BE": "#d414a7",
+        },
+    },
     userEmoticonBg: "#eeeeff",
     nameColor: "#474747",
     focusCircleColor: "#4a79ac", // blue>"#368ed3"
@@ -580,12 +602,7 @@ export const GraphPack = {
             ctx2d.font = fontSize + "px " + this.fontstyleCircle;
             ctx2d.textAlign = "center";
             // Color
-            var roleTextColor;
-            if (node.data.color) {
-                roleTextColor = this.colorToTextColor(node.data.color);
-            } else {
-                roleTextColor = this.nameColor + opac;
-            }
+            var roleTextColor = this.colorToTextColor(this.getNodeColor(node));
             ctx2d.fillStyle = roleTextColor;
             ctx2d.fillText(text, node.ctx.centerX, node.ctx.centerY);
             ctx2d.fill();
@@ -1146,10 +1163,11 @@ export const GraphPack = {
           "_default_": "#a2b9df"
         });
 
+        this.isDark = styles.colorScheme.includes("dark");
         this.backgroundColor = styles.getPropertyValue('--body-background-color').trim()
         this.focusCircleColor = styles.getPropertyValue('--link').trim()
         this.hoverCircleColor = styles.getPropertyValue('--text-weak').trim()
-        this.nameColor = styles.getPropertyValue('--text-evidence').trim()
+        this.nameColor = styles.getPropertyValue('--gp-name-color').trim()
         this.usernameColor = styles.getPropertyValue('--text').trim()
         this.userEmoticonBg = styles.getPropertyValue('--user-emoticon-bg').trim() || this.userEmoticonBg
     },
@@ -1163,9 +1181,9 @@ export const GraphPack = {
         return this.colorCircleRange[k % this.colorCircleRange.length]
     },
 
-    colorToTextColor(color) { // @duplicate: exists as elm function.
+    colorToTextColor(color) { // @duplicate: mirrors Utils.Color.colorToTextColor (elm), keep in sync.
         var c;
-        if (["#7FDBFF", "#39CCCC", "#01FF70", "#FFDC00", "#AAAAAA", "#DDDDDD"].includes(color.toUpperCase())) {
+        if (["#7FDBFF", "#39CCCC", "#01FF70", "#FFDC00", "#AAAAAA", "#DDDDDD"].includes(color.toUpperCase()) || color.startsWith("white")) {
             c = "#000";
         } else {
             c = "#fff";
@@ -1180,11 +1198,16 @@ export const GraphPack = {
         if (node.data.type_ === NodeType.Circle) {
             color = this.colorCircle(depth);
         } else if (node.data.type_ === NodeType.Role) {
-            color = node.data.color || this.roleColors[node.data.role_type] || this.roleColors["_default_"];
+            color = this.toneColor(node.data.color) || this.roleColors[node.data.role_type] || this.roleColors["_default_"];
         } else {
             console.warn("Node type unknonw", node.data.type_);
         }
         return color
+    },
+
+    // Custom (ColorPicker palette) colors retuned for the current theme, if listed in paletteTones.
+    toneColor(c) {
+        return c && (this.paletteTones[this.isDark ? "dark" : "light"][c.toUpperCase()] || c)
     },
 
     getZoomFactor(node) {
