@@ -1231,7 +1231,7 @@ export const GraphPack = {
         this.ctx2d.fillStyle = color;
         var s = this.ctx2d.fillStyle;
         var [r, g, b] = s[0] === "#" ? [1, 3, 5].map(i => parseInt(s.slice(i, i + 2), 16)) : s.match(/[\d.]+/g).map(Number);
-        return (r * 299 + g * 587 + b * 114) / 1000 > 128 ? "#000" : "#fff"; // YIQ brightness
+        return (r * 299 + g * 587 + b * 114) / 1000 > 155 ? "#000" : "#fff"; // YIQ brightness
     },
 
     getNodeColor(node) {
