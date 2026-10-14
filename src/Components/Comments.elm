@@ -66,7 +66,7 @@ import Html exposing (Html, a, br, button, div, hr, li, p, span, strong, text, t
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, style, target, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
-import Iso8601 exposing (fromTime)
+import Iso8601 exposing (fromTime, toTime)
 import Json.Decode as JD
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), withMapData, withMaybeMapData)
@@ -121,6 +121,7 @@ type alias Model =
     , history : List Event
     , expandedEvents : List Int
     , highlightedCommentId : String
+    , highlightedUntil : String -- when set, highlight the comments from highlightedCommentId to it (not own ones)
 
     -- Push comment (Tension)
     , tension_form : TensionForm
@@ -178,6 +179,7 @@ initModel nameid tensionid session =
     , history = []
     , expandedEvents = []
     , highlightedCommentId = ""
+    , highlightedUntil = ""
     , tension_form = initTensionForm session.lexicon tensionid Nothing session.user
     , tension_patch = NotAsked
     , contract_form = initCommentPatchForm session.user []
@@ -348,7 +350,7 @@ type Msg
     | SetTensionid String
     | SetContractid String
     | SetComments (List Comment)
-    | SetHistory (List Event) (Maybe String)
+    | SetHistory (List Event) (Maybe String) (Maybe String)
     | PushEvents (List Event)
     | OnHighlight String
     | OnSetTarget (List String)
@@ -454,15 +456,15 @@ update_ apis message model =
         SetComments comments ->
             ( { model | comments = comments }, out0 [ Ports.bulma_driver "" ] )
 
-        SetHistory history eltid ->
-            ( { model | history = history, highlightedCommentId = withDefault "" eltid }, noOut )
+        SetHistory history eltid until ->
+            ( { model | history = history, highlightedCommentId = withDefault "" eltid, highlightedUntil = withDefault "" until }, noOut )
 
         PushEvents events ->
             -- @todo: update tension_head history here (need to create a SessionCommon.Cmd to handle this.
             ( { model | history = model.history ++ events }, noOut )
 
         OnHighlight id ->
-            ( { model | highlightedCommentId = id }, noOut )
+            ( { model | highlightedCommentId = id, highlightedUntil = "" }, noOut )
 
         OnSetTarget targets ->
             ( model
@@ -1112,7 +1114,7 @@ viewCommentsContract session (State model) =
         [ model.comments
             |> List.map
                 (\c ->
-                    viewComment session c model.comment_form model.comment_result model.comment_delete_result model.highlightedCommentId model.userInput model.emojiPicker model.attachments (List.member c.id model.fadingOut)
+                    viewComment session c model.comment_form model.comment_result model.comment_delete_result ( model.highlightedCommentId, model.highlightedUntil ) model.userInput model.emojiPicker model.attachments (List.member c.id model.fadingOut)
                 )
             |> div []
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
@@ -1122,7 +1124,7 @@ viewCommentsContract session (State model) =
 viewCommentsTension : SessionCommon -> { t | governed_node : Maybe GovernedNode, draft_node_type : Maybe NodeType.NodeType } -> State -> Html Msg
 viewCommentsTension session tension (State model) =
     div []
-        [ viewComments_ session tension model.history model.comments model.comment_form model.comment_result model.comment_delete_result model.expandedEvents model.highlightedCommentId model.userInput model.emojiPicker model.attachments model.fadingOut
+        [ viewComments_ session tension model.history model.comments model.comment_form model.comment_result model.comment_delete_result model.expandedEvents ( model.highlightedCommentId, model.highlightedUntil ) model.userInput model.emojiPicker model.attachments model.fadingOut
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
 
@@ -1136,7 +1138,7 @@ viewComments_ :
     -> GqlData Comment
     -> ( String, GqlData IdPayload )
     -> List Int
-    -> String
+    -> ( String, String )
     -> UserInput.State
     -> EmojiPicker.State
     -> Attachments.State
@@ -1259,7 +1261,7 @@ viewComments_ session tension history comments comment_form comment_result comme
         |> div []
 
 
-viewComment : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> ( String, GqlData IdPayload ) -> String -> UserInput.State -> EmojiPicker.State -> Attachments.State -> Bool -> Html Msg
+viewComment : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> ( String, GqlData IdPayload ) -> ( String, String ) -> UserInput.State -> EmojiPicker.State -> Attachments.State -> Bool -> Html Msg
 viewComment session c form result delete_result highlightedCommentId userInput emojiPicker attachments isFadingOut =
     let
         isAuthor =
@@ -1269,7 +1271,16 @@ viewComment session c form result delete_result highlightedCommentId userInput e
             toReflink session.url ++ "?goto=" ++ c.createdAt
 
         isFocused =
-            c.createdAt == highlightedCommentId
+            case highlightedCommentId of
+                ( from, "" ) ->
+                    c.createdAt == from
+
+                ( from, until ) ->
+                    let
+                        ms =
+                            toTime >> Result.map Time.posixToMillis >> Result.withDefault 0
+                    in
+                    not isAuthor && ms from <= ms c.createdAt && ms c.createdAt <= ms until
     in
     div [ id c.createdAt, class "media section p-0", classList [ ( "comment-fadeout", isFadingOut ) ] ]
         [ div

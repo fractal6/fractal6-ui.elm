@@ -2901,6 +2901,14 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Mark all as read"
   fr="Tout marquer comme lu"
 
+[unreadEvents]
+  en="Unread events"
+  fr="Évènements non lus"
+
+[readEvents]
+  en="Read events"
+  fr="Évènements lus"
+
 [voteWaited]
   en="A vote is waited from you."
   fr="Un vote est attendu de votre part."

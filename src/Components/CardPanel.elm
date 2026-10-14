@@ -317,7 +317,7 @@ update_ apis message model =
                       }
                     , out0
                         [ Cmd.map CommentsMsg (send <| Comments.SetComments comments)
-                        , Cmd.map CommentsMsg (send <| Comments.SetHistory history Nothing)
+                        , Cmd.map CommentsMsg (send <| Comments.SetHistory history Nothing Nothing)
                         , Ports.bulma_driver "cardPanel"
                         ]
                     )

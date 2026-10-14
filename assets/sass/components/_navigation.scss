@@ -584,7 +584,8 @@
 }
 .is-event-badge-bg {
     .tag {
-        background-color: var(--link) !important;
+        color: white !important;
+        background-color: var(--link2) !important;
     }
 }
 
@@ -601,7 +602,7 @@
 }
 .is-contract-badge-bg {
     .tag {
-        color: $dark !important;
+        color: white !important;
         background-color: var(--warning) !important;
     }
 }

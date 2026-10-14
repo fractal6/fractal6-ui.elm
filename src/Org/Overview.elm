@@ -2144,7 +2144,7 @@ viewEventNotif session e =
         node =
             e.tension.receiver
     in
-    viewEventMedia session True ev
+    viewEventMedia session True [] ev
 
 
 

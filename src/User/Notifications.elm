@@ -19,7 +19,7 @@
 -}
 
 
-module User.Notifications exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
+module User.Notifications exposing (Flags, Model, Msg, groupNotifs, init, page, subscriptions, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
@@ -31,10 +31,10 @@ import Fractale.Codecs exposing (FractalBaseRoute(..), focusFromNameid, nid2root
 import Fractale.Error exposing (viewGqlErrors)
 import Fractale.Event exposing (contractEventToText, contractToJonction, contractToLink, contractTypeToText, eventToIcon, eventToLink, eventTypeToText, viewContractMedia, viewEventMedia, viewNotifMedia)
 import Fractale.User exposing (UserState(..))
-import Fractale.View exposing (counter, mediaTension, viewOrga, viewGoBack)
+import Fractale.View exposing (counter, mediaTension, viewGoBack, viewOrga)
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..))
-import Html exposing (Html, a, br, div, h2, i, li, nav, p, span, text, ul)
+import Html exposing (Attribute, Html, a, br, div, h2, i, li, nav, p, span, text, ul)
 import Html.Attributes exposing (attribute, class, classList, id, target, title)
 import Html.Events exposing (onClick)
 import Html.Lazy as Lazy
@@ -45,17 +45,19 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.PatchUser exposing (markAllAsRead, markAsRead)
+import Query.QueryNode exposing (queryOrgaNode)
 import Query.QueryNotifications exposing (queryNotifications)
 import Query.QueryTension exposing (queryAssignedTensions)
 import Schema.Enum.RoleType as RoleType
 import Schema.Enum.TensionEvent as TensionEvent
 import Session exposing (CommonMsg, GlobalCmd(..), SessionCommon, toF6Referer)
+import Set exposing (Set)
 import Text as T
 import Time
 import Url exposing (Url)
 import Utils.Bool exposing (ternary)
 import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.DomEvents exposing (onClickPD)
+import Utils.DomEvents exposing (onClickPD, onClickSP)
 import Utils.String exposing (upT)
 import Utils.Url exposing (queryBuilder, queryParser)
 
@@ -109,9 +111,12 @@ mapGlobalOutcmds gcmds =
 type alias Model =
     { uctx : UserCtx
     , notif : NotifCount
-    , notifications_data : GqlData UserEvents
+    , notifications_data : GqlData (List (List UserEvent)) -- rows: adjacent comments/creation of a tension are merged
+    , expanded : Set String -- merged rows (head event id) shown expanded
+    , orga_avatars : Dict String String -- rootnameid -> avatar file id
     , assigned_data : GqlData (Dict String (List Tension))
-    , eid : String
+    , eids : List String
+    , goto_link : Maybe String -- navigate once eids are marked as read
     , menuFocus : MenuNotif
 
     -- Common
@@ -247,8 +252,11 @@ init global flags =
             { uctx = uctx
             , notif = global.session.data.notif
             , notifications_data = Loading
+            , expanded = Set.empty
+            , orga_avatars = Dict.empty
             , assigned_data = Loading
-            , eid = ""
+            , eids = []
+            , goto_link = Nothing
             , menuFocus = menu
 
             -- common
@@ -276,8 +284,10 @@ type Msg
     | LoadNotifications
     | LoadAssigned
     | GotNotifications (GqlData UserEvents)
+    | GotOrgaAvatars (GqlData (List OrgaNode))
     | GotAssigned (GqlData (Dict String (List Tension)))
-    | MarkAsRead String
+    | MarkAsRead (List String) (Maybe String)
+    | ToggleGroup String
     | GotMarkAsRead (GqlData IdPayload)
     | MarkAllAsRead
     | GotMarkAllAsRead (GqlData IdPayload)
@@ -348,13 +358,25 @@ update global message model =
                     --                )
                     --                ( 0, 0 )
                     --in
-                    ( { model | notifications_data = result }
-                    , Cmd.none
+                    ( { model | notifications_data = withMapData groupNotifs result }
+                    , case data |> List.filterMap eventRootid |> LE.unique of
+                        [] ->
+                            Cmd.none
+
+                        rootids ->
+                            queryOrgaNode apis rootids GotOrgaAvatars
                     , Cmd.none
                     )
 
                 _ ->
-                    ( { model | notifications_data = result }, Cmd.none, Cmd.none )
+                    ( { model | notifications_data = withMapData groupNotifs result }, Cmd.none, Cmd.none )
+
+        GotOrgaAvatars result ->
+            -- No avatar on failure: the initials stay.
+            ( { model | orga_avatars = Loading.withDefaultData [] result |> List.filterMap (\o -> Maybe.map (Tuple.pair o.nameid) o.avatar) |> Dict.fromList }
+            , Cmd.none
+            , Cmd.none
+            )
 
         GotAssigned result ->
             case parseErr result model.refresh_trial of
@@ -370,8 +392,11 @@ update global message model =
                 _ ->
                     ( { model | assigned_data = result }, Cmd.none, Cmd.none )
 
-        MarkAsRead eid ->
-            ( { model | eid = eid }, markAsRead apis eid True GotMarkAsRead, Cmd.none )
+        MarkAsRead eids link ->
+            ( { model | eids = eids, goto_link = link }, markAsRead apis eids True GotMarkAsRead, Cmd.none )
+
+        ToggleGroup gid ->
+            ( { model | expanded = ternary (Set.member gid model.expanded) Set.remove Set.insert gid model.expanded }, Cmd.none, Cmd.none )
 
         GotMarkAsRead result ->
             case parseErr result model.refresh_trial of
@@ -379,22 +404,24 @@ update global message model =
                     ( model, Ports.raiseAuthModal model.uctx, Cmd.none )
 
                 RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep (MarkAsRead model.eid) 500, send UpdateUserToken )
+                    ( { model | refresh_trial = i }, sendSleep (MarkAsRead model.eids model.goto_link) 500, send UpdateUserToken )
 
                 OkAuth _ ->
                     -- modified event inplace toSet isRead...
                     let
                         newData =
                             withMapData
-                                (LE.updateIf (\a -> a.id == model.eid)
-                                    (\a -> { a | isRead = True })
-                                )
+                                (List.map (List.map (\a -> ternary (List.member a.id model.eids) { a | isRead = True } a)))
                                 model.notifications_data
                     in
-                    ( { model | notifications_data = newData }, Cmd.none, send RefreshNotifCount )
+                    ( { model | notifications_data = newData }
+                    , Cmd.none
+                    , Cmd.batch [ send RefreshNotifCount, gotoLink model.goto_link ]
+                    )
 
                 _ ->
-                    ( model, Cmd.none, Cmd.none )
+                    -- Do not trap the user on failure
+                    ( model, Cmd.none, gotoLink model.goto_link )
 
         MarkAllAsRead ->
             ( model, markAllAsRead apis model.uctx.username GotMarkAllAsRead, Cmd.none )
@@ -412,7 +439,7 @@ update global message model =
                     let
                         newData =
                             withMapData
-                                (List.map (\a -> ternary (editableEvent a.event) { a | isRead = True } a))
+                                (List.map (List.map (\a -> ternary (editableEvent a.event) { a | isRead = True } a)))
                                 model.notifications_data
                     in
                     ( { model | notifications_data = newData }, Cmd.none, send RefreshNotifCount )
@@ -552,7 +579,7 @@ view_ global model =
                                 p [ class "content" ] [ text T.noNotificationsYet ]
 
                             else
-                                viewNotifications model.session notifications
+                                viewNotifications model.session model.orga_avatars model.expanded notifications
 
                         LoadingSlowly ->
                             div [ class "spinner" ] []
@@ -610,16 +637,128 @@ viewMenu model =
         ]
 
 
-viewNotifications : SessionCommon -> UserEvents -> Html Msg
-viewNotifications session notifications =
-    notifications
-        |> List.map
-            (\ue -> Lazy.lazy2 viewUserEvent session ue)
+viewNotifications : SessionCommon -> Dict String String -> Set String -> List (List UserEvent) -> Html Msg
+viewNotifications session avatars expanded groups =
+    -- Flat rows (no wrapper) to keep the .media + .media borders.
+    groups
+        |> List.concatMap
+            (\group ->
+                case group of
+                    [ ue ] ->
+                        [ Lazy.lazy4 viewUserEvent session avatars "" ue ]
+
+                    ue :: _ ->
+                        let
+                            isExpanded =
+                                Set.member ue.id expanded
+                        in
+                        Lazy.lazy4 viewCommentGroup session avatars isExpanded group
+                            :: ternary isExpanded (List.map (Lazy.lazy4 viewUserEvent session avatars "is-child") group) []
+
+                    [] ->
+                        []
+            )
         |> div [ class "box is-shrinked" ]
 
 
-viewUserEvent : SessionCommon -> UserEvent -> Html Msg
-viewUserEvent session ue =
+{-| Group the adjacent comment/creation notifications of a same tension (list ordered by date desc).
+-}
+groupNotifs : UserEvents -> List (List UserEvent)
+groupNotifs =
+    LE.groupWhile (\a b -> Maybe.map2 (\x y -> x.tension.id == y.tension.id) (mergeEvent a) (mergeEvent b) == Just True)
+        >> List.map (\( x, xs ) -> x :: xs)
+
+
+{-| Comment or creation event (not always the head, see viewUserEvent).
+-}
+mergeEvent : UserEvent -> Maybe EventNotif
+mergeEvent ue =
+    ue.event
+        |> LE.findMap
+            (\x ->
+                case x of
+                    TensionEvent e ->
+                        ternary (List.member e.event_type [ TensionEvent.CommentPushed, TensionEvent.Created ]) (Just e) Nothing
+
+                    _ ->
+                        Nothing
+            )
+
+
+gotoLink : Maybe String -> Cmd Global.Msg
+gotoLink link =
+    Maybe.map (NavigateRaw >> send) link |> withDefault Cmd.none
+
+
+{-| Merged row of the comments/creation of a tension: links to the unread range (or the whole group) and marks it as read.
+-}
+viewCommentGroup : SessionCommon -> Dict String String -> Bool -> List UserEvent -> Html Msg
+viewCommentGroup session avatars isExpanded group =
+    case ( group, List.head group |> Maybe.andThen mergeEvent ) of
+        ( ue :: _, Just e ) ->
+            let
+                node =
+                    e.tension.receiver
+
+                unread =
+                    List.filter (not << .isRead) group
+
+                unreadIds =
+                    List.map .id unread
+
+                oldest =
+                    LE.last (ternary (unread == []) group unread)
+                        |> Maybe.andThen mergeEvent
+                        |> Maybe.map .createdAt
+                        |> withDefault e.createdAt
+
+                link =
+                    (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid node.nameid, param2 = e.tension.id } |> toHref)
+                        ++ "?goto="
+                        ++ oldest
+                        ++ "&until="
+                        ++ e.createdAt
+
+                ev =
+                    Dict.fromList
+                        [ ( "id", ue.id )
+                        , ( "title", eventTypeToText session.lexicon e.event_type )
+                        , ( "title_", e.tension.title )
+                        , ( "target", node.name )
+                        , ( "orga", nid2rootid node.nameid )
+                        , ( "date", e.createdAt )
+                        , ( "author", e.createdBy.username )
+                        , ( "link", link )
+                        , ( "icon", eventToIcon e.event_type )
+                        ]
+
+                linkAttrs =
+                    ternary (unreadIds == []) [] [ onClickPD (MarkAsRead unreadIds (Just link)), target "_blank" ]
+
+                nUnread =
+                    List.length unreadIds
+
+                nRead =
+                    List.length group - nUnread
+
+                -- The whole row toggles (see rowAttrs): the chevron is only an indicator.
+                extra =
+                    [ ternary (nUnread == 0) (text "") (span [ class "is-event-badge-bg", title T.unreadEvents ] [ counter nUnread ])
+                    , ternary (nRead == 0) (text "") (span [ title T.readEvents ] [ counter nRead ])
+                    , span [ class "button is-small has-text-text is-text ml-2" ] [ A.icon (ternary isExpanded "icon-chevron-up" "icon-chevron-down") ]
+                    ]
+
+                rowAttrs =
+                    [ class "is-clickable", onClick (ToggleGroup ue.id) ]
+            in
+            viewNotif session avatars rowAttrs False unreadIds node extra (viewEventMedia session False linkAttrs ev)
+
+        _ ->
+            text ""
+
+
+viewUserEvent : SessionCommon -> Dict String String -> String -> UserEvent -> Html Msg
+viewUserEvent session avatars cls ue =
     let
         firstEvent =
             List.head ue.event
@@ -677,7 +816,7 @@ viewUserEvent session ue =
                         , ( "icon", eventToIcon e.event_type )
                         ]
             in
-            viewNotif False ue node (viewEventMedia session False ev)
+            viewNotif session avatars [ class cls ] False (ternary ue.isRead [] [ ue.id ]) node [] (viewEventMedia session False [] ev)
 
         Just (ContractEvent c) ->
             let
@@ -698,7 +837,7 @@ viewUserEvent session ue =
                         , ( "icon", eventToIcon c.event.event_type )
                         ]
             in
-            viewNotif True ue node (viewContractMedia session ev)
+            viewNotif session avatars [ class cls ] True (ternary ue.isRead [] [ ue.id ]) node [] (viewContractMedia session ev)
 
         Just (NotifEvent n) ->
             case n.tension of
@@ -737,7 +876,7 @@ viewUserEvent session ue =
                                 , ( "icon", "icon-info" )
                                 ]
                     in
-                    viewNotif False ue node (viewNotifMedia session ev)
+                    viewNotif session avatars [ class cls ] False (ternary ue.isRead [] [ ue.id ]) node [] (viewNotifMedia session ev)
 
                 Nothing ->
                     -- Something has beed removed, contract ?
@@ -747,8 +886,28 @@ viewUserEvent session ue =
             text ""
 
 
-viewNotif : Bool -> UserEvent -> PNode -> Html Msg -> Html Msg
-viewNotif isContract ue node content =
+{-| Root nameid of the event receiver.
+-}
+eventRootid : UserEvent -> Maybe String
+eventRootid ue =
+    case List.head ue.event of
+        Just (TensionEvent e) ->
+            Just (nid2rootid e.tension.receiver.nameid)
+
+        Just (ContractEvent c) ->
+            Just (nid2rootid c.tension.receiver.nameid)
+
+        Just (NotifEvent n) ->
+            Maybe.map (.receiver >> .nameid >> nid2rootid) n.tension
+
+        Nothing ->
+            Nothing
+
+
+{-| Notification row; the read badge marks `unreadIds` as read, `extra` goes before it.
+-}
+viewNotif : SessionCommon -> Dict String String -> List (Attribute Msg) -> Bool -> List String -> PNode -> List (Html Msg) -> Html Msg -> Html Msg
+viewNotif session avatars attrs isContract unreadIds node extra content =
     let
         ( tooltip_cls, tooltip_txt ) =
             if isContract then
@@ -757,18 +916,24 @@ viewNotif isContract ue node content =
             else
                 ( "is-event-badge is-w", T.markAsRead )
     in
-    div [ class "media mediaBox is-hoverable" ]
-        [ div [ class "media-left is-hidden-mobile" ] [ viewOrga True "" Nothing node.nameid ]
+    div (class "media mediaBox is-hoverable" :: attrs)
+        [ div [ class "media-left is-hidden-mobile" ] [ viewOrga True session.file_server_url (Dict.get (nid2rootid node.nameid) avatars) node.nameid ]
         , div [ class "media-content" ] [ content ]
-        , if not ue.isRead then
+        , case extra of
+            [] ->
+                text ""
+
+            _ ->
+                div [ class "media-right is-inline-flex" ] extra
+        , if unreadIds /= [] then
             div
                 [ class "media-right"
                 , title tooltip_txt
                 , if isContract then
-                    onClick NoMsg
+                    onClickSP NoMsg
 
                   else
-                    onClick (MarkAsRead ue.id)
+                    onClickSP (MarkAsRead unreadIds Nothing)
                 ]
                 [ div [ class ("Circle " ++ tooltip_cls) ] [] ]
 

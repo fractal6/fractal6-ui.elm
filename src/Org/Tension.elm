@@ -213,6 +213,7 @@ type alias Model =
     , activeTab : TensionTab
     , nodeView : NodeView
     , jumpTo : Maybe String
+    , jumpUntil : Maybe String -- highlight the comments from jumpTo to it
     , tension_head : GqlData TensionHead
     , tension_comments : GqlData TensionComments
     , tension_blobs : GqlData TensionBlobs
@@ -357,6 +358,7 @@ init global flags =
             , activeTab = tab
             , nodeView = nodeView
             , jumpTo = Dict.get "goto" session.common.query |> Maybe.map List.head |> withDefault Nothing
+            , jumpUntil = Dict.get "until" session.common.query |> Maybe.map List.head |> withDefault Nothing
             , path_data = path_data
             , tension_head = ternary fs.orgChange Loading (fromMaybeData session.data.tension_head Loading)
             , focusState = fs
@@ -434,7 +436,7 @@ init global flags =
             case model.tension_head of
                 Success th ->
                     ( Success { th | history = Nothing }
-                    , Cmd.map CommentsMsg (send (Comments.SetHistory (withDefault [] th.history) model.jumpTo))
+                    , Cmd.map CommentsMsg (send (Comments.SetHistory (withDefault [] th.history) model.jumpTo model.jumpUntil))
                     )
 
                 _ ->
@@ -783,7 +785,7 @@ update global message model =
                             (queryLocalGraph apis focusid True (GotPath True))
                         , Ports.bulma_driver ""
                         , Cmd.map ContractsPageMsg (send (ContractsPage.SetRootnameid (nid2rootid targetid)))
-                        , Cmd.map CommentsMsg (send (Comments.SetHistory (withDefault [] th.history) model.jumpTo))
+                        , Cmd.map CommentsMsg (send (Comments.SetHistory (withDefault [] th.history) model.jumpTo model.jumpUntil))
                         ]
                     , Cmd.batch
                         [ send (UpdateSessionTensionHead (withMaybeData result))
@@ -832,7 +834,7 @@ update global message model =
             ( { model | expandedEvents = model.expandedEvents ++ [ i ] }, Cmd.none, Ports.bulma_driver "" )
 
         MarkAsRead eid ->
-            ( { model | eid = eid }, markAsRead apis eid True GotMarkAsRead, Cmd.none )
+            ( { model | eid = eid }, markAsRead apis [ eid ] True GotMarkAsRead, Cmd.none )
 
         GotMarkAsRead result ->
             case parseErr result model.refresh_trial of

@@ -290,10 +290,10 @@ userIdDecoder data =
             )
 
 
-markAsRead url eid isRead msg =
+markAsRead url eids isRead msg =
     makeGQLMutation url
         (Mutation.updateUserEvent
-            (markAsReadInput eid isRead)
+            (markAsReadInput eids isRead)
             (SelectionSet.map PatchUserPayload <|
                 Schema.Object.UpdateUserEventPayload.userEvent identity
                     -- markAsReadPayload
@@ -305,13 +305,13 @@ markAsRead url eid isRead msg =
         (RemoteData.fromResult >> decodeResponse userIdDecoder >> msg)
 
 
-markAsReadInput : String -> Bool -> Mutation.UpdateUserEventRequiredArguments
-markAsReadInput eid isRead =
+markAsReadInput : List String -> Bool -> Mutation.UpdateUserEventRequiredArguments
+markAsReadInput eids isRead =
     let
         inputReq =
             { filter =
                 Input.buildUserEventFilter
-                    (\ft -> { ft | id = Present [ encodeId eid ] })
+                    (\ft -> { ft | id = Present (List.map encodeId eids) })
             }
 
         patch =

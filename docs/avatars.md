@@ -71,7 +71,9 @@ Root nodes only, circle shape like user avatars; no avatar = initials (or the or
   payloads. JSON: same nested `avatar: {id}` codecs (`Codecs.nodeEncoder`/`nodeDecoder`).
 - Rendering: `Fractale.View.getAvatarOrga cls url avatar fallback`. Inline icons use the
   `img.orgaIcon` class (HelperBar path, TreeMenu root line); `viewOrga0`/`viewOrga` fill the
-  `circleBase` circle (`_shapes.scss`) in OrgaMenu, the org settings and the org cards (`mediaOrga`).
+  `circleBase` circle (`_shapes.scss`) in OrgaMenu, the org settings, the org cards (`mediaOrga`) and
+  the notifications (`User/Notifications.elm`: event receivers only carry a nameid, so one
+  `queryOrgaNode` on the notification rootids fills `orga_avatars`).
 - Upload: `src/Org/Settings.elm` `viewAvatarSettings` (GlobalMenu tab), Owner or root Coordinator
   only. Same JS capture and port as users, then `Api.File.upload (OrgAvatar rootnameid)` / `delete`.
   `setAvatar` refreshes the path, the session and the TreeMenu node (`DoUpdateNode`); TreeMenu reloads

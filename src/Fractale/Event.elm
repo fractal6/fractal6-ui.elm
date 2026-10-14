@@ -30,7 +30,7 @@ import Fractale.Form exposing (decodeColumnRef, decodeLabel, decodeProjectRef)
 import Fractale.User exposing (UserState(..))
 import Fractale.View exposing (byAt, nodeType2str, statusColor, tensionIcon2, tensionStatus2str, viewCircleSimple, viewNodeRefShort, viewUsernameLink)
 import Generated.Route as Route exposing (toHref)
-import Html exposing (Html, a, div, i, p, small, span, strong, text)
+import Html exposing (Attribute, Html, a, div, i, p, small, span, strong, text)
 import Html.Attributes exposing (attribute, class, classList, href, id, style)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (ContractNotif, Event, EventFragment, EventNotif, Label, UserEvent, Username)
@@ -92,14 +92,16 @@ contractToLink ue c =
     Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid c.tension.receiver.nameid, param2 = c.tension.id, param3 = c.id } |> toHref
 
 
-viewEventMedia : SessionCommon -> Bool -> Dict String String -> Html msg
-viewEventMedia session inline ev =
+viewEventMedia : SessionCommon -> Bool -> List (Attribute msg) -> Dict String String -> Html msg
+viewEventMedia session inline linkAttrs ev =
     div [ class "content" ]
         [ p [] <|
             [ a
-                [ class "discrete-link is-icon-aligned"
-                , href (Dict.get "link" ev |> withDefault "#")
-                ]
+                ([ class "discrete-link is-icon-aligned"
+                 , href (Dict.get "link" ev |> withDefault "#")
+                 ]
+                    ++ linkAttrs
+                )
               <|
                 List.intersperse (text space_) <|
                     [ A.icon (Dict.get "icon" ev |> withDefault "")
