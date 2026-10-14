@@ -23,12 +23,15 @@ function canvasDom() {
     document.body.innerHTML = `
         <div><div id="canvasParent"><canvas id="canvasOrga"></canvas>
             <div id="canvasButtons"></div><div id="canvasResizer"></div>
+            <div id="canvasShape"><button></button><div class="dropdown-menu">
+                <button class="dropdown-item" data-shape="circle"></button><button class="dropdown-item" data-shape="rounded-hexagon"></button><button class="dropdown-item" data-shape="squircle"></button>
+            </div></div>
             <div id="nodeTooltip" data-event-tension="doTension" data-event-action="doAction">
                 <span id="doTension"><span></span></span><span id="doAction"></span>
             </div>
         </div></div><div><div id="nextToChart"></div></div>`;
     Object.defineProperty(document.getElementById('canvasParent'), 'offsetWidth', { value: 600 });
-    const ctx = Object.fromEntries(['setTransform', 'fillRect', 'beginPath', 'fill', 'stroke', 'setLineDash', 'fillText', 'save', 'restore', 'clip', 'drawImage']
+    const ctx = Object.fromEntries(['setTransform', 'fillRect', 'beginPath', 'fill', 'stroke', 'setLineDash', 'fillText', 'save', 'restore', 'clip', 'drawImage', 'moveTo', 'arcTo', 'bezierCurveTo', 'closePath']
         .map(name => [name, jest.fn()]));
     ctx.measureText = text => ({ width: text.length * 10 });
     ctx.arc = jest.fn((x, y, r) => {
@@ -44,6 +47,7 @@ function graph(data = tree('org#a#role'), focusid = 'org#a#role') {
     const gp = Object.create(GraphPack);
     gp.computeCircleColorRange = jest.fn();
     gp.colorCircleRange = Array(8).fill('#cccccc');
+    gp.roleColors = { _default_: '#a2b9df' };
     const app = { ports: Object.fromEntries([
         'nodeHoveredFromJs', 'nodeFocusedFromJs', 'nodeClickedFromJs', 'nodeLeftClickedFromJs',
         'nodeRightClickedFromJs', 'nodeDraggedFromJs', 'sendToggleGraphReverse',
@@ -93,6 +97,27 @@ test.each(['nodeSizeTopDown', 'nodeSizeBottomUp'])('packing order and geometry s
         gp.resetGraphPack(snapshot, 'org');
         expect(Object.fromEntries(Object.entries(gp.nodesDict).map(([id, node]) => [id, geometry(node)]))).toEqual(expected);
     }
+});
+
+test.each([
+    ['rounded-hexagon', (dx, dy) => Math.hypot(dx, dy), Math.cos(Math.PI / 6)],
+    ['squircle', (dx, dy) => (dx ** 4 + dy ** 4) ** 0.25, 2 ** -0.25],
+])('the %s selector persists, re-packs children inside the drawn shape and fits it to the canvas', (shape, norm, inradius) => {
+    const roles = (id, n) => Array.from({ length: n }, (_, i) => role(`${id}#r${i}`, parent(id)));
+    const data = [circle('org', null), ...['org#a', 'org#b'].map(id => circle(id, parent('org'))), ...roles('org#a', 5), ...roles('org', 4)];
+    const { gp, ctx } = graph(data, 'org');
+    const rayon = gp.rayon;
+    const menu = document.getElementById('canvasShape');
+    menu.querySelector(`[data-shape="${shape}"]`).click();
+    expect(menu.dataset.shape).toBe(shape);
+    expect(localStorage.getItem('graphpack_shape')).toBe(shape);
+    expect(gp.rayon).toBeGreaterThan(rayon); // flat sides no longer waste the canvas margin
+    expect(ctx.moveTo).toHaveBeenCalled();
+    // Every child circle (hence its inscribed shape) lies within its parent's drawn shape.
+    gp.nodes.filter(n => n.parent).forEach(n => {
+        const p = n.parent.target, c = n.target;
+        expect(norm(c.x - p.x, c.y - p.y) + c.r).toBeLessThanOrEqual(p.r * inradius + 1e-9);
+    });
 });
 
 test('sparse circles share a minimum footprint, and sizing ignores names', () => {
@@ -503,10 +528,25 @@ test('the in-circle cards box matches the focused circle, including canvas offse
     expect(parseFloat(cards.style.left) + rayon).toBeCloseTo(centerX + 60);
     expect(parseFloat(cards.style.top) + rayon).toBeCloseTo(centerY + 30);
     expect(cards.classList.contains('is-invisible')).toBe(false);
+
+    // Flat-sided shapes: the cards disc shrinks to the shape's inscribed circle, still centered
+    gp.nodeShape = 'squircle';
+    gp.drawButtons();
+    const side = 2 * rayon * gp.shapeInradius.squircle;
+    expect(parseFloat(cards.style.width)).toBeCloseTo(side);
+    expect(parseFloat(cards.style.left) + side / 2).toBeCloseTo(centerX + 60);
+});
+
+test('role text is black or white from the fill brightness, toned and role-type fills included', () => {
+    const { gp } = graph();
+    // Bot (light theme), toned #FFDC00 and #7FDBFF (light theme), toned #DDDDDD (dark theme, mid grey): light fills
+    ['#c1cdd9', '#f7d000', '#6dd1f8', '#969da7'].forEach(c => expect(gp.colorToTextColor(c)).toBe('#000'));
+    // Member/Peer, Bot (dark theme), custom #154b84: dark fills
+    ['#7070ee', '#424a5c', '#154b84'].forEach(c => expect(gp.colorToTextColor(c)).toBe('#fff'));
 });
 
 test.each([
-    ['org#a', 'org#a', 167],
+    ['org#a', 'org#a', 157], // raised 10px to overlap the canvas top border
     ['org#a', 'org', 127],
     ['org', 'org#a', 127],
 ])('tooltip placement requires matching focus %s and zoom %s', (focusid, zoomid, top) => {

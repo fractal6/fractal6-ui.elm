@@ -274,6 +274,30 @@
     }
 }
 
+// Icon-only shape dropdown, styled as the #canvasButtons buttons
+#canvasShape {
+    position: absolute;
+
+    .button {
+        color: var(--text-strong);
+        i { display: none; }
+    }
+    // Trigger icon follows the current shape (data-shape set by JS)
+    &[data-shape="circle"] .button .icon-circle,
+    &[data-shape="rounded-hexagon"] .button .icon-hexagon,
+    &[data-shape="squircle"] .button .icon-squircle {
+        display: inline-block;
+    }
+
+    .dropdown-menu {
+        min-width: 0 !important; // overrides the global 7rem (_utilities.scss), icons only
+    }
+    .dropdown-item {
+        padding: 0.375rem 0.75rem;
+        text-align: center;
+    }
+}
+
 #canvasButtons {
     position: absolute;
     //display: flex;

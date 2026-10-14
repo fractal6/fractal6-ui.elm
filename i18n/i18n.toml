@@ -3507,3 +3507,19 @@ De plus, un propriétaire dispose du niveau de droit et d’accès en lecture et
 
 Veuillez confirmer pour continuer.
 """
+
+[nodeShape]
+  en="Node shape"
+  fr="Forme des nœuds"
+
+[shapeCircle]
+  en="Circle"
+  fr="Cercle"
+
+[shapeHexagon]
+  en="Hexagon"
+  fr="Hexagone"
+
+[shapeSquircle]
+  en="Squircle"
+  fr="Squircle"

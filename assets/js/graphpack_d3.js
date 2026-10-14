@@ -179,6 +179,12 @@ export const GraphPack = {
     zoomCtx: null,
     circlesPadding: 4, // 1.8
     circleDamping: 0.7, // big circles grow as r^damping beyond their minimum size (1 = no damping)
+    nodeShape: localStorage.getItem("graphpack_shape") || "circle", // circle | rounded-hexagon | squircle (drawn inside the packed circle)
+    // Inradius of each shape relative to its circle: parents grow by the inverse so children stay inside.
+    // (squircle: its bezier dips 0.6% inside the true superellipse)
+    shapeInradius: { "rounded-hexagon": Math.cos(Math.PI / 6), squircle: 0.994 * 2 ** -0.25 },
+    // Drawn half-extent [x, y] of each shape relative to its circle, to fit the canvas.
+    shapeExtent: { "rounded-hexagon": [0.97, Math.cos(Math.PI / 6)], squircle: [2 ** -0.25, 2 ** -0.25] },
     siblingsRotation: Math.PI / 8, // rotate packed siblings so equal circles (and their titles) don't line up horizontally
     minCardsSide: 220, // below that, the in-circle action cards are not shown
     fontsizeCircle_start: 22,
@@ -245,6 +251,7 @@ export const GraphPack = {
     $nextToChart: null,
     $canvas: null,
     $canvasButtons: null,
+    $canvasShape: null,
     $tooltip: null,
     // Canvas ctx
     ctx2d: null,
@@ -287,6 +294,11 @@ export const GraphPack = {
         this.$canvasButtons.style.left = offsetLeft + r.width - this.$canvasButtons.offsetWidth - buttonMargin + "px";
         this.$canvasButtons.style.top = offsetTop + buttonMargin + "px";
         this.$canvasButtons.classList.remove("is-invisible");
+        // Node shape selector, top left
+        this.$canvasShape.dataset.shape = this.nodeShape;
+        this.$canvasShape.style.left = offsetLeft + buttonMargin + "px";
+        this.$canvasShape.style.top = offsetTop + buttonMargin + "px";
+        this.$canvasShape.classList.remove("is-invisible");
 
         this.placeCanvasCards();
 
@@ -300,7 +312,8 @@ export const GraphPack = {
         var node = this.focusedNode;
         if (!node || this.isZooming || !this.$canvas) return this.clearCanvasCards()
         this.addNodeCtx(node);
-        var side = 2 * node.ctx.rayon;
+        // The cards form a disc: keep it inside the drawn shape (its inscribed circle)
+        var side = 2 * node.ctx.rayon * (this.shapeInradius[this.nodeShape] || 1);
         if (side < this.minCardsSide) return this.clearCanvasCards()
         var r = this.$canvas.getBoundingClientRect();
         var p = this.$canvasParent.getBoundingClientRect();
@@ -327,7 +340,9 @@ export const GraphPack = {
         // On mobile the packing is bounded by the width: taller than wide is wasted space
         if (this.mobileSize && !this.userHeight) this.height = Math.min(this.height, this.width);
 
-        this.rayon = (Math.min(this.width * 0.97, this.height * 0.97)) / 2;
+        // Fit the drawn shape, not its packed circle (flat sides leave margins).
+        var [ex, ey] = this.shapeExtent[this.nodeShape] || [1, 1];
+        this.rayon = (Math.min(this.width * 0.97 / ex, this.height * 0.97 / ey)) / 2;
         this.centerX = this.width / 2;
         this.centerY = this.height / 2;
         if (this.viewport) this.setViewport(this.viewport);
@@ -430,12 +445,37 @@ export const GraphPack = {
         var w = this.focusCircleWidth;
         var color = this.focusCircleColor;
         ctx.beginPath();
-        ctx.arc(b.ctx.centerX, b.ctx.centerY, b.ctx.rayon + 0.1 + w * 0.5,
-            0, 2 * Math.PI, true);
+        this.nodePath(ctx, b.ctx.centerX, b.ctx.centerY, b.ctx.rayon + 0.1 + w * 0.5);
         ctx.lineWidth = w;
         ctx.strokeStyle = color;
         ctx.stroke();
         ctx.globalAlpha = 1;
+    },
+
+    // Node outline: the packed circle, or the nodeShape inscribed in it.
+    nodePath(ctx, x, y, r) {
+        switch (this.nodeShape) {
+            case "rounded-hexagon": return this.polygonPath(ctx, x, y, r, 6, r * 0.2)
+            case "squircle":
+                // Superellipse |x|^4 + |y|^4 = a^4 as 4 cubics, touching the circle on the diagonals.
+                var a = r * 2 ** -0.25, k = 0.909 * a;
+                ctx.moveTo(x + a, y);
+                ctx.bezierCurveTo(x + a, y + k, x + k, y + a, x, y + a);
+                ctx.bezierCurveTo(x - k, y + a, x - a, y + k, x - a, y);
+                ctx.bezierCurveTo(x - a, y - k, x - k, y - a, x, y - a);
+                ctx.bezierCurveTo(x + k, y - a, x + a, y - k, x + a, y);
+                return ctx.closePath()
+            default: return ctx.arc(x, y, r, 0, 2 * Math.PI, true)
+        }
+    },
+
+    // Flat-top regular n-gon inscribed in the circle, corners rounded with radius `round` (0: sharp).
+    polygonPath(ctx, x, y, r, n, round) {
+        var p = i => [x + r * Math.cos((2 * (i % n) + 1 - n / 2) * Math.PI / n), y + r * Math.sin((2 * (i % n) + 1 - n / 2) * Math.PI / n)];
+        var [x0, y0] = p(0), [x1, y1] = p(n - 1);
+        ctx.moveTo((x0 + x1) / 2, (y0 + y1) / 2);
+        for (var i = 0; i < n; i++) ctx.arcTo(...p(i), ...p(i + 1), round);
+        ctx.closePath();
     },
 
     drawNode(node, opac) {
@@ -466,13 +506,13 @@ export const GraphPack = {
                 //var rayon = Math.min(node.ctx.rayon, 25);
                 ctx.beginPath();
                 ctx.fillStyle = circleColor;
-                ctx.arc(node.ctx.centerX, node.ctx.centerY, rayon, 0, 2 * Math.PI, true);
+                this.nodePath(ctx, node.ctx.centerX, node.ctx.centerY, rayon);
                 ctx.fill();
                 break;
             default:
                 ctx.beginPath();
                 ctx.fillStyle = circleColor;
-                ctx.arc(node.ctx.centerX, node.ctx.centerY, rayon, 0, 2 * Math.PI, true);
+                this.nodePath(ctx, node.ctx.centerX, node.ctx.centerY, rayon);
                 ctx.fill();
         }
     },
@@ -776,14 +816,14 @@ export const GraphPack = {
             ctx2d.beginPath();
             ctx2d.lineWidth = w;
             ctx2d.strokeStyle = color;
-            ctx2d.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon + 0.1 + w / 2, 0, 2 * Math.PI, true);
+            this.nodePath(ctx2d, node.ctx.centerX, node.ctx.centerY, node.ctx.rayon + 0.1 + w / 2);
             ctx2d.stroke();
             // Canvas has no z-index: redraw names clipped to the (opaque) border ring,
             // so titles stay on top without double-drawing (and bolding) them elsewhere.
             ctx2d.save();
             ctx2d.beginPath();
-            ctx2d.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon + 0.1 + w, 0, 2 * Math.PI);
-            ctx2d.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon + 0.1, 0, 2 * Math.PI);
+            this.nodePath(ctx2d, node.ctx.centerX, node.ctx.centerY, node.ctx.rayon + 0.1 + w);
+            this.nodePath(ctx2d, node.ctx.centerX, node.ctx.centerY, node.ctx.rayon + 0.1);
             ctx2d.clip("evenodd");
             this.drawNodeNames(this.zoomedNode);
             ctx2d.restore();
@@ -814,7 +854,7 @@ export const GraphPack = {
         for (var n of this.hoverGroup) {
             if (!n.ctx || n.ctx.rayon <= 0) continue
             ctx2d.beginPath();
-            ctx2d.arc(n.ctx.centerX, n.ctx.centerY, n.ctx.rayon + 0.1 + w / 2, 0, 2 * Math.PI, true);
+            this.nodePath(ctx2d, n.ctx.centerX, n.ctx.centerY, n.ctx.rayon + 0.1 + w / 2);
             ctx2d.stroke();
         }
     },
@@ -833,7 +873,7 @@ export const GraphPack = {
             ctx2d.setLineDash([6, 4]);
             ctx2d.lineWidth = w * 2;
             ctx2d.strokeStyle = this.hoverCircleColor;
-            ctx2d.arc(target.ctx.centerX, target.ctx.centerY, target.ctx.rayon + 0.1 + w, 0, 2 * Math.PI, true);
+            this.nodePath(ctx2d, target.ctx.centerX, target.ctx.centerY, target.ctx.rayon + 0.1 + w);
             ctx2d.stroke();
             ctx2d.setLineDash([]);
         }
@@ -844,7 +884,7 @@ export const GraphPack = {
         ctx2d.beginPath();
         ctx2d.globalAlpha = 0.6;
         ctx2d.fillStyle = this.getNodeColor(source);
-        ctx2d.arc(p.mouseX, p.mouseY, rayon, 0, 2 * Math.PI, true);
+        this.nodePath(ctx2d, p.mouseX, p.mouseY, rayon);
         ctx2d.fill();
         ctx2d.globalAlpha = 1;
     },
@@ -876,7 +916,7 @@ export const GraphPack = {
         this.ctx2d.beginPath();
         this.ctx2d.lineWidth = w * 1.5;
         this.ctx2d.strokeStyle = this.getNodeColor(node.parent || this.rootNode);
-        this.ctx2d.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon + 0.1 + w / 2, 0, 2 * Math.PI, true);
+        this.nodePath(this.ctx2d, node.ctx.centerX, node.ctx.centerY, node.ctx.rayon + 0.1 + w / 2);
         this.ctx2d.stroke();
 
         // Fix canvas alteration (text cutted and opacity stacked)
@@ -935,13 +975,16 @@ export const GraphPack = {
         var offsetTop = r.top - p.top;
         var tw = $tooltip.clientWidth;
         var l = (node.ctx.centerX + offsetLeft - (tw / 2 + 1));
-        if (node === this.focusedNode && node === this.zoomedNode) {
-            // below the circle
-            var hw = (-$tooltip.clientHeight + 2 * node.ctx.rayon);
-            var t = (node.ctx.centerY + offsetTop - (hw / 2 + 23));
+        // Anchor on the drawn shape's top, not its packed circle's
+        var R = node.ctx.rayon * (this.shapeExtent[this.nodeShape] || [1, 1])[1];
+        var isTop = node === this.focusedNode && node === this.zoomedNode;
+        if (isTop) {
+            // below the circle top, raised to overlap the canvas top border
+            var hw = (-$tooltip.clientHeight + 2 * R);
+            var t = (node.ctx.centerY + offsetTop - (hw / 2 + 33));
         } else {
             // above the circle
-            var hw = ($tooltip.clientHeight + 2 * node.ctx.rayon);
+            var hw = ($tooltip.clientHeight + 2 * R);
             var t = (node.ctx.centerY + offsetTop - (hw / 2 + 23));
         }
 
@@ -949,9 +992,9 @@ export const GraphPack = {
             // the tooltip overflow "too much" outside the canvas. (left/right
             this.clearNodeTooltip();
             return
-        } else if (t + $tooltip.clientHeight / 3 - offsetTop < 0) {
+        } else if (!isTop && t + $tooltip.clientHeight / 3 - offsetTop < 0) {
             // Overflow on top
-            var hw = (-$tooltip.clientHeight / 2 + 2 * node.ctx.rayon);
+            var hw = (-$tooltip.clientHeight / 2 + 2 * R);
             var t = (node.ctx.centerY + offsetTop - (hw / 2 + 23));
         }
         $tooltip.style.left = l + "px";
@@ -1181,14 +1224,14 @@ export const GraphPack = {
         return this.colorCircleRange[k % this.colorCircleRange.length]
     },
 
-    colorToTextColor(color) { // @duplicate: mirrors Utils.Color.colorToTextColor (elm), keep in sync.
-        var c;
-        if (["#7FDBFF", "#39CCCC", "#01FF70", "#FFDC00", "#AAAAAA", "#DDDDDD"].includes(color.toUpperCase()) || color.startsWith("white")) {
-            c = "#000";
-        } else {
-            c = "#fff";
-        }
-        return c
+    // Black or white text, whichever reads best on the given fill (any CSS color, toned or role-type ones included).
+    // Unlike Utils.Color.colorToTextColor (elm), not an allow-list: the canvas fills are not limited to the palette.
+    colorToTextColor(color) {
+        // The canvas normalizes any CSS color to #rrggbb (or rgba() when translucent)
+        this.ctx2d.fillStyle = color;
+        var s = this.ctx2d.fillStyle;
+        var [r, g, b] = s[0] === "#" ? [1, 3, 5].map(i => parseInt(s.slice(i, i + 2), 16)) : s.match(/[\d.]+/g).map(Number);
+        return (r * 299 + g * 587 + b * 114) / 1000 > 128 ? "#000" : "#fff"; // YIQ brightness
     },
 
     getNodeColor(node) {
@@ -1301,6 +1344,18 @@ export const GraphPack = {
         this.nodeFocusedFromJs(this.focusedNode);
     },
 
+    // Switch the node shape (#canvasShape selector), kept across sessions.
+    // The packing depends on the shape, so re-layout (animated from the current frame).
+    setNodeShape(shape) {
+        this.nodeShape = shape;
+        if (this.$canvasShape) this.$canvasShape.dataset.shape = shape;
+        localStorage.setItem("graphpack_shape", shape);
+        if (!this.isActive() || !this.graph) return
+        this.computeGeometry();
+        this.packedNodeSize = null;
+        this.resetGraphPack(this.dataNodes, this.focusedNode.data.nameid);
+    },
+
     // Minimum radius of a circle: the footprint of two of its (would-be) roles.
     minCircleRayon(node, pad) {
         var u = Math.sqrt(this.nodeSize({ type_: NodeType.Role, role_type: RoleType.Peer, depth: node.depth + 1 }, this.gStats));
@@ -1323,7 +1378,12 @@ export const GraphPack = {
             d3.packSiblings(cs);
             var cos = Math.cos(this.siblingsRotation), sin = Math.sin(this.siblingsRotation);
             cs.forEach(c => [c.x, c.y] = [c.x * cos - c.y * sin, c.x * sin + c.y * cos]);
-            node.r = cs.reduce((r, c) => Math.max(r, Math.hypot(c.x, c.y) + c.r), 0) + pad;
+            // Squircle: bound the children in its own L4 norm (a circle of radius r fits in the L4 ball of radius r),
+            // so they can use its corners. Others: the enclosing circle.
+            var norm = this.nodeShape === "squircle" ? c => (c.x ** 4 + c.y ** 4) ** 0.25 : c => Math.hypot(c.x, c.y);
+            node.r = cs.reduce((r, c) => Math.max(r, norm(c) + c.r), 0) + pad;
+            // Grow the parent so its inscribed shape's flat sides still enclose the children.
+            node.r /= this.shapeInradius[this.nodeShape] || 1;
             cs.forEach(c => c.r -= pad);
         } else {
             node.r = node.data.type_ === NodeType.Circle ? 0 : Math.sqrt(this.nodeSize(node.data, this.gStats));
@@ -1422,6 +1482,8 @@ export const GraphPack = {
     },
 
     // Test if a point, in graph (pack) coordinates, falls within a node's drawn circle.
+    // Intentionally circular for every nodeShape: the margin around flat sides is a hover/click comfort zone.
+    // Not a bug, do not make it shape-aware.
     nodeContains(node, gx, gy) {
         var r = this.nodeRayon(node);
         return (gx - node.x) ** 2 + (gy - node.y) ** 2 <= r ** 2
@@ -1721,7 +1783,7 @@ export const GraphPack = {
         this.viewport = null;
         this.exitingNodes = [];
         this.$canvas = this.$canvasParent = this.$nextToChart = null;
-        this.$tooltip = this.$canvasButtons = this.ctx2d = null;
+        this.$tooltip = this.$canvasButtons = this.$canvasShape = this.ctx2d = null;
     },
 
     init_canvas() {
@@ -1819,6 +1881,7 @@ export const GraphPack = {
 
         // Setup Buttons
         this.$canvasButtons = document.getElementById('canvasButtons');
+        this.$canvasShape = document.getElementById('canvasShape');
 
         // Setup nodeTooltip Tooltip
         this.$tooltip = document.getElementById('nodeTooltip');
@@ -2137,6 +2200,11 @@ export const GraphPack = {
             [this.$canvasButtons, "pointerdown", canvasButtonsDown],
             [this.$canvasButtons, "pointerup", canvasButtonsUp],
             [this.$canvasButtons, "pointermove", canvasButtonsMove],
+            // Shape dropdown item (open/close is done by the global dropdown driver, bulma_drivers.js)
+            [this.$canvasShape, "click", e => {
+                var item = e.target.closest(".dropdown-item");
+                if (item) this.setNodeShape(item.dataset.shape);
+            }],
             // Tooltip events
             [$subTooltipTension, "mousedown", tooltipTensionClick],
             [$subTooltipAction, "mousedown", tooltipActionClick],

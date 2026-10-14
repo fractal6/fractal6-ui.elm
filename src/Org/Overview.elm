@@ -1641,6 +1641,31 @@ viewCanvas us isFresh model =
 
         {- Hidden classes use in graphpack_d3.js -}
         --
+        -- Graphpack node shape selector (open state and selection handled by graphpack_d3.js,
+        -- the trigger shows the icon matching the data-shape set by JS, see _canvas.scss)
+        --
+        , let
+            shapes =
+                [ ( "circle", "icon-circle", T.shapeCircle )
+                , ( "rounded-hexagon", "icon-hexagon", T.shapeHexagon )
+                , ( "squircle", "icon-squircle", T.shapeSquircle )
+                ]
+          in
+          div [ id "canvasShape", class "dropdown is-invisible" ]
+            [ button [ class "button is-small", type_ "button", title T.nodeShape, attribute "aria-label" T.nodeShape, attribute "aria-haspopup" "true" ]
+                (List.map (\( _, ic, _ ) -> A.icon ic) shapes)
+            , div [ class "dropdown-menu" ]
+                [ div [ class "dropdown-content" ]
+                    (List.map
+                        (\( shape, ic, label ) ->
+                            button [ class "dropdown-item", type_ "button", attribute "data-shape" shape, title label, attribute "aria-label" label ] [ A.icon ic ]
+                        )
+                        shapes
+                    )
+                ]
+            ]
+
+        --
         -- Graphpack Control buttons
         --
         , div [ id "canvasButtons", class "buttons are-small is-invisible" ]

@@ -48,6 +48,17 @@ tooltip are drawn on top. Colors come from CSS variables (`computeCircleColorRan
 Roles linked to a user with an avatar draw it in place of the `@username` line, and
 hovering it opens the user card (see [avatars.md](avatars.md)).
 
+### Node shapes
+
+`nodeShape` (`circle`, `rounded-hexagon`, `squircle`) is picked in the `#canvasShape`
+selector (top left, Elm-rendered, value and `change` handled by JS) and kept in
+`localStorage.graphpack_shape`. Shapes are drawn inscribed in the packed circle
+(`nodePath`), so circle packing still drives the layout: `packLayout` grows parents by
+`1 / shapeInradius` so children stay inside the flat sides (the squircle bounds them in
+its own L4 norm to use its corners), and `computeGeometry` fits the drawn extent
+(`shapeExtent`) to the canvas. Switching re-packs through `resetGraphPack`, animated.
+Hit-testing stays circular on purpose (comfort margin around flat sides).
+
 ### Motion and lifecycle
 
 One cancelable D3 timer eases both layout and viewport; interruptions resume from the

@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'fractaleicon';
-  src:  url('fonts/fractaleicon.eot?5ewivc');
-  src:  url('fonts/fractaleicon.eot?5ewivc#iefix') format('embedded-opentype'),
-    url('fonts/fractaleicon.ttf?5ewivc') format('truetype'),
-    url('fonts/fractaleicon.woff?5ewivc') format('woff'),
-    url('fonts/fractaleicon.svg?5ewivc#fractaleicon') format('svg');
+  src:  url('fonts/fractaleicon.eot?86aspg');
+  src:  url('fonts/fractaleicon.eot?86aspg#iefix') format('embedded-opentype'),
+    url('fonts/fractaleicon.ttf?86aspg') format('truetype'),
+    url('fonts/fractaleicon.woff?86aspg') format('woff'),
+    url('fonts/fractaleicon.svg?86aspg#fractaleicon') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -177,6 +177,9 @@
 }
 .icon-help-circle:before {
   content: "\e927";
+}
+.icon-hexagon:before {
+  content: "\e977";
 }
 .icon-home:before {
   content: "\e928";
@@ -357,6 +360,9 @@
 }
 .icon-x-circle:before {
   content: "\e95c";
+}
+.icon-squircle:before {
+  content: "\e978";
 }
 .icon-fractale-light:before {
   content: "\e972";
