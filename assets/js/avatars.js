@@ -230,6 +230,4 @@ export function initUserCard(app) {
         if (e.target && typeof e.target.closest === 'function' && e.target.closest('#userCard a')) hideUserCard(0);
     });
 
-    // The card is anchored in fixed coordinates.
-    window.addEventListener('scroll', () => hideUserCard(0), { passive: true, capture: true });
 }

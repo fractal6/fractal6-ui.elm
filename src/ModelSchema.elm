@@ -1168,6 +1168,7 @@ type alias UserCard =
     , avatar : Maybe String
     , bio : Maybe String
     , location : Maybe String
+    , roles : List UserRole
     }
 
 

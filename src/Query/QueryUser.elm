@@ -93,9 +93,22 @@ queryUserCard url username msg =
                 |> with avatarPayload
                 |> with Schema.Object.User.bio
                 |> with Schema.Object.User.location
+                |> with rolesPayload
             )
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
+
+
+rolesPayload : SelectionSet (List UserRole) Schema.Object.User
+rolesPayload =
+    Schema.Object.User.roles identity
+        (SelectionSet.map4 UserRole
+            Schema.Object.Node.name
+            Schema.Object.Node.nameid
+            (Schema.Object.Node.role_type |> SelectionSet.map (withDefault RoleType.Peer))
+            Schema.Object.Node.color
+        )
+        |> SelectionSet.map (withDefault [])
 
 
 userProfilePayload : SelectionSet UserProfile Schema.Object.User
@@ -112,16 +125,7 @@ userProfilePayload =
                     Schema.Object.UserRights.canCreateRoot
                     Schema.Object.UserRights.type_
             )
-        |> with
-            (Schema.Object.User.roles identity
-                (SelectionSet.map4 UserRole
-                    Schema.Object.Node.name
-                    Schema.Object.Node.nameid
-                    (Schema.Object.Node.role_type |> SelectionSet.map (withDefault RoleType.Peer))
-                    Schema.Object.Node.color
-                )
-                |> SelectionSet.map (withDefault [])
-            )
+        |> with rolesPayload
         |> with Schema.Object.User.notifyByEmail
         |> with Schema.Object.User.bio
         |> with Schema.Object.User.location
@@ -146,16 +150,7 @@ userFullPayload =
                     Schema.Object.UserRights.canCreateRoot
                     Schema.Object.UserRights.type_
             )
-        |> with
-            (Schema.Object.User.roles identity
-                (SelectionSet.map4 UserRole
-                    Schema.Object.Node.name
-                    Schema.Object.Node.nameid
-                    (Schema.Object.Node.role_type |> SelectionSet.map (withDefault RoleType.Peer))
-                    Schema.Object.Node.color
-                )
-                |> SelectionSet.map (withDefault [])
-            )
+        |> with rolesPayload
         |> with Schema.Object.User.notifyByEmail
         |> with Schema.Object.User.lang
         |> with Schema.Object.User.bio

@@ -2428,6 +2428,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Roles in this circle"
   fr="Roles dans ce cercle"
 
+[rolesInOrga]
+  en="Roles in this organisation"
+  fr="Rôles dans cette organisation"
+
 [noLabels]
   en="No label in this circle yet"
   fr="Aucune étiquette dans ce cercle"

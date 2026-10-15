@@ -52,9 +52,13 @@ redraw after decodes (`scheduleAvatarRedraw`, skipped during motion). The disc i
 - One card, `Components/UserCard.elm` (shown username + cache: one `queryUserCard` per user per
   session), held by `Global.elm` as `userCard` and rendered at the end of the layout as `#userCard`.
   No events, links only.
+- Roles: `queryUserCard` also fetches `User.roles`; the card lists those of the current org
+  (`session.path_data`, via `getOrgaRoles`, Member excluded, as the org card), styled like `viewRole`,
+  under a `.help` "Roles in this organisation" label, above the bio.
+  None outside an org.
 - `assets/js/avatars.js` `initUserCard`: delegated `pointerover`/`pointerout` on `[data-user-card]`,
   0.5s show delay, stays open while the pointer is on the card or a press started on it (text
-  selection), hidden on scroll, on a press elsewhere and on a click on one of its links. The large profile picture (`getAvatar3`)
+  selection), kept on scroll (closed by the pointer leaving), hidden on a press elsewhere and on a click on one of its links. The large profile picture (`getAvatar3`)
   has no card.
   Sends the username (or null) through `Ports.userCardFromJs`, then places the card once Elm
   rendered it (`cardPosition`: below the anchor, flipped above, clamped), re-placed on resize.

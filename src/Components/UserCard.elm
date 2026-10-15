@@ -26,17 +26,22 @@ module Components.UserCard exposing (Msg, State, init, subscriptions, update, vi
 
 import Assets as A
 import Dict exposing (Dict)
-import Fractale.Codecs exposing (FractalBaseRoute(..), toLink)
-import Fractale.View exposing (getAvatar2)
+import Fractale.Codecs exposing (FractalBaseRoute(..), getOrgaRoles, toLink)
+import Fractale.View exposing (getAvatar2, role2icon)
 import Html exposing (Html, a, div, p, text)
-import Html.Attributes exposing (attribute, class, href, id)
+import Html.Attributes exposing (attribute, class, href, id, title)
 import Loading exposing (GqlData, RequestResult(..))
 import Maybe exposing (withDefault)
 import ModelSchema exposing (UserCard)
 import Ports
 import Query.QueryUser exposing (queryUserCard)
+import Schema.Enum.RoleType as RoleType
 import Session exposing (Apis, SessionCommon)
+import Text as T
+import Utils.Bool exposing (ternary)
+import Utils.Color exposing (colorAttr)
 import Utils.Html exposing (showIf, showMaybe)
+import Utils.String exposing (upH)
 
 
 type State
@@ -102,7 +107,13 @@ viewCard session username data =
                     u
 
                 _ ->
-                    { username = username, name = Nothing, avatar = Nothing, bio = Nothing, location = Nothing }
+                    { username = username, name = Nothing, avatar = Nothing, bio = Nothing, location = Nothing, roles = [] }
+
+        -- Roles in the current organisation only (none outside an org)
+        roles =
+            session.path_data
+                |> Maybe.map (\p -> getOrgaRoles [ p.focus.nameid ] user.roles |> List.filter (\r -> r.role_type /= RoleType.Member))
+                |> withDefault []
     in
     div [ id "userCard", class "box", attribute "data-username" username ]
         [ div [ class "media" ]
@@ -112,7 +123,25 @@ viewCard session username data =
                 , a [ href link, class "is-discrete is-block" ] [ text ("@" ++ username) ]
                 ]
             ]
-        , showMaybe user.bio (\b -> p [ class "mt-2" ] [ text b ])
-        , showMaybe user.location (\l -> p [ class "mt-2 is-discrete is-size-7" ] [ A.icon1 "icon-map-pin" l ])
+        , showIf (roles /= [])
+            (div []
+                [ p [ class "help" ] [ text T.rolesInOrga ]
+                , div [ class "buttons mb-2" ] <|
+                    List.map
+                        (\r ->
+                            -- Same look as Fractale.View.viewRole, without its click msg
+                            a
+                                [ class "button buttonRole is-small"
+                                , href (toLink (ternary (r.role_type == RoleType.Guest) MembersBaseUri OverviewBaseUri) r.nameid [])
+                                , title r.nameid
+                                , colorAttr (withDefault (RoleType.toString r.role_type |> String.toLower) r.color)
+                                ]
+                                [ A.icon1 (role2icon r) (upH r.name) ]
+                        )
+                        roles
+                ]
+            )
+        , showMaybe user.bio (\b -> p [] [ text b ])
+        , showMaybe user.location (\l -> p [ class "is-discrete is-size-7" ] [ A.icon1 "icon-map-pin" l ])
         , showIf (Loading.isLoading data) (div [ class "is-loading-text is-discrete is-size-7" ] [ text "..." ])
         ]
