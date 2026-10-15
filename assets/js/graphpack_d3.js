@@ -1971,6 +1971,7 @@ export const GraphPack = {
 
         // Start a potential node drag (nav/zoom happens on mouseup instead)
         var canvasMouseDownEvent = e => {
+            this.avatarHovered = null; // the document pointerdown closed the card (avatars.js)
             if (e.button !== 0 || this.isZooming || this.isFrozen) return false
             this.pressed = true;
             // No drag on touch, the finger belongs to the page scroll (move is in the long-press menu)
