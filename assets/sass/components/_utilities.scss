@@ -958,3 +958,17 @@ figcaption {
 }
 
 // END FIX BULMA
+
+// User profile: subtle "edit your profile" button revealed on hover.
+.profile-left {
+    .profile-edit-btn {
+        display: flex;
+        width: fit-content;
+        margin: 0.5rem auto 0;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        &:focus { opacity: 1; }
+    }
+    &:hover .profile-edit-btn { opacity: 0.75; }
+    &:hover .profile-edit-btn:hover { opacity: 1; }
+}

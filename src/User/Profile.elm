@@ -439,9 +439,15 @@ view_ : SessionCommon -> UserProfile -> Model -> Html Msg
 view_ session user model =
     div [ id "profile", class "top-section" ]
         [ div [ class "columns" ]
-            [ div [ class "column is-3" ]
+            [ div [ class "column is-3 profile-left" ]
                 [ div [ class "columns is-centered m-0 pl-2" ]
                     [ viewProfileC session user ]
+                , showIf ((uctxFromUser session.user).username == user.username) <|
+                    a
+                        [ class "button is-small is-rounded profile-edit-btn"
+                        , href (toHref (Route.User_Dynamic_Settings { param1 = user.username }))
+                        ]
+                        [ A.icon1 "icon-edit-2" T.editYourProfile ]
                 ]
             , div [ class "column is-7" ]
                 [ viewProfileRight session.file_server_url session.user user model ]
