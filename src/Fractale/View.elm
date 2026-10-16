@@ -1077,6 +1077,16 @@ nodeType2icon nodeType =
             "icon-leaf"
 
 
+{-| Node type icon with a visibility badge (non-public nodes only)
+-}
+viewNodeIcon : String -> NodeType.NodeType -> NodeVisibility.NodeVisibility -> Html msg
+viewNodeIcon cls nodeType visibility =
+    span [ class ("node-icon " ++ cls) ]
+        [ A.icon (nodeType2icon nodeType ++ " icon-sm")
+        , showIf (visibility /= NodeVisibility.Public) <| span [ class "node-icon-badge", title (NodeVisibility.toString visibility) ] [ A.icon (visibility2icon visibility) ]
+        ]
+
+
 
 --
 -- Utils

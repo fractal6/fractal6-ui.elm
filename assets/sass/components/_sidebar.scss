@@ -223,6 +223,28 @@
     // Keep both hover actions clear without reflowing the name on hover.
     padding-right: calc(5% + 3em);
 }
+// Node type icon with a visibility badge cut into its top-right corner
+.node-icon {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+}
+.node-icon-badge {
+    position: absolute;
+    right: -0.4em;
+    top: -0.3em;
+    display: flex;
+    padding: 1px;
+    border-radius: 50%;
+    background-color: var(--tree-menu-background-color);
+    i {
+        font-size: 0.65rem;
+    }
+}
+.treeMenu:hover .node-icon-badge,
+.treeMenu.is-active .node-icon-badge {
+    background-color: var(--background-hover);
+}
 .treeMenu-label {
     min-width: 0;
     overflow-wrap: anywhere;

@@ -31,7 +31,7 @@ import Fractale.Error exposing (viewGqlErrors)
 import Fractale.Graph exposing (getNode, getParentId, localGraphFromOrga, withDescendants)
 import Fractale.HotUpdate exposing (hotNodeInsert, hotNodeMove, hotNodePull, hotNodePush)
 import Fractale.User exposing (UserState(..), uctxFromUser)
-import Fractale.View exposing (counter, getAvatarOrga, nodeType2icon)
+import Fractale.View exposing (counter, getAvatarOrga, viewNodeIcon)
 import Html exposing (Html, a, div, i, li, span, text, ul)
 import Html.Attributes exposing (attribute, class, classList, id, selected, target)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
@@ -41,6 +41,7 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.QueryNode exposing (queryNodesSub, queryOrgaTree)
+import Schema.Enum.NodeVisibility as NodeVisibility
 import Schema.Enum.RoleType as RoleType
 import Schemas.TreeMenu exposing (ExpandedLines, PersistentModel, toPersistant)
 import Scroll
@@ -193,8 +194,22 @@ buildChildren_ rid orga =
             (\k v ->
                 (v.parent |> Maybe.map .nameid) == Just rid
             )
-        |> Dict.keys
-        |> List.map (\nid -> buildTree_ (Just nid) orga)
+        |> Dict.values
+        |> List.sortBy
+            (\n ->
+                ( case n.visibility of
+                    NodeVisibility.Public ->
+                        0
+
+                    NodeVisibility.Private ->
+                        1
+
+                    NodeVisibility.Secret ->
+                        2
+                , n.nameid
+                )
+            )
+        |> List.map (\n -> buildTree_ (Just n.nameid) orga)
 
 
 
@@ -849,7 +864,7 @@ viewCircleLine url hover focus collapsible isCollapsed node =
         [ div [ class "level is-mobile" ]
             [ div [ class "level-left treeMenu-node" ]
                 [ -- Only root nodes carry an avatar
-                  getAvatarOrga "orgaIcon mr-2" url node.avatar (A.icon (nodeType2icon node.type_ ++ " icon-sm mr-2"))
+                  getAvatarOrga "orgaIcon mr-2" url node.avatar (viewNodeIcon "mr-2" node.type_ node.visibility)
                 , span [ class "treeMenu-label" ]
                     [ text node.name
                     , showMaybe node.first_link
@@ -1028,7 +1043,7 @@ viewNodeLine onTargetClick selected excluded node =
                     []
                )
         )
-        [ A.icon1_sm (nodeType2icon node.type_) node.name
+        [ span [ class "is-flex is-align-items-center" ] [ viewNodeIcon "mr-2" node.type_ node.visibility, text node.name ]
         , showMaybe node.first_link
             (\f -> span [ class "is-username is-size-7" ] [ text (space_ ++ "@" ++ f.username) ])
         ]
