@@ -32,7 +32,7 @@ import Fractale.Graph exposing (getNode, getParentId, localGraphFromOrga, withDe
 import Fractale.HotUpdate exposing (hotNodeInsert, hotNodeMove, hotNodePull, hotNodePush)
 import Fractale.User exposing (UserState(..), uctxFromUser)
 import Fractale.View exposing (counter, getAvatarOrga, viewNodeIcon)
-import Html exposing (Html, a, div, i, li, span, text, ul)
+import Html exposing (Attribute, Html, a, div, i, li, span, text, ul)
 import Html.Attributes exposing (attribute, class, classList, id, selected, target)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
@@ -93,6 +93,27 @@ prefixId did =
     "treeMenu_" ++ did
 
 
+{-| `expanded_lines` key of the roles line of a circle (present = expanded).
+-}
+rolesKey : String -> String
+rolesKey nameid =
+    "-/§roles§/" ++ nameid
+
+
+{-| `expanded_lines` key of a circle (present = collapsed).
+-}
+circleKey : String -> String
+circleKey nameid =
+    "-/§circle§/" ++ nameid
+
+
+{-| Expand the roles line holding the focused role, so it is visible.
+-}
+withFocusedRoles : NodeFocus -> ExpandedLines -> ExpandedLines
+withFocusedRoles focus expanded_lines =
+    ternary (isRole focus.nameid) (Dict.insert (rolesKey (nearestCircleid focus.nameid)) False expanded_lines) expanded_lines
+
+
 initModel : FractalBaseRoute -> Maybe String -> NodeFocus -> Maybe PersistentModel -> Maybe NodesDict -> SessionCommon -> Model
 initModel baseUri uriQuery focus persistent tree session =
     let
@@ -102,17 +123,6 @@ initModel baseUri uriQuery focus persistent tree session =
                     { isActive = False
                     , expanded_lines = Dict.empty
                     }
-
-        expanded_lines =
-            if isRole focus.nameid then
-                let
-                    nid =
-                        nearestCircleid focus.nameid |> (++) "-/§roles§/"
-                in
-                Dict.insert nid False m.expanded_lines
-
-            else
-                m.expanded_lines
     in
     { isActive = m.isActive
     , isActive2 = m.isActive
@@ -134,7 +144,7 @@ initModel baseUri uriQuery focus persistent tree session =
     , fetching = False
     , tree = Tree { node = initNode, children = [] }
     , hover = Nothing
-    , expanded_lines = expanded_lines
+    , expanded_lines = withFocusedRoles focus m.expanded_lines
 
     -- Common
     , session = session
@@ -477,20 +487,25 @@ update_ apis message model =
                                 |> withDefault Dict.empty
                                 |> Dict.filter (\_ n -> n.role_type == Nothing && n.parent /= Nothing)
                                 |> Dict.keys
-                                |> List.map (\nid -> ( "-/§circle§/" ++ nid, False ))
+                                |> List.map (\nid -> ( circleKey nid, False ))
                                 |> Dict.fromList
                     }
             in
             ( newModel, out0 [ Ports.saveMenuTree (toPersistant newModel) ] )
 
         OnExpandAll ->
-            -- Expand every circle; only the root's roles line is open.
+            -- Expand every circle and every roles line.
             let
-                (Tree root) =
-                    model.tree
-
                 newModel =
-                    { model | expanded_lines = Dict.singleton ("-/§roles§/" ++ root.node.nameid) False }
+                    { model
+                        | expanded_lines =
+                            withMaybeData model.tree_result
+                                |> withDefault Dict.empty
+                                |> Dict.values
+                                |> List.filterMap (\n -> ternary (n.role_type /= Nothing) n.parent Nothing)
+                                |> List.map (\p -> ( rolesKey p.nameid, False ))
+                                |> Dict.fromList
+                    }
             in
             ( newModel, out0 [ Ports.saveMenuTree (toPersistant newModel) ] )
 
@@ -499,19 +514,7 @@ update_ apis message model =
                 ( { model | focus = focus }, noOut )
 
             else
-                let
-                    expanded_lines =
-                        if isRole model.focus.nameid then
-                            let
-                                nid =
-                                    nearestCircleid model.focus.nameid |> (++) "-/§roles§/"
-                            in
-                            Dict.insert nid False model.expanded_lines
-
-                        else
-                            model.expanded_lines
-                in
-                ( { model | focus = focus, expanded_lines = expanded_lines }, out0 [ send OnLoad ] )
+                ( { model | focus = focus, expanded_lines = withFocusedRoles model.focus model.expanded_lines }, out0 [ send OnLoad ] )
 
         -- Data Tree Edit
         FetchNewNode nameid focus ->
@@ -791,29 +794,33 @@ viewTreeMenu isPanelOpen model =
         ]
 
 
+{-| Split the children of a node into its visible roles and its sub-circles.
+-}
+splitChildren : List (Tree Node) -> ( List Node, List (Tree Node) )
+splitChildren children =
+    ( List.filterMap (\(Tree c) -> ternary (List.member c.node.role_type [ Just RoleType.Coordinator, Just RoleType.Peer, Just RoleType.Bot ]) (Just c.node) Nothing) children
+    , List.filter (\(Tree c) -> c.node.role_type == Nothing) children
+    )
+
+
 viewSubTree : String -> Bool -> Int -> Maybe (List String) -> NodeFocus -> Tree Node -> ExpandedLines -> Html Msg
 viewSubTree url isPanelOpen depth hover focus (Tree { node, children }) expanded_lines =
     let
-        roles =
-            children |> List.filter (\(Tree c) -> List.member c.node.role_type [ Just RoleType.Coordinator, Just RoleType.Peer, Just RoleType.Bot ]) |> List.map (\(Tree c) -> c.node)
+        ( roles, circles ) =
+            splitChildren children
 
         nid =
-            node.nameid |> (++) "-/§roles§/"
+            rolesKey node.nameid
 
         isExpanded =
             Dict.member nid expanded_lines
 
-        circleNid =
-            node.nameid |> (++) "-/§circle§/"
-
+        -- The root is locked open.
         isCollapsed =
-            Dict.member circleNid expanded_lines
-
-        nonRoleChildrenCount =
-            children |> List.filter (\(Tree c) -> c.node.role_type == Nothing) |> List.length
+            depth > 0 && Dict.member (circleKey node.nameid) expanded_lines
 
         hasCollapsible =
-            nonRoleChildrenCount > 0 || List.length roles > 0
+            depth > 0 && (circles /= [] || roles /= [])
     in
     ul ([ class "menu-list" ] ++ ternary (depth == 0 && not isPanelOpen) [ onMouseLeave (OnNodeHover Nothing) ] [])
         [ li []
@@ -822,28 +829,25 @@ viewSubTree url isPanelOpen depth hover focus (Tree { node, children }) expanded
                         []
 
                     else
-                        List.map
-                            (\(Tree c) ->
-                                showIf (c.node.role_type == Nothing) <|
-                                    viewSubTree url isPanelOpen (depth + 1) hover focus (Tree c) expanded_lines
-                            )
-                            children
+                        (showIf (roles /= []) <|
+                            ul [ class "menu-list tree-roles" ]
+                                (li []
+                                    [ viewRolesLine True
+                                        [ id nid, onMouseEnter (OnNodeHover (Just (List.map .nameid roles))), onClickPD (OnToggleDropdowLine nid) ]
+                                        isExpanded
+                                        roles
+                                    ]
+                                    :: (if isExpanded then
+                                            List.map (\n -> li [] [ Lazy.lazy6 viewCircleLine url hover focus False False n ]) roles
+
+                                        else
+                                            []
+                                       )
+                                )
+                        )
+                            :: List.map (\c -> viewSubTree url isPanelOpen (depth + 1) hover focus c expanded_lines) circles
                    )
             )
-        , ul [ class "menu-list pl-0" ]
-            [ div [ class "is-boxed" ] <|
-                ([ showIf (List.length roles > 0) <|
-                    li [] [ viewRolesLine "roles" hover roles nid expanded_lines ]
-                 ]
-                    ++ (if isExpanded then
-                            List.map (\n -> li [] [ Lazy.lazy6 viewCircleLine url hover focus False False n ]) roles
-
-                        else
-                            []
-                       )
-                )
-            ]
-            |> showIf (not isCollapsed && List.length roles > 0)
         ]
 
 
@@ -883,7 +887,7 @@ viewCircleLine url hover focus collapsible isCollapsed node =
                             span [ class "is-contract-badge-bg" ] [ counter i ]
                     ]
                 ]
-            , if isHover || (collapsible && isCollapsed) then
+            , showIf (isHover || collapsible) <|
                 div [ class "level-right here" ]
                     [ showIf isHover <|
                         span
@@ -892,68 +896,36 @@ viewCircleLine url hover focus collapsible isCollapsed node =
                             , onClickPosSafe (\pos -> Do [ DoOpenActionPanel "actionPanelHelper" node.nameid pos ])
                             ]
                             [ A.icon "icon-more-vertical" ]
-                    , if collapsible && isCollapsed then
-                        span [ class "treeMenu-action", onClickSafe (OnToggleDropdowLine (node.nameid |> (++) "-/§circle§/")) ]
-                            [ A.icon "icon-chevron-right" ]
-
-                      else if collapsible && isHover then
-                        span [ class "treeMenu-action", onClickSafe (OnToggleDropdowLine (node.nameid |> (++) "-/§circle§/")) ]
-                            [ A.icon "icon-chevron-down" ]
-
-                      else
-                        text ""
+                    , showIf collapsible <|
+                        span [ class "treeMenu-action", onClickSafe (OnToggleDropdowLine (circleKey node.nameid)) ]
+                            [ A.icon (ternary isCollapsed "icon-chevron-right" "icon-chevron-down") ]
                     ]
-
-              else
-                text ""
             ]
         ]
 
 
-viewRolesLine : String -> Maybe (List String) -> List Node -> String -> ExpandedLines -> Html Msg
-viewRolesLine type_txt hover roles nid expanded_lines =
-    let
-        isExpanded =
-            Dict.member nid expanded_lines
-
-        -- Hovering that line highlights every role collapsed behind it.
-        nameids =
-            List.map .nameid roles
-    in
-    a
-        [ class "treeMenu pt-0 pr-1"
-        , id nid
-        , onMouseEnter (OnNodeHover (Just nameids))
-        , onClickPD (OnToggleDropdowLine nid)
-        , target "_blank"
-        ]
-        [ div [ class "level is-mobile" ]
-            [ div [ class "level-left" ]
-                [ span [ class "tag has-background-tag has-text-text" ]
-                    [ text "+", text (String.fromInt (List.length roles)), text (" " ++ type_txt) ]
-                , case List.sum <| List.map .n_open_tensions roles of
+{-| Discord-like category header for the roles of a circle. Collapsed: shows the summed counters if `withCounters`.
+-}
+viewRolesLine : Bool -> List (Attribute msg) -> Bool -> List Node -> Html msg
+viewRolesLine withCounters attrs isExpanded roles =
+    a ([ class "treeMenu tree-roles-header", target "_blank" ] ++ attrs)
+        [ A.icon (ternary isExpanded "icon-chevron-down" "icon-chevron-right")
+        , span [ class "tree-roles-label" ] [ text (T.roles ++ " · " ++ String.fromInt (List.length roles)) ]
+        , showIf (withCounters && not isExpanded) <|
+            span []
+                [ case List.sum <| List.map .n_open_tensions roles of
                     0 ->
                         text ""
 
                     i ->
-                        showIf (not isExpanded) (counter i)
+                        counter i
                 , case List.sum <| List.map .n_open_contracts roles of
                     0 ->
                         text ""
 
                     i ->
-                        showIf (not isExpanded)
-                            (span [ class "is-contract-badge-bg" ] [ counter i ])
+                        span [ class "is-contract-badge-bg" ] [ counter i ]
                 ]
-            , if isExpanded then
-                A.icon "icon-chevron-up"
-
-              else if hover == Just nameids then
-                A.icon "icon-chevron-down"
-
-              else
-                text ""
-            ]
         ]
 
 
@@ -976,48 +948,40 @@ viewSelectorTree onTargetClick onDropdownClick selected exclude expanded_lines o
                 excluded =
                     ternary (exclude == "") [] (withDescendants [ exclude ] odata)
             in
-            div [ id "tree-selector", class "menu" ] [ viewSubTree2 onTargetClick onDropdownClick 0 selected excluded tree expanded_lines ]
+            div [ id "tree-selector", class "menu" ] [ viewSubTree2 onTargetClick onDropdownClick selected excluded tree expanded_lines ]
 
         _ ->
             div [ class "spinner" ] []
 
 
-viewSubTree2 : (Node -> msg) -> (String -> msg) -> Int -> List String -> List String -> Tree Node -> ExpandedLines -> Html msg
-viewSubTree2 onTargetClick onDropdownClick depth selected excluded (Tree { node, children }) expanded_lines =
+viewSubTree2 : (Node -> msg) -> (String -> msg) -> List String -> List String -> Tree Node -> ExpandedLines -> Html msg
+viewSubTree2 onTargetClick onDropdownClick selected excluded (Tree { node, children }) expanded_lines =
     let
-        roles =
-            children |> List.filter (\(Tree c) -> List.member c.node.role_type [ Just RoleType.Coordinator, Just RoleType.Peer, Just RoleType.Bot ]) |> List.map (\(Tree c) -> c.node)
+        ( roles, circles ) =
+            splitChildren children
 
         nid =
-            node.nameid |> (++) "-/§roles§/"
+            rolesKey node.nameid
 
         isExpanded =
             Dict.member nid expanded_lines
     in
-    ul ([ class "menu-list" ] ++ ternary (depth == 0) [] [])
+    ul [ class "menu-list" ]
         [ li []
             (Lazy.lazy4 viewNodeLine onTargetClick selected excluded node
-                :: List.map
-                    (\(Tree c) ->
-                        showIf (c.node.role_type == Nothing) <|
-                            viewSubTree2 onTargetClick onDropdownClick (depth + 1) selected excluded (Tree c) expanded_lines
-                    )
-                    children
-            )
-        , ul [ class "menu-list pl-0" ]
-            [ div [ class "is-boxed" ] <|
-                ([ showIf (List.length roles > 0) <|
-                    li [] [ viewRolesLine2 onDropdownClick "roles" (Just nid) roles nid expanded_lines ]
-                 ]
-                    ++ (if isExpanded then
-                            List.map (\n -> li [] [ Lazy.lazy4 viewNodeLine onTargetClick selected excluded n ]) roles
+                :: (showIf (roles /= []) <|
+                        ul [ class "menu-list tree-roles" ]
+                            (li [] [ viewRolesLine False [ id nid, onClickPD (onDropdownClick nid) ] isExpanded roles ]
+                                :: (if isExpanded then
+                                        List.map (\n -> li [] [ Lazy.lazy4 viewNodeLine onTargetClick selected excluded n ]) roles
 
-                        else
-                            []
-                       )
-                )
-            ]
-            |> showIf (List.length roles > 0)
+                                    else
+                                        []
+                                   )
+                            )
+                   )
+                :: List.map (\c -> viewSubTree2 onTargetClick onDropdownClick selected excluded c expanded_lines) circles
+            )
         ]
 
 
@@ -1046,36 +1010,4 @@ viewNodeLine onTargetClick selected excluded node =
         [ span [ class "is-flex is-align-items-center" ] [ viewNodeIcon "mr-2" node.type_ node.visibility, text node.name ]
         , showMaybe node.first_link
             (\f -> span [ class "is-username is-size-7" ] [ text (space_ ++ "@" ++ f.username) ])
-        ]
-
-
-{-| This is a copy (just a few changes) of viewRoleLines just with msg instead of MSG
-@CODEFACTOR: how to factorize those functions in elm ?
--}
-viewRolesLine2 : (String -> msg) -> String -> Maybe String -> List Node -> String -> ExpandedLines -> Html msg
-viewRolesLine2 onDropdownClick type_txt hover roles nid expanded_lines =
-    let
-        isExpanded =
-            Dict.member nid expanded_lines
-    in
-    a
-        [ class "treeMenu pt-0 pr-1"
-        , id nid
-        , onClickPD (onDropdownClick nid)
-        , target "_blank"
-        ]
-        [ div [ class "level is-mobile" ]
-            [ div [ class "level-left" ]
-                [ span [ class "tag is-smaller2 has-background-tag has-text-text" ]
-                    [ text "+", text (String.fromInt (List.length roles)), text (" " ++ type_txt) ]
-                ]
-            , if isExpanded then
-                A.icon "icon-chevron-up"
-
-              else if hover == Just nid then
-                A.icon "icon-chevron-down"
-
-              else
-                text ""
-            ]
         ]

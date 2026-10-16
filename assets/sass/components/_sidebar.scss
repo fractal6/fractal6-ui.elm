@@ -105,17 +105,6 @@
             margin-left: 1em;
         }
 
-        &.is-boxed, > .is-boxed {
-            li:not(:first-child) {
-                font-size: 0.95em;
-                padding-left: 0.25em;
-                margin-right: 0.7em;
-                border-right: 1px solid var(--border-color);
-                // Accordion animation for expanded roles
-                animation: accordionSlideDown 0.2s ease-out forwards;
-            }
-        }
-
         .tag {
             font-size: 70% !important;
         }
@@ -250,6 +239,34 @@
     overflow-wrap: anywhere;
 }
 
+// Discord-like category header for the roles of a circle (#tree-menu and #tree-selector)
+a.treeMenu.tree-roles-header {
+    display: flex;
+    align-items: center;
+    gap: 0.35em;
+    padding-top: 0.5em;
+    padding-bottom: 0.25em;
+    color: var(--text-weak);
+
+    > i {
+        font-size: 0.8em;
+    }
+
+    &:hover {
+        color: var(--text);
+    }
+}
+.tree-roles-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+// Accordion animation for expanded roles
+.tree-roles > li:not(:first-child) {
+    animation: accordionSlideDown 0.2s ease-out forwards;
+}
+
 
 #tree-selector {
     li, li a {
@@ -282,16 +299,6 @@
             }
         }
 
-        &.is-boxed, > .is-boxed {
-            li:not(:first-child) {
-                font-size: 0.95em;
-                padding-left: 0.25em;
-                margin-right: 0.88em;
-                border-right: 1px solid var(--border-color-light);
-                // Accordion animation for expanded roles
-                animation: accordionSlideDown 0.2s ease-out forwards;
-            }
-        }
 
         a.is-active:hover {
             cursor: default;
