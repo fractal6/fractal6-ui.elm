@@ -2005,7 +2005,7 @@ viewProjectsListHeader focus counts statusFilter isEmpty =
             A.icon1 "icon-check has-text-success is-invisible" ""
 
         showGoRoot =
-            focus.nameid /= focus.rootnameid && not isEmpty
+            focus.nameid /= focus.rootnameid
     in
     div
         [ class "pt-3 pb-3 has-border-light has-background-header"
@@ -2085,8 +2085,6 @@ viewProjectsList canEditProject commonOp session focus pattern statusFilter data
                                 |> Format.namedValue "type" (nodeType2str focus.type_ |> decap)
                                 |> Format.namedValue "status" (projectStatus2str (statusDecoder statusFilter) |> decap)
                             )
-                        , showIf (focus.nameid /= focus.rootnameid) <|
-                            viewGoRoot "" OnGoRoot
                         ]
 
             Failure err ->
