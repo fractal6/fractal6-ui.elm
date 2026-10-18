@@ -24,6 +24,7 @@ import { replaceRange, caretAtAnchor } from './textutils'
 import { GraphPack } from './graphpack_d3'
 import { initAvatarCapture, initUserCard } from './avatars'
 import { initFileCapture } from './fileCapture'
+import { initScrollRestore } from './scrollRestore'
 import { sleep } from './custom.js'
 
 // Drag&Drop support
@@ -140,6 +141,7 @@ window.addEventListener('load', _ => {
             initFileCapture(app);
             initAvatarCapture(app);
             initUserCard(app);
+            initScrollRestore(session);
 
             // Scroll position detection with throttling
             window.addEventListener('scroll', function() {

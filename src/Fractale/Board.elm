@@ -177,7 +177,7 @@ viewBoard op commonOp header keys_title data =
                                 ]
                             )
                         |> List.concat
-                        |> div [ class "content scrollbar-thin" ]
+                        |> div [ id (op.boardId ++ "-" ++ key), class "content scrollbar-thin" ]
                     ]
                 , div [ class "divider is-vertical2 is-small is-hidden-mobile" ] []
                 ]

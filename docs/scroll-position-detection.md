@@ -33,3 +33,20 @@ view global model =
 - Uses `{ passive: true }` listener for scroll performance
 - Only sends to Elm when position actually changes
 - 5px threshold prevents flickering at boundaries
+
+## Scroll restoration on back/forward
+
+`assets/js/scrollRestore.js` (`initScrollRestore`, called from `ports.js`) restores the board
+scroll (project board and tensions board views: circle, label, assignee) when navigating with the browser back/forward buttons.
+
+- **Save**: a capture-phase `scroll` listener on `document` records, per URL, the scroll of
+  `.kb-board` elements and their children that have an `id` (board horizontal scroll, columns
+  `.content` vertical scroll). Only the last 10 URLs are kept.
+- **Restore**: on `popstate`, the saved positions are re-applied every frame for 3s, so they win
+  over the async board render and auto-scrolls. Any user input (wheel, touch, key, mouse) stops it.
+- The window scroll is not handled (left to the browser, `history.scrollRestoration = auto`).
+
+Limitations: elements without an `id` are not restored; positions
+are in memory only (lost on reload); the same URL visited twice shares one entry.
+
+Tests: `tests/Js/scrollRestore.test.js`.
