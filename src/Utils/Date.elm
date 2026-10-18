@@ -107,6 +107,12 @@ toTimeI18n lang =
         Lang.Fr ->
             I18n.fr
 
+        Lang.It ->
+            I18n.it
+
+        Lang.Es ->
+            I18n.es
+
 
 toShortMonth : Lang.Lang -> Time.Month -> String
 toShortMonth lang month =
@@ -186,3 +192,79 @@ toShortMonth lang month =
 
                 Time.Dec ->
                     "Dec"
+
+        Lang.It ->
+            case month of
+                Time.Jan ->
+                    "Gen"
+
+                Time.Feb ->
+                    "Feb"
+
+                Time.Mar ->
+                    "Mar"
+
+                Time.Apr ->
+                    "Apr"
+
+                Time.May ->
+                    "Mag"
+
+                Time.Jun ->
+                    "Giu"
+
+                Time.Jul ->
+                    "Lug"
+
+                Time.Aug ->
+                    "Ago"
+
+                Time.Sep ->
+                    "Set"
+
+                Time.Oct ->
+                    "Ott"
+
+                Time.Nov ->
+                    "Nov"
+
+                Time.Dec ->
+                    "Dic"
+
+        Lang.Es ->
+            case month of
+                Time.Jan ->
+                    "Ene"
+
+                Time.Feb ->
+                    "Feb"
+
+                Time.Mar ->
+                    "Mar"
+
+                Time.Apr ->
+                    "Abr"
+
+                Time.May ->
+                    "May"
+
+                Time.Jun ->
+                    "Jun"
+
+                Time.Jul ->
+                    "Jul"
+
+                Time.Aug ->
+                    "Ago"
+
+                Time.Sep ->
+                    "Sep"
+
+                Time.Oct ->
+                    "Oct"
+
+                Time.Nov ->
+                    "Nov"
+
+                Time.Dec ->
+                    "Dic"

@@ -878,6 +878,12 @@ lang2str x =
         Lang.Fr ->
             "Français"
 
+        Lang.It ->
+            "Italiano"
+
+        Lang.Es ->
+            "Español"
+
 
 
 --

@@ -9,6 +9,12 @@
   fr="""Votre organisation
         est un être vivant,
         Donnez-lui un toit."""
+  it="""La tua organizzazione
+        è un essere vivente,
+        Dalle una casa."""
+  es="""Tu organización
+        es un ser vivo,
+        Dale un hogar."""
 
 [heroSubtitle]
   en="""Design your organisation,
@@ -21,35 +27,59 @@
         Identifiez et collectez les [tensions](https://doc.fractale.co/tension/ "Tâches, tickets, Q&A, annonces, etc"),
         Partagez, échangez et résolvez-les,
         Evoluez organiquement."""
+  it="""Progetta la tua organizzazione,
+      Invita i tuoi collaboratori,
+      Identifica e raccogli le [tensioni](https://doc.fractale.co/tension/ "Attività, ticket, domande e risposte, annunci, ecc."),
+      Condividile, discutile e risolvile,
+      Evolvi in modo organico."""
+  es="""Diseña tu organización,
+      Invita a tus colaboradores,
+      Identifica y recoge las [tensiones](https://doc.fractale.co/tension/ "Tareas, incidencias, preguntas y respuestas, anuncios, etc."),
+      Compártelas, debátelas y resuélvelas,
+      Evoluciona de forma orgánica."""
 
 
 [aboutHero]
   en="**Fractale** is a collaboration and communication platform inspired by self-organized systems and open-source culture. We build collective intelligence tools to foster transparency, scalability and resilience in organisations."
   fr="**Fractale** est une plateforme de collaboration et de communication inspirée par les systèmes auto-organisés et la culture open source. Nous construisons des outils d’intelligence collective qui favorisent la transparence, accompagne l’évolution et renforce la résilience des organisations."
+  it="**Fractale** è una piattaforma di collaborazione e comunicazione ispirata ai sistemi auto-organizzati e alla cultura open source. Sviluppiamo strumenti di intelligenza collettiva per favorire la trasparenza, la scalabilità e la resilienza delle organizzazioni."
+  es="**Fractale** es una plataforma de colaboración y comunicación inspirada en los sistemas autoorganizados y la cultura de código abierto. Creamos herramientas de inteligencia colectiva para fomentar la transparencia, la escalabilidad y la resiliencia de las organizaciones."
 
 [npoHero]
   en="From a few members to several thousand collaborators, Fractale allows NPOs to facilitate team coordination, make governance structures transparent while providing a memory to the organisation."
   fr="De quelques membres à plusieurs milliers de collaborateurs, Fractale permet aux NPOs (Non-Profit Organisation) de faciliter la coordination d’équipes, rendre transparentes les structures de gouvernance et fluidifier l’information tout en fournissant une mémoire à l’organisation."
+  it="Da pochi membri a diverse migliaia di collaboratori, Fractale permette alle organizzazioni non profit di facilitare il coordinamento dei team e rendere trasparenti le strutture di governance, offrendo al contempo una memoria all’organizzazione."
+  es="Desde unos pocos miembros hasta varios miles de colaboradores, Fractale permite a las organizaciones sin ánimo de lucro facilitar la coordinación de equipos y hacer transparentes las estructuras de gobernanza, a la vez que proporciona una memoria a la organización."
 
 [corpHero]
   en="From _**Agile**_ methods to _**Holacracy**_, Fractale allows you to implement management and project tracking methods, in an easy and intuitive way. Boost the engagement of your teams around clear objectives while making your communication more fluid."
   fr="Des méthodes _**Agiles**_ à l’_**Holacratie**_, Fractale vous permet de mettre en œuvre un management et du suivi de projets, de manière simple et intuitive. Favorisez l’implication de vos équipes autour d’objectifs clairs tout en fluidifiant votre communication."
+  it="Dai metodi _**Agile**_ all’_**Olacrazia**_, Fractale ti permette di applicare metodi di gestione e monitoraggio dei progetti in modo semplice e intuitivo. Aumenta il coinvolgimento dei tuoi team attorno a obiettivi chiari rendendo la comunicazione più fluida."
+  es="Desde los métodos _**Agile**_ hasta la _**Holacracia**_, Fractale te permite aplicar métodos de gestión y seguimiento de proyectos de forma sencilla e intuitiva. Impulsa el compromiso de tus equipos en torno a objetivos claros mientras haces más fluida tu comunicación."
 
 [forNpo]
   en="For Nonprofits"
   fr="Pour les collectifs"
+  it="Per le non profit"
+  es="Para organizaciones sin ánimo de lucro"
 
 [forCorp]
   en="For Companies"
   fr="Pour les entreprises"
+  it="Per le aziende"
+  es="Para empresas"
 
 [tryNow]
   en="Try it now"
   fr="Essayez maintenant"
+  it="Provalo ora"
+  es="Pruébalo ahora"
 
 [tryFree]
   en="Join"
   fr="Rejoindre"
+  it="Unisciti"
+  es="Únete"
 
 #
 # [I am an NPO]
@@ -61,194 +91,296 @@
 [welcome]
   en="Welcome to Fractale"
   fr="Bienvenue sur Fractale"
+  it="Benvenuto su Fractale"
+  es="Bienvenido a Fractale"
 
 [welcome2]
   en="Self-organisation platform for Humans"
   fr="Plateforme d’auto-organisation pour les Humains"
+  it="Piattaforma di auto-organizzazione per gli Umani"
+  es="Plataforma de autoorganización para Humanos"
 
 [welcomeSub]
   en="a collective intelligence platform"
   fr="une plateforme d’intelligence collective"
+  it="una piattaforma di intelligenza collettiva"
+  es="una plataforma de inteligencia colectiva"
 
 [signin]
   en="Sign in"
   fr="Se connecter"
+  it="Accedi"
+  es="Iniciar sesión"
 
 [signin_]
   en="Sign in"
   fr="Connexion"
+  it="Accesso"
+  es="Iniciar sesión"
 
 [signup]
   en="Sign up"
   fr="S’inscrire"
+  it="Registrati"
+  es="Registrarse"
 
 [signup_]
   en="Sign up"
   fr="Inscription"
+  it="Registrazione"
+  es="Registro"
 
 [signout]
   en="Sign Out"
   fr="Déconnexion"
+  it="Esci"
+  es="Cerrar sesión"
 
 [signinNow]
   en="Sign-in"
   fr="Connectez-vous"
+  it="Accedi"
+  es="Inicia sesión"
 
 [signupNow]
   en="Create an account"
   fr="Inscrivez-vous"
+  it="Crea un account"
+  es="Crea una cuenta"
 
 [signinNow2]
   en="Sign-in"
   fr="Vous Connecter"
+  it="Accedi"
+  es="Inicia sesión"
 
 [signupNow2]
   en="Create an account"
   fr="Vous Inscrire"
+  it="Crea un account"
+  es="Crea una cuenta"
 
 [createYourAccount]
   en="Create your account"
   fr="Créez votre compte"
+  it="Crea il tuo account"
+  es="Crea tu cuenta"
 
 [needAnAccount]
   en="New to Fractale?"
   fr="Pas de compte ?"
+  it="Nuovo su Fractale?"
+  es="¿Nuevo en Fractale?"
 
 [alreadyAnAccount]
   en="Already an account?"
   fr="Déjà enregistré ?"
+  it="Hai già un account?"
+  es="¿Ya tienes una cuenta?"
 
 [passwordRequirements]
   en="Password must be 8 characters or longer."
   fr="Le mot de passe doit comporter 8 caractères ou plus."
+  it="La password deve contenere almeno 8 caratteri."
+  es="La contraseña debe tener 8 caracteres o más."
 
 [passwordForgotten]
   en="Forgot your password?"
   fr="Mot de passe oublié ?"
+  it="Password dimenticata?"
+  es="¿Olvidaste tu contraseña?"
 
 [checkYourEmail]
   en="Please check your email ({{}}) {{}}."
   fr="Veuillez vérifier vos e-mails ({{}}) {{}}."
+  it="Controlla la tua email ({{}}) {{}}."
+  es="Revisa tu correo electrónico ({{}}) {{}}."
 
 [checkConfirmationEmail]
   en="No confirmation email received? Check your Spam folder"
   fr="Vous n’avez pas reçu de courriel de confirmation ? Vérifiez votre dossier Spam"
+  it="Non hai ricevuto l’email di conferma? Controlla la cartella Spam"
+  es="¿No has recibido el correo de confirmación? Revisa tu carpeta de Spam"
 
 [requestNewEmail]
   en="send a new confirmation email."
   fr="envoyer un nouvel e-mail de confirmation."
+  it="invia una nuova email di conferma."
+  es="enviar un nuevo correo de confirmación."
 
 [toConfirmYourAccount]
   en="to confirm your account"
   fr="pour valider votre compte"
+  it="per confermare il tuo account"
+  es="para confirmar tu cuenta"
 
 [toResetYourPassword]
   en="to reset your password"
   fr="pour réinitialiser votre mot de passe"
+  it="per reimpostare la tua password"
+  es="para restablecer tu contraseña"
 
 [welcomeUser]
   en="Welcome @{{username}}"
   fr="Bienvenue @{{username}}"
+  it="Benvenuto @{{username}}"
+  es="Bienvenido @{{username}}"
 
 [accountActivated]
   en="Your account is now active."
   fr="Votre compte est maintenant actif."
+  it="Il tuo account è ora attivo."
+  es="Tu cuenta ya está activa."
 
 [createOrgaHint]
   en="A space for your team, or for your own projects."
   fr="Un espace pour votre équipe, ou pour vos propres projets."
+  it="Uno spazio per il tuo team o per i tuoi progetti personali."
+  es="Un espacio para tu equipo o para tus propios proyectos."
 
 [exploreOrgaHint]
   en="See how other organisations work."
   fr="Découvrez comment fonctionnent d’autres organisations."
+  it="Scopri come lavorano altre organizzazioni."
+  es="Descubre cómo trabajan otras organizaciones."
 
 [gotItCreateOrga]
   en="Got it, let’s create my first organisation."
   fr="Compris, je veux créer ma première organisation"
+  it="Capito, creiamo la mia prima organizzazione."
+  es="Entendido, vamos a crear mi primera organización."
 
 [explorePublicOrga]
   en="Explore public organisations."
   fr="Explorer les organisations publiques."
+  it="Esplora le organizzazioni pubbliche."
+  es="Explora las organizaciones públicas."
 
 [failedCaptcha]
   en="Failed to fetch captcha"
   fr="Échec de la récupération du captcha"
+  it="Impossibile caricare il captcha"
+  es="No se pudo obtener el captcha"
 
 [updatePassword]
 en="Update password"
 fr="Enregister le mot de passe"
+  it="Aggiorna la password"
+  es="Actualizar contraseña"
 
 [updatePassword2]
 en="Update your password"
 fr="Enregister votre mot de passe"
+  it="Aggiorna la tua password"
+  es="Actualiza tu contraseña"
 
 [wrongCode]
   en="Wrong code, please try again."
   fr="Code incorrect, veuillez réessayer."
+  it="Codice errato, riprova."
+  es="Código incorrecto, inténtalo de nuevo."
 
 [subscribeToAnnoucements]
   en="Subscribe to Fractale Announcements"
   fr="S’abonner aux annonces de Fractale"
+  it="Iscriviti agli annunci di Fractale"
+  es="Suscríbete a los anuncios de Fractale"
 
 # Features
 
 [govTransp]
   en="Governance Transparency"
   fr="Gouvernance Transparente"
+  it="Trasparenza della Governance"
+  es="Transparencia de la Gobernanza"
 [govTranspAbout]
   en="Keep anyone to the same page. Engage your peers by sharing the structure of your organisation, the purposes of your circles and the mandates of your roles. Roles comes with authority rules that allows giving responsabilities and trust to members and autonomy in the governance of circles."
   fr="Faites en sorte que tout le monde soit sur la même longueur d’onde. Engagez vos pairs en partageant la structure de votre organisation, les objectifs de vos cercles et les mandats de vos rôles. Les rôles sont accompagnés de règles d’autorité qui permettent de donner des responsabilités et de la confiance aux membres et de l’autonomie dans la gouvernances des cercles."
+  it="Tieni tutti allineati. Coinvolgi i tuoi pari condividendo la struttura della tua organizzazione, gli scopi dei tuoi cerchi e i mandati dei tuoi ruoli. I ruoli sono accompagnati da regole di autorità che permettono di dare responsabilità e fiducia ai membri e autonomia nella governance dei cerchi."
+  es="Mantén a todos en la misma página. Involucra a tus compañeros compartiendo la estructura de tu organización, los propósitos de tus círculos y los mandatos de tus roles. Los roles incluyen reglas de autoridad que permiten dar responsabilidades y confianza a los miembros, y autonomía en la gobernanza de los círculos."
 
 [govFeat1]
   en="Dynamic Organigram"
   fr="Organigramme dynamique"
+  it="Organigramma dinamico"
+  es="Organigrama dinámico"
 [govFeat2]
   en="Roles and Circles"
   fr="Rôles et Cercles"
+  it="Ruoli e Cerchi"
+  es="Roles y Círculos"
 [govFeat3]
   en="Distributed Authority"
   fr="Authorité Distribuée"
+  it="Autorità Distribuita"
+  es="Autoridad Distribuida"
 [govFeat4]
   en="Controlled Visibility"
   fr="Contrôle de la Visibilité"
+  it="Visibilità Controllata"
+  es="Visibilidad Controlada"
 [govFeat5]
   en="Mandates and Contracts (mutual validation)"
   fr="Mandats et Contrats (validation mutuelle)"
+  it="Mandati e Contratti (validazione reciproca)"
+  es="Mandatos y Contratos (validación mutua)"
 [govFeat6]
   en="Intuitive Navigation"
   fr="Navigation Intuitive"
+  it="Navigazione Intuitiva"
+  es="Navegación Intuitiva"
 [govFeat7]
   en="History Journal"
   fr="Historique"
+  it="Cronologia"
+  es="Historial"
 
 [asyncCom]
   en="Asynchronous Communication"
   fr="Communication Asynchrone"
+  it="Comunicazione Asincrona"
+  es="Comunicación Asíncrona"
 [asyncComAbout]
   en="Twitter use tweets, Gmail use e-mails, Fractale use tensions. A tension is a general communication object that is akin to an email and can be sent to any circle in Fractale. Tensions comes with general categories to distinguish the type of problem to deal with, **Operational**, **Governance**, **Help** or **Alert**, along with user-defined labels to help you organize your data. The recipients of the notifications are naturally determined by the members of the targeted circle and the type of tension. Tensions can be searched and filtered based directly on the structure of the organisation."
   fr="Twitter utilise des tweets, Gmail utilise des e-mails, Fractale utilise des tensions. Une tension est un objet de communication général qui s’apparente à un e-mail et qui peut être envoyé à n’importe quel cercle dans Fractale. Les tensions sont fournies avec des catégories générales pour distinguer le type de problème à traiter, **Opérationnel**, **Gouvernance**, **Aide** ou **Alerte**, ainsi que des étiquettes définies par l’utilisateur pour vous aider à organiser vos données. Les destinataires des notifications sont naturellement déterminés par les membres du cercle ciblé et le type de tension. Les tensions peuvent être recherchées et filtrées en se basant directement sur la structure de l’organisation."
+  it="Twitter usa i tweet, Gmail usa le email, Fractale usa le tensioni. Una tensione è un oggetto di comunicazione generico, simile a un’email, che può essere inviato a qualsiasi cerchio in Fractale. Le tensioni hanno categorie generali per distinguere il tipo di problema da affrontare, **Operativa**, **Governance**, **Aiuto** o **Allerta**, insieme a etichette definite dall’utente per aiutarti a organizzare i tuoi dati. I destinatari delle notifiche sono determinati naturalmente dai membri del cerchio destinatario e dal tipo di tensione. Le tensioni possono essere cercate e filtrate basandosi direttamente sulla struttura dell’organizzazione."
+  es="Twitter usa tuits, Gmail usa correos electrónicos, Fractale usa tensiones. Una tensión es un objeto de comunicación general, similar a un correo electrónico, que puede enviarse a cualquier círculo en Fractale. Las tensiones tienen categorías generales para distinguir el tipo de problema a tratar, **Operativa**, **Gobernanza**, **Ayuda** o **Alerta**, junto con etiquetas definidas por el usuario para ayudarte a organizar tus datos. Los destinatarios de las notificaciones se determinan de forma natural por los miembros del círculo destinatario y el tipo de tensión. Las tensiones se pueden buscar y filtrar basándose directamente en la estructura de la organización."
 
 [asyncFeat1]
   en="Tensions Driven Communication"
   fr="Tensions Driven Communication"
+  it="Comunicazione guidata dalle Tensioni"
+  es="Comunicación guiada por Tensiones"
 [asyncFeat2]
   en="Discussion Threads"
   fr="Fils de Discussion"
+  it="Thread di Discussione"
+  es="Hilos de Discusión"
 [asyncFeat3]
   en="Markdown Support"
   fr="Markdown Support"
+  it="Supporto Markdown"
+  es="Soporte de Markdown"
 [asyncFeat4]
   en="Email Notifications, per tension subscriptions"
   fr="Notifications E-mail, abonnements par tension"
+  it="Notifiche Email, iscrizioni per tensione"
+  es="Notificaciones por correo, suscripciones por tensión"
 [asyncFeat5]
   en="Labels"
   fr="Etiquettes"
+  it="Etichette"
+  es="Etiquetas"
 [asyncFeat6]
   en="Project Management"
   fr="Management de Projet"
+  it="Gestione dei Progetti"
+  es="Gestión de Proyectos"
 [asyncFeat7]
   en="Full-Text Search and Filtering"
   fr="Recherche Fulltext et Filtrage"
+  it="Ricerca Full-Text e Filtri"
+  es="Búsqueda de Texto Completo y Filtros"
 
 
 # Roadmap
@@ -274,6 +406,26 @@ fr="Enregister votre mot de passe"
   * Importateurs de données.
   * Application mobile.
   """
+  it="""
+  * Gestisci le tensioni nelle bacheche di progetto, stile **Kanban**.
+  * Eventi e **Calendari Condivisi**.
+  * **Mailing list** collegate ai cerchi (crea una tensione e notifica un gruppo di pari direttamente inviando un’email).
+  * **Sistema di voto** per l’elezione dei Ruoli (sorteggio, giudizio maggioritario, ecc.).
+  * **Trova** pari e recluta collaboratori in tutto Fractale pubblicando ruoli aperti.
+  * API GraphQL.
+  * Importatori di dati.
+  * App mobile.
+  """
+  es="""
+  * Gestiona las tensiones en tableros de proyecto, estilo **Kanban**.
+  * Eventos y **Calendarios Compartidos**.
+  * **Listas de correo** vinculadas a los círculos (crea una tensión y notifica a un grupo de compañeros directamente enviando un correo).
+  * **Sistema de votación** para la elección de Roles (sorteo, juicio mayoritario, etc.).
+  * **Encuentra** compañeros y recluta colaboradores en todo Fractale publicando roles abiertos.
+  * API GraphQL.
+  * Importadores de datos.
+  * Aplicación móvil.
+  """
 
 #
 # General
@@ -282,25 +434,37 @@ fr="Enregister votre mot de passe"
 [unreadNotif]
   en="You have unread events"
   fr="Vous avez des évènements non-lues"
+  it="Hai eventi non letti"
+  es="Tienes eventos sin leer"
 [pendingContract]
   en="You have pending contracts"
   fr="Vous avez des contrats en attente"
+  it="Hai contratti in sospeso"
+  es="Tienes contratos pendientes"
 
 [showOrgaMenu]
   en="Show your organisations"
   fr="Afficher vos organisations"
+  it="Mostra le tue organizzazioni"
+  es="Mostrar tus organizaciones"
 [showCircleMenu]
   en="Show the circles tree"
   fr="Afficher l’arbre des cercles"
+  it="Mostra l’albero dei cerchi"
+  es="Mostrar el árbol de círculos"
 
 
 [gotIt]
   en="Got it"
   fr="J’ai compris"
+  it="Ho capito"
+  es="Entendido"
 
 [nothingToShow]
   en="Nothing to show yet."
   fr="Rien à afficher pour le moment."
+  it="Ancora niente da mostrare."
+  es="Todavía no hay nada que mostrar."
 
 [welcomeNoOrga]
   en="""Welcome,
@@ -309,158 +473,240 @@ You can [Explore](/explore) public organisations or create your [First Organisat
   fr="""Bienvenue,
 Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Première Organisation](/new/orga).
   """
+  it="""Benvenuto,
+Puoi [Esplorare](/explore) le organizzazioni pubbliche o creare la tua [Prima Organizzazione](/new/orga).
+  """
+  es="""Bienvenido,
+Puedes [Explorar](/explore) las organizaciones públicas o crear tu [Primera Organización](/new/orga).
+  """
 
 [selectColor]
   en="Select a color"
   fr="Selectionnez une couleur"
+  it="Seleziona un colore"
+  es="Selecciona un color"
 
 [createLabel]
   en="Create label"
   fr="Créer l’étiquette"
+  it="Crea etichetta"
+  es="Crear etiqueta"
 
 [updateLabel]
   en="Update label"
   fr="Modifier l’étiquette"
+  it="Modifica etichetta"
+  es="Editar etiqueta"
 
 [editYourProfile]
   en="Edit your profile"
   fr="Modifier votre profil"
+  it="Modifica il tuo profilo"
+  es="Edita tu perfil"
 
 [updateProfile]
   en="Update profile"
   fr="Modifier le profil"
+  it="Aggiorna profilo"
+  es="Actualizar perfil"
 
 [updateType]
   en="Change type"
   fr="Modifier le type"
+  it="Cambia tipo"
+  es="Cambiar tipo"
 
 [updateTypeHelp]
   en="Change the type of this tension (e.g. Operational, Governance, etc.)"
   fr="Changer le type de cette tension (ex. Opérationnel, Gouvernance, etc.)"
+  it="Cambia il tipo di questa tensione (es. Operativa, Governance, ecc.)"
+  es="Cambia el tipo de esta tensión (p. ej. Operativa, Gobernanza, etc.)"
 
 [messageSent]
   en="Message sent"
   fr="Message envoyé"
+  it="Messaggio inviato"
+  es="Mensaje enviado"
 
 [requestSent]
   en="Your request has been sent."
   fr="Votre requête a été envoyé."
+  it="La tua richiesta è stata inviata."
+  es="Tu solicitud ha sido enviada."
 
 [profile]
   en="Profile"
   fr="Profil"
+  it="Profilo"
+  es="Perfil"
 
 [publicProfil]
   en="Public profile"
   fr="Profil publique"
+  it="Profilo pubblico"
+  es="Perfil público"
 
 [accountProfil]
   en="Account Settings"
   fr="Paramètres du compte"
+  it="Impostazioni account"
+  es="Configuración de la cuenta"
 
 [emailProfil]
   en="Notification Settings"
   fr="Paramètres des notifications"
+  it="Impostazioni notifiche"
+  es="Configuración de notificaciones"
 
 [emailConf]
   en="Notifications"
   fr="Notifications"
+  it="Notifiche"
+  es="Notificaciones"
 
 [account]
   en="Account"
   fr="Compte"
+  it="Account"
+  es="Cuenta"
 
 [emailHelp]
   en="Your address is private, only you can see it."
   fr="Votre adresse est privée, vous seul pouvez la voir."
+  it="Il tuo indirizzo è privato, solo tu puoi vederlo."
+  es="Tu dirección es privada, solo tú puedes verla."
 
 [usernameHelp]
   en="Contact us to change your username."
   fr="Contactez-nous pour changer votre nom d’utilisateur."
+  it="Contattaci per cambiare il tuo nome utente."
+  es="Contáctanos para cambiar tu nombre de usuario."
 
 [languageHelp]
   en="Change the system language."
   fr="Changer la langue du système."
+  it="Cambia la lingua del sistema."
+  es="Cambia el idioma del sistema."
 
 [namePH]
   en="Choose a name for your public profile"
   fr="Choisissez un nom pour votre profil public"
+  it="Scegli un nome per il tuo profilo pubblico"
+  es="Elige un nombre para tu perfil público"
 
 [bioPH]
   en="Tell us more about yourself"
   fr="Dites-nous en plus sur vous"
+  it="Raccontaci qualcosa di te"
+  es="Cuéntanos más sobre ti"
 
 [locationPH]
   en="City, country..."
   fr="Ville, pays..."
+  it="Città, paese..."
+  es="Ciudad, país..."
 
 [questionTitlePH]
   en="Subject of your question"
   fr="Sujet de votre question"
+  it="Oggetto della tua domanda"
+  es="Asunto de tu pregunta"
 
 [questionTextPH]
   en="Write your question here..."
   fr="Ecrivez votre question ici..."
+  it="Scrivi qui la tua domanda..."
+  es="Escribe tu pregunta aquí..."
 
 [feedbackTitlePH]
   en="Subject of your feedback"
   fr="Sujet de votre feedback"
+  it="Oggetto del tuo feedback"
+  es="Asunto de tus comentarios"
 
 [feedbackTextPH]
   en="Write your feedback here..."
   fr="Ecrivez votre feedback ici..."
+  it="Scrivi qui il tuo feedback..."
+  es="Escribe tus comentarios aquí..."
 
 [yourOrg]
   en="Organisations"
   fr="Organisations"
+  it="Organizzazioni"
+  es="Organizaciones"
 
 [home]
   en="Home"
   fr="Home"
+  it="Home"
+  es="Inicio"
 
 [createYourOrganisation]
   en="Create your organisation"
   fr="Creer votre organisation"
+  it="Crea la tua organizzazione"
+  es="Crea tu organización"
 
 [organisationVisibility]
   en="Organisation visibility"
   fr="Visibilité de l’organisation"
+  it="Visibilità dell’organizzazione"
+  es="Visibilidad de la organización"
 
 [haveProjectElsewhere]
   en="Have a project elsewhere?"
   fr="Vous avez un projet ailleurs ?"
+  it="Hai un progetto altrove?"
+  es="¿Tienes un proyecto en otro sitio?"
 
 [importExistingOrga]
   en="Import an organisation"
   fr="Importer une organisation"
+  it="Importa un’organizzazione"
+  es="Importar una organización"
 
 [importFromHolaspirit]
   en="Import from HolaSpirit (spreadsheet)"
   fr="Importer depuis HolaSpirit (tableur)"
+  it="Importa da HolaSpirit (foglio di calcolo)"
+  es="Importar desde HolaSpirit (hoja de cálculo)"
 
 [importOtherFormat]
   en="I have another format"
   fr="J’ai un autre format"
+  it="Ho un altro formato"
+  es="Tengo otro formato"
 
 [importOrgaLoading]
   en="Importing your organisation, please wait..."
   fr="Import de votre organisation en cours, veuillez patienter..."
+  it="Importazione della tua organizzazione in corso, attendi..."
+  es="Importando tu organización, espera por favor..."
 
 [clickOrDropFile]
   en="Click or drop a file here"
   fr="Cliquez ou déposez un fichier ici"
+  it="Clicca o trascina un file qui"
+  es="Haz clic o suelta un archivo aquí"
 
 [spreadsheetFormats]
   en=".xlsx or .csv export from HolaSpirit"
   fr="export .xlsx ou .csv depuis HolaSpirit"
+  it="esportazione .xlsx o .csv da HolaSpirit"
+  es="exportación .xlsx o .csv desde HolaSpirit"
 
 [import_]
   en="Import"
   fr="Importer"
+  it="Importa"
+  es="Importar"
 
 [importOrgaRequestTitle]
   en="Organisation import request"
   fr="Demande d’import d’organisation"
+  it="Richiesta di importazione dell’organizzazione"
+  es="Solicitud de importación de organización"
 
 [importOrgaRequestMessage]
   en="""I’d like to import my organisation into Fractale. Here is my data:
@@ -469,768 +715,1154 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="""J’aimerais importer mon organisation dans Fractale. Voici mes données :
 
 """
+  it="""Vorrei importare la mia organizzazione in Fractale. Ecco i miei dati:
+
+"""
+  es="""Me gustaría importar mi organización en Fractale. Estos son mis datos:
+
+"""
 
 [organisationSettings]
   en="Organisation settings"
   fr="Paramètres de l’organisation"
+  it="Impostazioni dell’organizzazione"
+  es="Configuración de la organización"
 
 [loading]
   en="Loading"
   fr="Chargement"
+  it="Caricamento"
+  es="Cargando"
 
 [scrollToTop]
   en="Scroll to top"
   fr="Défiler vers le haut"
+  it="Scorri in alto"
+  es="Ir arriba"
 
 [scrollToBottom]
   en="Scroll to bottom"
   fr="Défiler vers le bas"
+  it="Scorri in basso"
+  es="Ir abajo"
 
 [seemore]
   en="see more"
   fr="voir plus"
+  it="vedi altro"
+  es="ver más"
 
 [contactUs]
   en="Contact us"
   fr="Nous contacter"
+  it="Contattaci"
+  es="Contáctanos"
 
 [seeFullList]
   en="See full list"
   fr="Voir la liste complète"
+  it="Vedi l’elenco completo"
+  es="Ver la lista completa"
 
 [seeByCircle]
   en="See by circles"
   fr="Voir par cercles"
+  it="Vedi per cerchi"
+  es="Ver por círculos"
 
 [seeByAssignee]
   en="See by assignees"
   fr="Voir par assignés"
+  it="Vedi per assegnatari"
+  es="Ver por asignados"
 
 [organisation]
   en="Organisation"
   fr="Organisation"
+  it="Organizzazione"
+  es="Organización"
 
 [organisations]
   en="Organisations"
   fr="Organisations"
+  it="Organizzazioni"
+  es="Organizaciones"
 
 [joinOrga]
   en="Join this organisation"
   fr="Rejoindre cette organisation"
+  it="Unisciti a questa organizzazione"
+  es="Únete a esta organización"
 
 [joinUs]
   en="Join us"
   fr="Rejoignez-nous"
+  it="Unisciti a noi"
+  es="Únete a nosotros"
 
 [keepInTouch1]
   en="Be the first to be informed"
   fr="Soyez les premiers à être informés"
+  it="Sii tra i primi a essere informato"
+  es="Sé el primero en enterarte"
 [keepInTouch2]
   en="Let’s co-design the tool you need"
   fr="Co-construisons l’outil dont vous avez besoin"
+  it="Progettiamo insieme lo strumento di cui hai bisogno"
+  es="Diseñemos juntos la herramienta que necesitas"
 
 [moreToCome]
   en="Upcoming Features"
   fr="Fonctionnalités à venir"
+  it="Prossime funzionalità"
+  es="Próximas funcionalidades"
 
 [leaveRole]
   en="Leave this role"
   fr="Quitter ce rôle"
+  it="Lascia questo ruolo"
+  es="Dejar este rol"
 
 
 [removeUser]
   en="Remove user"
   fr="Retirer l’utilisateur"
+  it="Rimuovi utente"
+  es="Eliminar usuario"
 
 [leaveOrga]
   en="Leave organisation"
   fr="Quitter cette organisation"
+  it="Lascia l’organizzazione"
+  es="Dejar la organización"
 
 [checkItOut_fem]
   en="Check it out."
   fr="Consulter-la."
+  it="Dagli un’occhiata."
+  es="Échale un vistazo."
 
 [checkItOut_masc]
   en="Check it out."
   fr="Consulter-le."
+  it="Dagli un’occhiata."
+  es="Échale un vistazo."
 
 [explore]
   en="Explore"
   fr="Explorer"
+  it="Esplora"
+  es="Explorar"
 
 [dashboard]
   en="Dashboard"
   fr="Tableau de bord"
+  it="Dashboard"
+  es="Panel"
 
 [exploreOrganisations]
   en="Explore organisations"
   fr="Explorer les organisations"
+  it="Esplora le organizzazioni"
+  es="Explorar organizaciones"
 
 [newOrganisation]
   en="New Organisation"
   fr="Nouvelle Organisation"
+  it="Nuova Organizzazione"
+  es="Nueva Organización"
 
 [toggleSystemMode]
   en="System Theme"
   fr="Thème Système"
+  it="Tema di Sistema"
+  es="Tema del Sistema"
 
 [toggleLightMode]
   en="Light Theme"
   fr="Thème Clair"
+  it="Tema Chiaro"
+  es="Tema Claro"
 
 [toggleDarkMode]
   en="Dark Theme"
   fr="Thème Sombre"
+  it="Tema Scuro"
+  es="Tema Oscuro"
 
 [view]
   en="View"
   fr="Voir"
+  it="Vedi"
+  es="Ver"
 
 [consult]
   en="View"
   fr="Consulter"
+  it="Consulta"
+  es="Consultar"
 
 [overview]
   en="Overview"
   fr="Vue d’ensemble"
+  it="Panoramica"
+  es="Vista general"
 
 [tensions_]
   en="Tensions"
   fr="Tensions"
+  it="Tensioni"
+  es="Tensiones"
 
 [tensions]
   en="{{_Tension_}}s"
   fr="{{_Tension_}}s"
+  it="{{_Tension_}}"
+  es="{{_Tension_}}"
 
 [projects]
   en="Projects"
   fr="Projets"
+  it="Progetti"
+  es="Proyectos"
 
 [project]
   en="Project"
   fr="Projet"
+  it="Progetto"
+  es="Proyecto"
 
 [subProjects]
   en="Sub-circle projects"
   fr="Projets des sous-cercles"
+  it="Progetti dei sotto-cerchi"
+  es="Proyectos de los subcírculos"
 
 [resources]
   en="Resources"
   fr="Ressources"
+  it="Risorse"
+  es="Recursos"
 
 [circles]
   en="Circles"
   fr="Cercles"
+  it="Cerchi"
+  es="Círculos"
 
 [members]
   en="Members"
   fr="Membres"
+  it="Membri"
+  es="Miembros"
 
 [guests]
   en="Guests"
   fr="Invités"
+  it="Ospiti"
+  es="Invitados"
 
 [settings]
   en="Settings"
   fr="Paramètres"
+  it="Impostazioni"
+  es="Configuración"
 
 [journal]
   en="Journal"
   fr="Journal"
+  it="Registro"
+  es="Registro"
 
 [activity]
   en="Activity"
   fr="Activité"
+  it="Attività"
+  es="Actividad"
 
 [labels]
   en="Labels"
   fr="Etiquettes"
+  it="Etichette"
+  es="Etiquetas"
 
 [versions]
   en="Versions"
   fr="Versions"
+  it="Versioni"
+  es="Versiones"
 
 [revisions]
   en="Revisions"
   fr="Révisions"
+  it="Revisioni"
+  es="Revisiones"
 
 [showDiff]
   en="Show changes"
   fr="Voir les modifications"
+  it="Mostra le modifiche"
+  es="Mostrar cambios"
 
 [noChanges]
   en="No changes"
   fr="Aucune modification"
+  it="Nessuna modifica"
+  es="Sin cambios"
 
 [unchangedLines]
   en="{{}} unchanged lines"
   fr="{{}} lignes inchangées"
+  it="{{}} righe invariate"
+  es="{{}} líneas sin cambios"
 
 [history]
   en="History"
   fr="Historique"
+  it="Cronologia"
+  es="Historial"
 
 [edit]
   en="Edit"
   fr="Editer"
+  it="Modifica"
+  es="Editar"
 
 [editOrganisation]
   en="Edit the organisation (root circle)"
   fr="Editer l’organisation (cercle racine)"
+  it="Modifica l’organizzazione (cerchio radice)"
+  es="Editar la organización (círculo raíz)"
 
 [editCurrentCircle]
   en="Edit the current circle"
   fr="Editer le cercle courant"
+  it="Modifica il cerchio corrente"
+  es="Editar el círculo actual"
 
 [circleEditHelp]
   en="The name, description, {{_mandate_}}, visibility and governance mode of the organisation and of each circle are edited from the tension that defines it:"
   fr="Le nom, la description, le {{_mandate_}}, la visibilité et le mode de gouvernance de l’organisation et de chaque cercle se modifient depuis la tension qui le définit :"
+  it="Il nome, la descrizione, il {{_mandate_}}, la visibilità e la modalità di governance dell’organizzazione e di ogni cerchio si modificano dalla tensione che lo definisce:"
+  es="El nombre, la descripción, el {{_mandate_}}, la visibilidad y el modo de gobernanza de la organización y de cada círculo se editan desde la tensión que lo define:"
 
 [editThisRole]
   en="Edit this Role"
   fr="Editer ce Rôle"
+  it="Modifica questo Ruolo"
+  es="Editar este Rol"
 
 
 [thisThingIs]
   en="This {{}} is {{}}"
   fr="Ce {{}} est {{}}"
+  it="Questo {{}} è {{}}"
+  es="Este {{}} es {{}}"
 
 [goUp]
   en="Go up"
   fr="Monter"
+  it="Sali"
+  es="Subir"
 
 [viewOnMap]
   en="View on the flow chart"
   fr="Voir sur l’organigramme"
+  it="Vedi sull’organigramma"
+  es="Ver en el organigrama"
 
 [cancel]
   en="Cancel"
   fr="Annuler"
+  it="Annulla"
+  es="Cancelar"
 
 [confirm]
   en="Confirm"
   fr="Confirmer"
+  it="Conferma"
+  es="Confirmar"
 
 [publish]
   en="Publish"
   fr="Publier"
+  it="Pubblica"
+  es="Publicar"
 
 [publishTitle]
   en="As long as a revision is not published the changes are only visible in the {{_tension_}} of the circle (the current page)."
   fr="Tant qu’une révision n’est pas publiée, les modifications ne sont visibles que dans la {{_tension_}} du cercle (la page actuelle)."
+  it="Finché una revisione non viene pubblicata, le modifiche sono visibili solo nella {{_tension_}} del cerchio (la pagina corrente)."
+  es="Mientras una revisión no se publique, los cambios solo son visibles en la {{_tension_}} del círculo (la página actual)."
 
 [published]
   en="Published"
   fr="Publié"
+  it="Pubblicato"
+  es="Publicado"
 
 [archived]
   en="Archived"
   fr="Archivé"
+  it="Archiviato"
+  es="Archivado"
 
 [active]
   en="Active"
   fr="Actives"
+  it="Attive"
+  es="Activas"
 
 [moreFilters]
   en="More filters"
   fr="Plus de filtres"
+  it="Altri filtri"
+  es="Más filtros"
 
 [openRoles]
   en="Open roles"
   fr="Rôles ouverts"
+  it="Ruoli aperti"
+  es="Roles abiertos"
 
 [openRolesHelp]
   en="Roles without a member linked"
   fr="Rôles sans membre lié"
+  it="Ruoli senza un membro collegato"
+  es="Roles sin un miembro vinculado"
 
 [archivedRoles]
   en="Archived roles"
   fr="Rôles archivés"
+  it="Ruoli archiviati"
+  es="Roles archivados"
 
 [archivedCircles]
   en="Archived circles"
   fr="Cercles archivés"
+  it="Cerchi archiviati"
+  es="Círculos archivados"
 
 [revisionNotPublished]
   en="Revision not published"
   fr="Révision non publiée"
+  it="Revisione non pubblicata"
+  es="Revisión no publicada"
 
 [list]
   en="List"
   fr="Liste"
+  it="Elenco"
+  es="Lista"
 
 [byCircle]
   en="By circles"
   fr="Par cercles"
+  it="Per cerchi"
+  es="Por círculos"
 
 [byLabel]
   en="By labels"
   fr="Par étiquettes"
+  it="Per etichette"
+  es="Por etiquetas"
 
 [byAssignee]
   en="By assignees"
   fr="Par assignés"
+  it="Per assegnatari"
+  es="Por asignados"
 
 [by]
   en="by"
   fr="par"
+  it="da"
+  es="por"
 
 [in_]
   en="in"
   fr="dans"
+  it="in"
+  es="en"
 
 [from]
   en="from"
   fr="de"
+  it="da"
+  es="de"
 
 [to]
   en="to"
   fr="vers"
+  it="a"
+  es="a"
 
 [to_in]
   en="to"
   fr="dans"
+  it="in"
+  es="en"
 
 [for]
   en="for"
   fr="pour"
+  it="per"
+  es="para"
 
 [as_]
   en="as"
   fr="comme"
+  it="come"
+  es="como"
 
 [or_]
   en="or"
   fr="ou"
+  it="o"
+  es="o"
 
 [all]
   en="All"
   fr="Tous"
+  it="Tutti"
+  es="Todos"
 
 [created]
   en="Created"
   fr="Crée"
+  it="Creato"
+  es="Creado"
 
 [move]
   en="Move"
   fr="Déplacer"
+  it="Sposta"
+  es="Mover"
 
 [visibility]
   en="Visibility"
   fr="Visibilité"
+  it="Visibilità"
+  es="Visibilidad"
 
 [authority]
   en="Authority"
   fr="Autorité"
+  it="Autorità"
+  es="Autoridad"
 
 [governance]
   en="Governance"
   fr="Gouvernance"
+  it="Governance"
+  es="Gobernanza"
 
 [operational]
   en="Operational"
   fr="Opérationnel"
+  it="Operativa"
+  es="Operativa"
 
 [help]
   en="Question & help"
   fr="Question / Aide"
+  it="Domande e aiuto"
+  es="Preguntas y ayuda"
 
 [alert]
   en="Alert"
   fr="Alerte"
+  it="Allerta"
+  es="Alerta"
 
 [announcement]
   en="Announcement"
   fr="Annonce"
+  it="Annuncio"
+  es="Anuncio"
 
 [allCat]
   en="All categories"
   fr="Toutes les catégories"
+  it="Tutte le categorie"
+  es="Todas las categorías"
 
 [theVisibility]
   en="the visibility"
   fr="la visibilité"
+  it="la visibilità"
+  es="la visibilidad"
 
 [theGovernance]
   en="the governance"
   fr="la gouvernance"
+  it="la governance"
+  es="la gobernanza"
 
 [theAuthority]
   en="the authority"
   fr="l’autorité"
+  it="l’autorità"
+  es="la autoridad"
 
 [linkAction]
   en="Invite someone to play this role"
   fr="Inviter une personne à jouer ce rôle"
+  it="Invita qualcuno a ricoprire questo ruolo"
+  es="Invita a alguien a desempeñar este rol"
 
 [unlinkAction]
   en="Unlink user to the role"
   fr="Détacher l’utilisateur du rôle"
+  it="Scollega l’utente dal ruolo"
+  es="Desvincular al usuario del rol"
 
 [inviteOrLink]
   en="Invite someone to this role (or link yourself)"
   fr="Invitez une personne à jouer ce rôle (ou reliez-vous vous-même)"
+  it="Invita qualcuno a ricoprire questo ruolo (o collegati tu stesso)"
+  es="Invita a alguien a este rol (o vincúlate tú mismo)"
 
 [inviteSomeone]
   en="Invite someone"
   fr="Inviter une personne"
+  it="Invita qualcuno"
+  es="Invitar a alguien"
 
 [inviteSomeoneElse]
   en="Invite someone else"
   fr="Inviter une autre personne"
+  it="Invita qualcun altro"
+  es="Invitar a otra persona"
 
 [usernameOrEmail]
   en="Username or email address"
   fr="Nom d’utilisateur ou adresse email"
+  it="Nome utente o indirizzo email"
+  es="Nombre de usuario o correo electrónico"
 
 [addRole]
   en="Add a Role"
   fr="Ajouter un Rôle"
+  it="Aggiungi un Ruolo"
+  es="Añadir un Rol"
 
 [addUserRole]
   en="add a role to this member"
   fr="Ajouter un rôle à ce membre"
+  it="aggiungi un ruolo a questo membro"
+  es="añadir un rol a este miembro"
 
 [makeOwner]
   en="Make this member an Owner"
   fr="Rendre ce membre Propriétaire"
+  it="Rendi questo membro Proprietario"
+  es="Hacer Propietario a este miembro"
 
 [addTensionToProject]
   en="Add {{_tension_}}s to project"
   fr="Ajouter des {{_tension_}}s au projet"
+  it="Aggiungi una {{_tension_}} al progetto"
+  es="Añadir una {{_tension_}} al proyecto"
 
 [projectCaptionSimple]
   en="Start with a simple board to spread your {{_tension_}}s across customizable columns."
   fr="Commencez par un tableau simple pour répartir vos {{_tension_}}s dans des colonnes personnalisables."
+  it="Inizia con una bacheca semplice per distribuire ogni {{_tension_}} in colonne personalizzabili."
+  es="Empieza con un tablero sencillo para repartir cada {{_tension_}} en columnas personalizables."
 
 [invite]
   en="Invite"
   fr="Inviter"
+  it="Invita"
+  es="Invitar"
 
 [join]
   en="Join"
   fr="Rejoindre"
+  it="Unisciti"
+  es="Unirse"
 
 [join2]
   en="Join"
   fr="Rejoignez"
+  it="Unisciti"
+  es="Únete"
 
 [archive]
   en="Archive"
   fr="Archiver"
+  it="Archivia"
+  es="Archivar"
 
 [unarchive]
   en="Unarchive"
   fr="Désarchiver"
+  it="Ripristina"
+  es="Desarchivar"
 
 [inviteMembers]
   en="Invite people"
   fr="Inviter des personnes"
+  it="Invita persone"
+  es="Invitar personas"
 
 [link]
   en="Link"
   fr="Lier"
+  it="Collega"
+  es="Vincular"
 
 [unlink]
   en="Unlink"
   fr="Détacher"
+  it="Scollega"
+  es="Desvincular"
 
 [saveChanges]
   en="Save changes"
   fr="Enregistrer"
+  it="Salva modifiche"
+  es="Guardar cambios"
 
 [save]
   en="Save"
   fr="Enregistrer"
+  it="Salva"
+  es="Guardar"
 
 [leaveComment]
   en="Leave a comment"
   fr="Laissez un commentaire"
+  it="Lascia un commento"
+  es="Deja un comentario"
 
 [leaveCommentOpt]
   en="Text (optional)"
   fr="Texte (Optionnel)"
+  it="Testo (facoltativo)"
+  es="Texto (opcional)"
 
 [text]
   en="Text..."
   fr="Texte..."
+  it="Testo..."
+  es="Texto..."
 
 [changeTensionType]
   en="Change the {{_tension_}} type"
   fr="Modifier le type de la {{_tension_}}"
+  it="Modifica il tipo di {{_tension_}}"
+  es="Cambiar el tipo de {{_tension_}}"
 
 [noResultsFound]
   en="No results found"
   fr="Aucun résulat trouvé"
+  it="Nessun risultato trovato"
+  es="No se encontraron resultados"
 
 [typeToFilter]
   en="Type to filter"
   fr="Tapez pour filter"
+  it="Scrivi per filtrare"
+  es="Escribe para filtrar"
 
 [typeToFilterEmoji]
   en="type text to filter emoji"
   fr="tapez pour filtrer les emoji"
+  it="scrivi per filtrare le emoji"
+  es="escribe para filtrar emojis"
 
 [searchTensions]
   en='Search {{_tension_}}s'
   fr='Rechercher des {{_tension_}}s'
+  it='Cerca una {{_tension_}}'
+  es='Buscar una {{_tension_}}'
 
 [exportTensionsHelp]
   en='Export the filtered {{_tension_}}s to a spreadsheet (.xlsx)'
   fr='Exporter les {{_tension_}}s filtrées vers un tableur (.xlsx)'
+  it='Esporta ogni {{_tension_}} filtrata in un foglio di calcolo (.xlsx)'
+  es='Exportar cada {{_tension_}} filtrada a una hoja de cálculo (.xlsx)'
 
 [searchProjects]
   en="Search projects"
   fr="Rechercher des projets"
+  it="Cerca progetti"
+  es="Buscar proyectos"
 
 
 [searchMembers]
   en="Search members"
   fr="Rechercher des membres"
+  it="Cerca membri"
+  es="Buscar miembros"
 
 [searchUsers]
   en="Search users"
   fr="Rechercher des utilisateurs"
+  it="Cerca utenti"
+  es="Buscar usuarios"
 
 [searchLabels]
   en="Search labels"
   fr="Rechercher des étiquettes"
+  it="Cerca etichette"
+  es="Buscar etiquetas"
 
 [searchOrganisations]
   en="Search organisations"
   fr="Rechercher des organisations"
+  it="Cerca organizzazioni"
+  es="Buscar organizaciones"
 
 [searchRecentActivities]
   en="Search recent activities"
   fr="Rechercher des activités récentes"
+  it="Cerca attività recenti"
+  es="Buscar actividad reciente"
 
 [addOrEditLabels]
   en="Add or Edit Labels"
   fr="Ajouter ou éditer les étiquettes"
+  it="Aggiungi o modifica Etichette"
+  es="Añadir o editar Etiquetas"
 
 [addOrEditProjects]
   en="Add or Edit Projects"
   fr="Ajouter ou éditer les projets"
+  it="Aggiungi o modifica Progetti"
+  es="Añadir o editar Proyectos"
 
 [inviteNewMembers]
   en="Invite new members"
   fr="Inviter de nouveaux membres"
+  it="Invita nuovi membri"
+  es="Invitar a nuevos miembros"
 
 [noProjectsYet]
   en="No project yet"
   fr="Aucun projet pour le moment"
+  it="Ancora nessun progetto"
+  es="Aún no hay proyectos"
 
 [moveToColumn]
   en="Move to column"
   fr="Déplacer vers une colonne"
+  it="Sposta nella colonna"
+  es="Mover a la columna"
 
 [editProjects]
   en="Edit projects"
   fr="Éditer les projets"
+  it="Modifica progetti"
+  es="Editar proyectos"
 
 [openTension]
   en="Open"
   fr="Ouvert"
+  it="Aperta"
+  es="Abierta"
 
 [closedTension]
   en="Closed"
   fr="Fermé"
+  it="Chiusa"
+  es="Cerrada"
 
 [openProject]
   en="Open"
   fr="Ouvert"
+  it="Aperto"
+  es="Abierto"
 
 [closedProject]
   en="Closed"
   fr="Fermé"
+  it="Chiuso"
+  es="Cerrado"
 
 [closedContract]
   en="Closed"
   fr="Fermé"
+  it="Chiuso"
+  es="Cerrado"
 
 [canceledContract]
   en="Canceled"
   fr="Annulé"
+  it="Annullato"
+  es="Cancelado"
 
 [reopened2]
   en="reopened"
   fr="a réouvert"
+  it="ha riaperto"
+  es="reabrió"
 
 [closed2]
   en="closed"
   fr="a fermé"
+  it="ha chiuso"
+  es="cerró"
 
 [assigned2]
   en="assigned"
   fr="a assigné"
+  it="ha assegnato"
+  es="asignó"
 
 [unassigned2]
   en="unassigned"
   fr="a désassigné"
+  it="ha rimosso l’assegnazione di"
+  es="desasignó"
 
 [addedTheLabel]
   en="added the label"
   fr="a ajouté l’étiquette"
+  it="ha aggiunto l’etichetta"
+  es="añadió la etiqueta"
 
 [removedTheLabel]
   en="removed the label"
   fr="a retiré l’étiquette"
+  it="ha rimosso l’etichetta"
+  es="quitó la etiqueta"
 
 [deletedAComment]
   en="deleted a comment"
   fr="a supprimé un commentaire"
+  it="ha eliminato un commento"
+  es="eliminó un comentario"
 
 [archived2]
   en="archived"
   fr="a archivé"
+  it="ha archiviato"
+  es="archivó"
 
 [unarchived2]
   en="unarchived"
   fr="a désarchivé"
+  it="ha ripristinato"
+  es="desarchivó"
 
 [moved2]
   en="moved"
   fr="a déplacé"
+  it="ha spostato"
+  es="movió"
 
 [changed2]
   en="changed"
   fr="a modifié"
+  it="ha modificato"
+  es="cambió"
 
 [updated2]
   en="updated"
   fr="a mis à jour"
+  it="ha aggiornato"
+  es="actualizó"
 
 [linked2]
   en="has been linked"
   fr="a été lié"
+  it="è stato collegato"
+  es="ha sido vinculado"
 
 [unlinked2]
   en="has been unlinked"
   fr="a été détaché"
+  it="è stato scollegato"
+  es="ha sido desvinculado"
 
 [published2]
   en="published"
   fr="a publié"
+  it="ha pubblicato"
+  es="publicó"
 
 [joined2]
   en="joined"
   fr="a rejoint"
+  it="si è unito"
+  es="se unió"
 
 [left2]
   en="left"
   fr="a quitté"
+  it="ha lasciato"
+  es="salió"
 
 [pinned2]
   en="pinned"
   fr="a épinglé"
+  it="ha fissato"
+  es="fijó"
 
 [unpinned2]
   en="unpinned"
   fr="a désépinglé"
+  it="ha sbloccato"
+  es="desfijó"
 
 [addedToProject]
   en="added to project"
   fr="a ajouté au projet"
+  it="ha aggiunto al progetto"
+  es="añadió al proyecto"
 
 [removedFromProject]
   en="removed from project"
   fr="a retiré du projet"
+  it="ha rimosso dal progetto"
+  es="quitó del proyecto"
 
 [movedColumn]
   en="changed project status from"
   fr="a changé le statut du projet de"
+  it="ha cambiato lo stato del progetto da"
+  es="cambió el estado del proyecto de"
 
 [mentioned2]
   en="mentioned this {{_tension_}}"
   fr="a mentionné cette {{_tension_}}"
+  it="ha menzionato questa {{_tension_}}"
+  es="mencionó esta {{_tension_}}"
 
 [commented]
   en="commented"
   fr="a commenté"
+  it="ha commentato"
+  es="comentó"
 
 [opened]
   en="opened"
   fr="ouvert"
+  it="aperta"
+  es="abierta"
 
 [edited]
   en="edited"
   fr="édité"
+  it="modificato"
+  es="editado"
 
 [updated]
   en="updated"
   fr="mis à jour"
+  it="aggiornato"
+  es="actualizado"
 
 [authored]
   en="authored"
   fr="créé"
+  it="creato"
+  es="creado"
 
 [authoredBy]
   en="authored by"
   fr="créé par"
+  it="creato da"
+  es="creado por"
 
 [quickHelp]
   en="Quick help"
   fr="Aide rapide"
+  it="Aiuto rapido"
+  es="Ayuda rápida"
 
 [askQuestion]
   en="Ask a question"
   fr="Poser une question"
+  it="Fai una domanda"
+  es="Hacer una pregunta"
 
 [giveFeedback]
   en="Give feedback"
   fr="Donner un feedback"
+  it="Lascia un feedback"
+  es="Enviar comentarios"
 
 [haveYouCheckQuickHelp]
   en="Have you checked if your question is answered in the"
   fr="Avez-vous vérifié si la réponse à votre question se trouve dans l’"
+  it="Hai verificato se la risposta alla tua domanda si trova nel"
+  es="¿Has comprobado si tu pregunta ya tiene respuesta en la"
 
 [the]
   en="the"
   fr="le"
+  it="il"
+  es="el"
 
 [theF]
   en="the"
   fr="la"
+  it="la"
+  es="la"
 
 [this]
   en="this"
   fr="ce"
+  it="questo"
+  es="este"
 
 [thisF]
   en="this"
   fr="cette"
+  it="questa"
+  es="esta"
 
 [write]
   en="Write"
   fr="Ecrire"
+  it="Scrivi"
+  es="Escribir"
 
 [preview]
   en="Preview"
   fr="Aperçu"
+  it="Anteprima"
+  es="Vista previa"
 
 [confirmUnsaved]
   en="You have unsaved data, please confirm to exit."
   fr="Vous avez des données non sauvegardées, veuillez confirmer pour quitter."
+  it="Hai dati non salvati, conferma per uscire."
+  es="Tienes datos sin guardar, confirma para salir."
 
 [confirmUnsafe]
   en="You have unsaved data, please confirm to continue (your editing will be lost)."
   fr="Vous avez des données non sauvegardées, veuillez confirmer pour continuer (votre édition sera perdue)."
+  it="Hai dati non salvati, conferma per continuare (le tue modifiche andranno perse)."
+  es="Tienes datos sin guardar, confirma para continuar (se perderán tus cambios)."
 
 [confirmDeleteLabel]
   en="Please confirm to delete this label"
   fr="Veuillez confirmer pour supprimer cette étiquette"
+  it="Conferma per eliminare questa etichetta"
+  es="Confirma para eliminar esta etiqueta"
 
 [confirmDeleteRole]
   en="Please confirm to delete the role"
   fr="Veuillez confirmer pour supprimer le rôle"
+  it="Conferma per eliminare il ruolo"
+  es="Confirma para eliminar el rol"
 
 [confirmDeleteContract]
   en="Please confirm to cancel this contract"
   fr="Êtes-vous sûr de vouloir annuler ce contrat"
+  it="Conferma per annullare questo contratto"
+  es="Confirma para cancelar este contrato"
 
 [confirmDeleteComment]
   en="Please confirm to delete this comment"
   fr="Êtes-vous sûr de vouloir supprimer ce commentaire"
+  it="Conferma per eliminare questo commento"
+  es="Confirma para eliminar este comentario"
 
 [confirmLeaveOrga]
   en="""Please confirm to leave this organisation:
@@ -1241,486 +1873,734 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 - Vous serez desassigné de toutes {{_tension_}}s dans cette organisation.
 - Vous pourrez la rejoindre à nouveau sur invitation seulement.
   """
+  it="""Conferma per lasciare questa organizzazione:
+- Verrai rimosso da ogni {{_tension_}} a cui sei assegnato in questa organizzazione.
+- Potrai unirti di nuovo solo su invito.
+  """
+  es="""Confirma para abandonar esta organización:
+- Se te desasignará de cada {{_tension_}} de esta organización.
+- Solo podrás volver a unirte mediante invitación.
+  """
 
 [deleteThisContract]
   en="Delete this contract"
   fr="Supprimer ce contrat"
+  it="Elimina questo contratto"
+  es="Eliminar este contrato"
 
 [delete]
   en="Delete"
   fr="Supprimer"
+  it="Elimina"
+  es="Eliminar"
 
 [askAnotherQuestion]
   en="Ask another question."
   fr="Poser une autre question."
+  it="Fai un’altra domanda."
+  es="Hacer otra pregunta."
 
 [giveAnotherFeedback]
   en="Give another feedback."
   fr="Donnez un autre feedback."
+  it="Lascia un altro feedback."
+  es="Enviar otro comentario."
 
 [theOrganisation]
   en="the organisation"
   fr="l’organisation"
+  it="l’organizzazione"
+  es="la organización"
 
 [theOwnerRole]
   en="its Owner role"
   fr="son rôle de propriétaire"
+  it="il suo ruolo di Proprietario"
+  es="su rol de Propietario"
 
 [moveTension]
   en="Move {{_tension_}}"
   fr="Déplacer la {{_tension_}}"
+  it="Sposta {{_tension_}}"
+  es="Mover {{_tension_}}"
 
 [moveTensionHelp]
   en="Move this {{_tension_}} to a different circle"
   fr="Déplacer cette {{_tension_}} vers un autre cercle"
+  it="Sposta questa {{_tension_}} in un altro cerchio"
+  es="Mover esta {{_tension_}} a otro círculo"
 
 [pinTension]
   en="Pin"
   fr="Epingler"
+  it="Fissa"
+  es="Fijar"
 
 [pinTensionHelp]
   en="Pin this {{_tension_}} to show it at the top of the list"
   fr="Épingler cette {{_tension_}} pour l'afficher en haut de la liste"
+  it="Fissa questa {{_tension_}} per mostrarla in cima alla lista"
+  es="Fija esta {{_tension_}} para mostrarla al principio de la lista"
 
 [unpinTension]
   en="Unpin"
   fr="Désépingler"
+  it="Sblocca"
+  es="Desfijar"
 
 [unpinTensionHelp]
   en="Unpin this {{_tension_}} from the top of the list"
   fr="Désépingler cette {{_tension_}} du haut de la liste"
+  it="Rimuovi questa {{_tension_}} dalla cima della lista"
+  es="Quitar esta {{_tension_}} del principio de la lista"
 
 [moveCircle]
   en="Move circle"
   fr="Déplacer le cercle"
+  it="Sposta cerchio"
+  es="Mover círculo"
 
 [moveRole]
   en="Move role"
   fr="Déplacer le rôle"
+  it="Sposta ruolo"
+  es="Mover rol"
 
 [moveProject]
   en="Move project"
   fr="Déplacer le projet"
+  it="Sposta progetto"
+  es="Mover proyecto"
 
 [newContract]
   en="New contract"
   fr="Nouveau contrat"
+  it="Nuovo contratto"
+  es="Nuevo contrato"
 
 [contractType]
   en="Contract"
   fr="Contrat"
+  it="Contratto"
+  es="Contrato"
 
 [contractEvent]
   en="Event"
   fr="Evénement"
+  it="Evento"
+  es="Evento"
 
 [createContract]
   en="Create contract"
   fr="Créer le contrat"
+  it="Crea contratto"
+  es="Crear contrato"
 
 [submit]
   en="Submit"
   fr="Soumettre"
+  it="Invia"
+  es="Enviar"
 
 [send]
   en="Send"
   fr="Envoyer"
+  it="Invia"
+  es="Enviar"
 
 [comment]
   en="Comment"
   fr="Commenter"
+  it="Commenta"
+  es="Comentar"
 
 [close]
   en="Close"
   fr="Fermer"
+  it="Chiudi"
+  es="Cerrar"
 
 [closeComment]
   en="Comment and close"
   fr="Commenter et fermer"
+  it="Commenta e chiudi"
+  es="Comentar y cerrar"
 
 [reopen]
   en="Reopen"
   fr="Réouvrir"
+  it="Riapri"
+  es="Reabrir"
 
 [reopenComment]
   en="Comment and reopen"
   fr="Commenter et réouvrir"
+  it="Commenta e riapri"
+  es="Comentar y reabrir"
 
 [noMessageProvided]
   en="Empty message"
   fr="Message vide"
+  it="Messaggio vuoto"
+  es="Mensaje vacío"
 
 [selectADestination]
   en="select a destination"
   fr="Selectionner une destination"
+  it="seleziona una destinazione"
+  es="selecciona un destino"
 
 [question]
   en="Question"
   fr="Question"
+  it="Domanda"
+  es="Pregunta"
 
 [feedback]
   en="Feedback"
   fr="Feedback"
+  it="Feedback"
+  es="Comentarios"
 
 [thankyouFeedback]
   en="Thank you for your feedback, we will get back to you shortly."
   fr="Merci pour votre retour, nous vous répondrons dans les plus brefs délais."
+  it="Grazie per il tuo feedback, ti risponderemo al più presto."
+  es="Gracias por tus comentarios, te responderemos en breve."
 
 [add]
   en="New"
   fr="Créer"
+  it="Nuovo"
+  es="Nuevo"
 
 [addTension]
   en="New {{_tension_}}"
   fr="Créer une {{_tension_}}"
+  it="Nuova {{_tension_}}"
+  es="Nueva {{_tension_}}"
 
 [remove]
   en="Remove"
   fr="Supprimer"
+  it="Rimuovi"
+  es="Quitar"
 
 [uploadInProgress]
   en="Upload in progress"
   fr="Envoi en cours"
+  it="Caricamento in corso"
+  es="Subida en curso"
 
 [changeAvatar]
   en="Change the avatar"
   fr="Modifier l'avatar"
+  it="Cambia l’avatar"
+  es="Cambiar el avatar"
 
 [avatarDecodeError]
   en="This image could not be read. Try a PNG, JPEG or WebP file."
   fr="Cette image n’a pas pu être lue. Essayez un fichier PNG, JPEG ou WebP."
+  it="Impossibile leggere questa immagine. Prova con un file PNG, JPEG o WebP."
+  es="No se pudo leer esta imagen. Prueba con un archivo PNG, JPEG o WebP."
 
 [attach]
   en="Attach"
   fr="Joindre"
+  it="Allega"
+  es="Adjuntar"
 
 [attachmentsFailed]
   en="Some attachments could not be uploaded:"
   fr="Certaines pièces jointes n’ont pas pu être envoyées :"
+  it="Alcuni allegati non sono stati caricati:"
+  es="Algunos adjuntos no se pudieron subir:"
 
 [clipboardNotAttachable]
   en="The clipboard content cannot be attached. Use the Attach button or drag and drop the file instead."
   fr="Le contenu du presse-papiers ne peut pas être joint. Utilisez le bouton Joindre ou glissez-déposez le fichier."
+  it="Il contenuto degli appunti non può essere allegato. Usa il pulsante Allega o trascina il file."
+  es="El contenido del portapapeles no se puede adjuntar. Usa el botón Adjuntar o arrastra y suelta el archivo."
 
 [copied]
   en="Copied!"
   fr="Copié !"
+  it="Copiato!"
+  es="¡Copiado!"
 
 [copyText]
   en="Copy text"
   fr="Copier le texte"
+  it="Copia testo"
+  es="Copiar texto"
 
 [copyLink]
   en="Copy link"
   fr="Copier le lien"
+  it="Copia link"
+  es="Copiar enlace"
 
 [tipsSubmitShortcut]
   en="Tips: <C+Enter> to submit"
   fr="Astuce : <C+Entrée> pour envoyer"
+  it="Suggerimento: <C+Invio> per inviare"
+  es="Consejo: <C+Intro> para enviar"
 
 [subscribe]
   en="Subscribe"
   fr="S’abonner"
+  it="Iscriviti"
+  es="Suscribirse"
 
 [unsubscribe]
   en="Unsubscribe"
   fr="Se désabonner"
+  it="Annulla iscrizione"
+  es="Cancelar suscripción"
 
 [notifications]
   en="Notifications"
   fr="Notifications"
+  it="Notifiche"
+  es="Notificaciones"
 
 [inbox]
   en="Inbox"
   fr="Inbox"
+  it="Posta in arrivo"
+  es="Bandeja de entrada"
 
 [watch]
   en="Watch"
   fr="Suivre"
+  it="Segui"
+  es="Seguir"
 
 [unwatch]
   en="Unwatch"
   fr="Ne plus suivre"
+  it="Non seguire più"
+  es="Dejar de seguir"
 
 [watchThisOrganisation]
   en="Watch this organisation to receive\nannouncements from this organisation."
   fr="Suivre cette organisation"
+  it="Segui questa organizzazione per ricevere\ni suoi annunci."
+  es="Sigue esta organización para recibir\nsus anuncios."
 
 [unwatchThisOrganisation]
   en="Unwatch this organisation to stop receiving\nannouncements from this organisation."
   fr="Ne plus suivre cette organisation"
+  it="Smetti di seguire questa organizzazione per non ricevere\npiù i suoi annunci."
+  es="Deja de seguir esta organización para no recibir\nmás sus anuncios."
 
 [assigned]
   en="Assigned"
   fr="Assignés"
+  it="Assegnati"
+  es="Asignados"
 
 [assignedTensions]
   en="Assigned {{_Tension_}}s"
   fr="{{_Tension_}}s Assignées"
+  it="{{_Tension_}} assegnate"
+  es="{{_Tension_}} asignadas"
 
 [addAssignees]
   en="Add assignees..."
   fr="Ajouter des assignés..."
+  it="Aggiungi assegnatari..."
+  es="Añadir responsables..."
 
 [addLabels]
   en="Add labels..."
   fr="Ajouter des étiquettes..."
+  it="Aggiungi etichette..."
+  es="Añadir etiquetas..."
 
 [tensionSubscribeText]
   en="You’re receiving notifications because you’re subscribed to this thread."
   fr="Vous recevez des notifications car vous êtes abonné à ce fil de discussion."
+  it="Ricevi notifiche perché sei iscritto a questa discussione."
+  es="Recibes notificaciones porque estás suscrito a este hilo."
 
 [tensionUnsubscribeText]
   en="You’re not receiving notifications from this thread."
   fr="Vous ne recevez pas les notifications de ce fil de discussion."
+  it="Non ricevi notifiche da questa discussione."
+  es="No recibes notificaciones de este hilo."
 
 [back]
   en="Back"
   fr="Retour"
+  it="Indietro"
+  es="Volver"
 
 [almostThere]
   en="Almost there"
   fr="On y est presque"
+  it="Ci siamo quasi"
+  es="Ya casi está"
 
 [sort]
   en="Sort by"
   fr="Trier par"
+  it="Ordina per"
+  es="Ordenar por"
 
 [oldest]
   en="Oldest"
   fr="Plus ancien"
+  it="Meno recenti"
+  es="Más antiguos"
 
 [newest]
   en="Newest"
   fr="Plus récent"
+  it="Più recenti"
+  es="Más recientes"
 
 [lastUpdate]
   en="Last update"
   fr="Dernière modification"
+  it="Ultimo aggiornamento"
+  es="Última actualización"
 
 [reviewAndValidate]
   en="Create / Import"
   fr="Créer / Importer"
+  it="Crea / Importa"
+  es="Crear / Importar"
 
 [subject]
   en="Subject"
   fr="Sujet"
+  it="Oggetto"
+  es="Asunto"
 
 [theSubject]
   en="the subject"
   fr="le sujet"
+  it="l’oggetto"
+  es="el asunto"
 
 [user]
   en="User"
   fr="Utilisateur"
+  it="Utente"
+  es="Usuario"
 
 [name]
   en="Name"
   fr="Nom"
+  it="Nome"
+  es="Nombre"
 
 [username]
   en="Username"
   fr="Nom d’utilisateur"
+  it="Nome utente"
+  es="Nombre de usuario"
 
 [email]
   en="Email address"
   fr="Adresse e-mail"
+  it="Indirizzo email"
+  es="Correo electrónico"
 
 [password]
   en="Password"
   fr="Mot de passe"
+  it="Password"
+  es="Contraseña"
 
 [location]
   en="Location"
   fr="Localisation"
+  it="Posizione"
+  es="Ubicación"
 
 [language]
   en="Language"
   fr="Langue"
+  it="Lingua"
+  es="Idioma"
 
 [tension]
   en="{{_Tension_}}"
   fr="{{_Tension_}}"
+  it="{{_Tension_}}"
+  es="{{_Tension_}}"
 
 [circle]
   en="Circle"
   fr="Cercle"
+  it="Cerchio"
+  es="Círculo"
 
 [role]
   en="Role"
   fr="Rôle"
+  it="Ruolo"
+  es="Rol"
 
 [roles]
   en="Roles"
   fr="Rôles"
+  it="Ruoli"
+  es="Roles"
 
 [owner]
   en="Owner"
   fr="Propriétaire"
+  it="Proprietario"
+  es="Propietario"
 
 [guest]
   en="Guest"
   fr="Invité"
+  it="Ospite"
+  es="Invitado"
 
 [parent]
   en="Parent"
   fr="Parent"
+  it="Genitore"
+  es="Padre"
 
 [pending]
   en="Pending"
   fr="En attente"
+  it="In attesa"
+  es="Pendiente"
 
 [pendingInvitation]
   en="Pending invitation"
   fr="Invitation en attente"
+  it="Invito in attesa"
+  es="Invitación pendiente"
 
 [pendingRoles]
   en="Pending roles"
   fr="Rôles en attente"
+  it="Ruoli in attesa"
+  es="Roles pendientes"
 
 [checkYourPendingInvitation]
   en="You already have a pending invitation, please check it out."
   fr="Vous avez déjà une invitation en attente, veuillez la vérifier."
+  it="Hai già un invito in attesa, controllalo."
+  es="Ya tienes una invitación pendiente, revísala."
 
 [checkPendingInvitation]
   en="An similar invitation is pending, please check it out."
   fr="Une invitation similaire est en attente, veuillez la vérifier."
+  it="Un invito simile è in attesa, controllalo."
+  es="Hay una invitación similar pendiente, revísala."
 
 [firstLink]
   en="Lead link"
   fr="Référent"
+  it="Referente"
+  es="Referente"
 
 [firstLinks]
   en="Lead links"
   fr="Référents"
+  it="Referenti"
+  es="Referentes"
 
 [phQS]
   en="Find a role or circle"
   fr="Rechercher un rôle ou cercle"
+  it="Cerca un ruolo o un cerchio"
+  es="Buscar un rol o un círculo"
 
 [noResults]
   en="No results"
   fr="Aucun résultats"
+  it="Nessun risultato"
+  es="Sin resultados"
 
 [noResultsFor]
   en="No results for"
   fr="Aucun résultats pour"
+  it="Nessun risultato per"
+  es="Sin resultados para"
 
 [nodeNotFound]
   en="Circle is private, archived or has moved."
   fr="le cercle est privé, archivé ou a été déplacé"
+  it="Il cerchio è privato, archiviato o è stato spostato."
+  es="El círculo es privado, está archivado o se ha movido."
 
 [pageNotFound]
   en="Sorry, page not found"
   fr="Désolé, cette page n’existe pas"
+  it="Spiacenti, pagina non trovata"
+  es="Lo sentimos, página no encontrada"
 
 [author]
   en="Author"
   fr="Auteur"
+  it="Autore"
+  es="Autor"
 
 [label]
   en="Label"
   fr="Etiquette"
+  it="Etichetta"
+  es="Etiqueta"
 
 [accept]
   en="Accept"
   fr="Accepter"
+  it="Accetta"
+  es="Aceptar"
 
 [decline]
   en="Decline"
   fr="Décliner"
+  it="Rifiuta"
+  es="Rechazar"
 
 [cancelInvitation]
   en="Cancel invitation"
   fr="Annuler l’invitation"
+  it="Annulla invito"
+  es="Cancelar invitación"
 
 [security]
   en="Security"
   fr="Sécurité"
+  it="Sicurezza"
+  es="Seguridad"
 
 [about]
   en="About"
   fr="A propos"
+  it="Informazioni"
+  es="Acerca de"
 
 [aboutOpt]
   en="About (optional)"
   fr="A propos (optionnel)"
+  it="Informazioni (facoltativo)"
+  es="Acerca de (opcional)"
 
 [mandate]
   en="{{_Mandate_}}"
   fr="{{_Mandate_}}"
+  it="{{_Mandate_}}"
+  es="{{_Mandate_}}"
 
 [purpose]
   en="Purpose"
   fr="Raison d’être"
+  it="Scopo"
+  es="Propósito"
 
 [responsabilities]
   en="Accountabilities"
   fr="Responsabilités"
+  it="Responsabilità"
+  es="Responsabilidades"
 
 [domains]
   en="Domains"
   fr="Domaines"
+  it="Domini"
+  es="Dominios"
 
 [policies]
   en="Policies"
   fr="Politiques"
+  it="Politiche"
+  es="Políticas"
 
 [rules]
   en="Rules"
   fr="Règles"
+  it="Regole"
+  es="Reglas"
 
 [create]
   en="Create"
   fr="Créer"
+  it="Crea"
+  es="Crear"
 
 [phCirclePurpose]
   en="Define the purpose of the circle"
   fr="Définir la raison d’être du cercle"
+  it="Definisci lo scopo del cerchio"
+  es="Define el propósito del círculo"
 
 [phCircleResponsabilities]
   en="Define the circle accountabilities"
   fr="Définir les responsabilités du cercle"
+  it="Definisci le responsabilità del cerchio"
+  es="Define las responsabilidades del círculo"
 
 [phCircleDomains]
   en="Define the circle domains"
   fr="Définir les domaines du cercle"
+  it="Definisci i domini del cerchio"
+  es="Define los dominios del círculo"
 
 [phCirclePolicies]
   en="Define the circle policies"
   fr="Définir les politiques du cercle"
+  it="Definisci le politiche del cerchio"
+  es="Define las políticas del círculo"
 
 [phCircleRules]
   en="Define the circle rules"
   fr="Définir les règles du cercle"
+  it="Definisci le regole del cerchio"
+  es="Define las reglas del círculo"
 
 [phRolePurpose]
   en="Define the purpose of the role"
   fr="Définir la raison d’être du rôle"
+  it="Definisci lo scopo del ruolo"
+  es="Define el propósito del rol"
 
 [phRoleResponsabilities]
   en="Define the role accountabilities"
   fr="Définir les responsabilités du rôle"
+  it="Definisci le responsabilità del ruolo"
+  es="Define las responsabilidades del rol"
 
 [phRoleDomains]
   en="Define the role domains"
   fr="Définir les domaines du rôle"
+  it="Definisci i domini del ruolo"
+  es="Define los dominios del rol"
 
 [phRolePolicies]
   en="Define the role policies"
   fr="Définir les politiques du rôle"
+  it="Definisci le politiche del ruolo"
+  es="Define las políticas del rol"
 
 [phRoleRules]
   en="Define the role rules"
   fr="Définir les règles du rôle"
+  it="Definisci le regole del ruolo"
+  es="Define las reglas del rol"
 
 [duplicateNameError]
   en="⚠️ This name already exists, please choose another one."
   fr="⚠️ Ce nom existe déja, veuillez en choisir un autre."
+  it="⚠️ Questo nome esiste già, scegline un altro."
+  es="⚠️ Este nombre ya existe, elige otro."
 
 [nameTooLongError]
   en="⚠️ This name is too long, please enter a shorter one."
   fr="⚠️ Ce nom est trop long, veuillez en entrer un plus court."
+  it="⚠️ Questo nome è troppo lungo, inseriscine uno più corto."
+  es="⚠️ Este nombre es demasiado largo, introduce uno más corto."
 
 [duplicateOrgHint]
   en="""
@@ -1729,960 +2609,1442 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="""
 **Tips** : Pour expérimenter les fonctionnalités de Fractale ou en tant qu’organisation personnelle, vous pouvez utiliser votre propre nom d’utilisateur comme suffix, par exemple `{{}}-{{}}`.
   """
+  it="""
+**Suggerimento**: Per sperimentare le funzionalità di Fractale o come organizzazione personale, puoi usare il tuo nome utente come suffisso, ad esempio `{{}}-{{}}`.
+  """
+  es="""
+**Consejo**: Para experimentar con las funciones de Fractale o como organización personal, puedes usar tu propio nombre de usuario como sufijo, por ejemplo `{{}}-{{}}`.
+  """
 
 [duplicateContractError]
   en="⚠️ A similar contract already exists, please check it out."
   fr="⚠️ Un contrat similaire existe déjà, veuillez le consulter."
+  it="⚠️ Esiste già un contratto simile, consultalo."
+  es="⚠️ Ya existe un contrato similar, consúltalo."
 
 [noAuthErr]
   en="Access denied: Contact a coordinator to access this ressource."
   fr="Accès refusé : Contactez un coordinateur pour accéder à cette ressource."
+  it="Accesso negato: contatta un coordinatore per accedere a questa risorsa."
+  es="Acceso denegado: contacta con un coordinador para acceder a este recurso."
 
 [sinceThe]
   en="since"
   fr="depuis"
+  it="dal"
+  es="desde"
 
 [createdThe]
   en="created"
   fr="créé"
+  it="creato"
+  es="creado"
 
 [description]
   en="Description"
   fr="Description"
+  it="Descrizione"
+  es="Descripción"
 
 [toThisRole]
   en="to this role"
   fr="sur ce rôle"
+  it="a questo ruolo"
+  es="a este rol"
 
 [inThisCircle]
   en="in this circle"
   fr="dans ce cercle"
+  it="in questo cerchio"
+  es="en este círculo"
 
 [toThisOrganisation]
   en="to this organisation"
   fr="de cette organisation"
+  it="a questa organizzazione"
+  es="a esta organización"
 
 [enterValidUserOrEmail]
   en="Please, enter a valid email address or username"
   fr="Veuillez entrer une adresse e-mail ou un nom d’utilisateur valide."
+  it="Inserisci un indirizzo email o un nome utente valido"
+  es="Introduce una dirección de correo electrónico o un nombre de usuario válido"
 
 [userNotFound]
   en="No member found."
   fr="Aucun membre trouvé."
+  it="Nessun membro trovato."
+  es="No se ha encontrado ningún miembro."
 
 [color]
   en="Color"
   fr="Couleur"
+  it="Colore"
+  es="Color"
 
 [collapse]
   en="Collapse"
   fr="Réduire"
+  it="Comprimi"
+  es="Contraer"
 
 [collapseAll]
   en="Collapse all"
   fr="Tout réduire"
+  it="Comprimi tutto"
+  es="Contraer todo"
 
 [expandAll]
   en="Expand all"
   fr="Tout déplier"
+  it="Espandi tutto"
+  es="Expandir todo"
 
 [conversation]
   en="Conversation"
   fr="Conversation"
+  it="Conversazione"
+  es="Conversación"
 
 [document]
   en="Document"
   fr="Document"
+  it="Documento"
+  es="Documento"
 
 [contracts]
   en="Contracts"
   fr="Contrats"
+  it="Contratti"
+  es="Contratos"
 
 [status]
   en="Status"
   fr="Statut"
+  it="Stato"
+  es="Estado"
 
 [type_]
   en="Type"
   fr="Type"
+  it="Tipo"
+  es="Tipo"
 
 [theType_]
   en="the type"
   fr="le type"
+  it="il tipo"
+  es="el tipo"
 
 [depth]
   en="Depth"
   fr="Profondeur"
+  it="Profondità"
+  es="Profundidad"
 
 [depthAll]
   en="Includes all sub-circles"
   fr="Comprend tous les sous-cercles"
+  it="Include tutti i sotto-cerchi"
+  es="Incluye todos los subcírculos"
 
 [depthSelected]
   en="Current circle and its direct children only"
   fr="Cercle actuel et ses enfants direct uniquement"
+  it="Solo il cerchio attuale e i suoi figli diretti"
+  es="Solo el círculo actual y sus hijos directos"
 
 [showMore]
   en="Load more"
   fr="Afficher plus"
+  it="Carica altro"
+  es="Cargar más"
 
 [clearFilters]
   en="Reset filters"
   fr="Réinitialiser les filtres"
+  it="Reimposta filtri"
+  es="Restablecer filtros"
 
 [subLabels]
   en="Sub-circle labels"
   fr="Étiquettes de sous-cercles"
+  it="Etichette dei sotto-cerchi"
+  es="Etiquetas de subcírculos"
 
 [newLabel]
   en="New label"
   fr="Nouvelle étiquette"
+  it="Nuova etichetta"
+  es="Nueva etiqueta"
 
 [newProject]
   en="New project"
   fr="Nouveau projet"
+  it="Nuovo progetto"
+  es="Nuevo proyecto"
 
 [editProject]
   en="Edit project"
   fr="Editer le projet"
+  it="Modifica progetto"
+  es="Editar proyecto"
 
 [projectSettings]
   en="Project settings"
   fr="Paramètres du projet"
+  it="Impostazioni del progetto"
+  es="Ajustes del proyecto"
 
 [collaborators]
   en="Collaborators"
   fr="Collaborateurs"
+  it="Collaboratori"
+  es="Colaboradores"
 
 [collaboratorsHelp]
   en="Collaborators get write access to this project. Coordinators of linked circles also have access."
   fr="Les collaborateurs ont un accès en écriture à ce projet. Les coordinateurs des cercles liés y ont aussi accès."
+  it="I collaboratori hanno accesso in scrittura a questo progetto. Anche i coordinatori dei cerchi collegati vi hanno accesso."
+  es="Los colaboradores tienen acceso de escritura a este proyecto. Los coordinadores de los círculos vinculados también tienen acceso."
 
 [addACollaborator]
   en="Add a collaborator"
   fr="Ajouter un collaborateur"
+  it="Aggiungi un collaboratore"
+  es="Añadir un colaborador"
 
 [permissions]
   en="Permissions"
   fr="Permissions"
+  it="Permessi"
+  es="Permisos"
 
 [peerCanEditProject]
   en="Allow peers to edit"
   fr="Autoriser les pairs à modifier"
+  it="Consenti ai pari di modificare"
+  es="Permitir a los pares editar"
 
 [peerCanEditProjectHelp]
   en="Organization peers can edit this project."
   fr="Les pairs de l'organisation peuvent modifier ce projet."
+  it="I pari dell’organizzazione possono modificare questo progetto."
+  es="Los pares de la organización pueden editar este proyecto."
 
 [guestCanEditProject]
   en="Allow guests to edit"
   fr="Autoriser les invités à modifier"
+  it="Consenti agli ospiti di modificare"
+  es="Permitir a los invitados editar"
 
 [guestCanEditProjectHelp]
   en="Organization guests can edit this project. Enabling this also allows peers."
   fr="Les invités de l'organisation peuvent modifier ce projet. Activer cette option autorise aussi les pairs."
+  it="Gli ospiti dell’organizzazione possono modificare questo progetto. Attivando questa opzione lo possono fare anche i pari."
+  es="Los invitados de la organización pueden editar este proyecto. Activar esta opción también lo permite a los pares."
 
 [assignees]
   en="Assignees"
   fr="Assignés"
+  it="Assegnatari"
+  es="Asignados"
 
 [attached]
   en="attached"
   fr="joint"
+  it="allegato"
+  es="adjunto"
 
 [noneYet]
   en="None yet"
   fr="Aucun pour l’instant"
+  it="Nessuno per ora"
+  es="Ninguno por ahora"
 
 [noDocument]
   en="No document attached"
   fr="Aucun document joint"
+  it="Nessun documento allegato"
+  es="Ningún documento adjunto"
 
 [noOpenTensionRole]
   en="No open {{_tension_}}s for this role yet."
   fr="Aucune {{_tension_}} ouverte pour ce rôle pour le moment."
+  it="Nessuna {{_tension_}} aperta per questo ruolo al momento."
+  es="Ninguna {{_tension_}} abierta para este rol por ahora."
 
 [noOpenTensionCircle]
   en="No open {{_tension_}}s in this circle yet."
   fr="Aucune {{_tension_}} ouverte dans ce cercle pour le moment."
+  it="Nessuna {{_tension_}} aperta in questo cerchio al momento."
+  es="Ninguna {{_tension_}} abierta en este círculo por ahora."
 
 [noTensionRole]
   en="No {{_tension_}}s for this role yet."
   fr="Aucune {{_tension_}} pour ce rôle pour le moment."
+  it="Nessuna {{_tension_}} per questo ruolo al momento."
+  es="Ninguna {{_tension_}} para este rol por ahora."
 
 [noTensionCircle]
   en="No {{_tension_}}s in this circle yet."
   fr="Aucune {{_tension_}} dans ce cercle pour le moment."
+  it="Nessuna {{_tension_}} in questo cerchio al momento."
+  es="Ninguna {{_tension_}} en este círculo por ahora."
 
 [noProjects]
   en="No {{status}} projects linked to this {{type}} yet."
   fr="Aucun projet {{status}} associé à ce {{type}} pour le moment."
+  it="Nessun progetto {{status}} collegato a questo {{type}} al momento."
+  es="Ningún proyecto {{status}} vinculado a este {{type}} por ahora."
 
 
 [createNewTension]
   en="Create {{_tension_}}"
   fr="Créer une {{_tension_}}"
+  it="Crea {{_tension_}}"
+  es="Crear {{_tension_}}"
 
 [createNewCircle]
   en="Add sub-circle"
   fr="Ajouter un sous-cercle"
+  it="Aggiungi sotto-cerchio"
+  es="Añadir subcírculo"
 
 [createNewRole]
   en="Add role"
   fr="Ajouter un rôle"
+  it="Aggiungi ruolo"
+  es="Añadir rol"
 
 [createNewProject]
   en="Create project"
   fr="Créer un projet"
+  it="Crea progetto"
+  es="Crear proyecto"
 
 [welcomeTensionHint]
   en="Start a discussion or track work."
   fr="Lancer une discussion ou suivre un travail."
+  it="Avvia una discussione o segui un lavoro."
+  es="Inicia una conversación o haz seguimiento de un trabajo."
 
 [welcomeProjectHint]
   en="Organize work on a board."
   fr="Organiser le travail sur un tableau."
+  it="Organizza il lavoro su una bacheca."
+  es="Organiza el trabajo en un tablero."
 
 [welcomeCircleHint]
   en="Create a team or area."
   fr="Créer une équipe ou un domaine."
+  it="Crea un team o un’area."
+  es="Crea un equipo o un área."
 
 [welcomeRoleHint]
   en="Give someone a mandate."
   fr="Confier un mandat à quelqu'un."
+  it="Affida un mandato a qualcuno."
+  es="Confía un mandato a alguien."
 
 [welcomeActions]
   en="Actions"
   fr="Actions"
+  it="Azioni"
+  es="Acciones"
 
 [editTitle]
   en="Edit subjet"
   fr="Editer le sujet"
+  it="Modifica oggetto"
+  es="Editar asunto"
 
 [newTensionHelp]
   en="Create a new {{_tension_}}."
   fr="Créer une nouvelle {{_tension_}}."
+  it="Crea una nuova {{_tension_}}."
+  es="Crea una nueva {{_tension_}}."
 
 [newRoleHelp]
   en="Create or propose a new role."
   fr="Créer ou proposer un nouveau rôle."
+  it="Crea o proponi un nuovo ruolo."
+  es="Crea o propone un nuevo rol."
 
 [newCircleHelp]
   en="Create or propose a new circle."
   fr="Créer ou proposer un nouveau cercle."
+  it="Crea o proponi un nuovo cerchio."
+  es="Crea o propone un nuevo círculo."
 
 [tensionTitleHelp]
   en="Title that sumarize your {{_tension_}}."
   fr="Titre qui résume votre {{_tension_}}."
+  it="Titolo che riassume la tua {{_tension_}}."
+  es="Título que resume tu {{_tension_}}."
 
 [circleNameHelp]
   en="Name of the circle."
   fr="Nom du cercle."
+  it="Nome del cerchio."
+  es="Nombre del círculo."
 
 [roleNameHelp]
   en="Name of the role."
   fr="Nom du rôle."
+  it="Nome del ruolo."
+  es="Nombre del rol."
 
 [roleName]
   en="Role name"
   fr="Nom du rôle"
+  it="Nome del ruolo"
+  es="Nombre del rol"
 
 [labelName]
   en="Label name"
   fr="Nom de l’étiquette"
+  it="Nome dell’etichetta"
+  es="Nombre de la etiqueta"
 
 [orgaNameHelp]
   en="Organisation name."
   fr="Nom de l’organisation"
+  it="Nome dell’organizzazione."
+  es="Nombre de la organización."
 
 [aboutHelp]
   en="Short description for this organisation."
   fr="Brève description de cette organisation."
+  it="Breve descrizione di questa organizzazione."
+  es="Breve descripción de esta organización."
 
 [purposeHelpOrga]
   en="Purpose of this organisation."
   fr="Raison d’être de cette organisation."
+  it="Scopo di questa organizzazione."
+  es="Propósito de esta organización."
 
 [roleAboutHelp]
   en="Short description for this role."
   fr="Brève description de ce rôle."
+  it="Breve descrizione di questo ruolo."
+  es="Breve descripción de este rol."
 
 [circleAboutHelp]
   en="Short description for this circle."
   fr="Brève description de ce cercle."
+  it="Breve descrizione di questo cerchio."
+  es="Breve descripción de este círculo."
 
 [tensionMessageHelp]
   en="Add a comment to help others understand your issue."
   fr="Ajoutez un commentaire pour aider les autres à comprendre votre requête."
+  it="Aggiungi un commento per aiutare gli altri a capire la tua richiesta."
+  es="Añade un comentario para ayudar a los demás a entender tu solicitud."
 
 [circleMessageHelp]
   en="Add a comment to help others understand why a new circle should be created."
   fr="Ajoutez un commentaire pour aider les autres à comprendre pourquoi un nouveau cercle devrait être créé."
+  it="Aggiungi un commento per aiutare gli altri a capire perché dovrebbe essere creato un nuovo cerchio."
+  es="Añade un comentario para ayudar a los demás a entender por qué debería crearse un nuevo círculo."
 
 [roleMessageHelp]
   en="Add a comment to help others understand why a new role should be created."
   fr="Ajoutez un commentaire pour aider les autres à comprendre pourquoi un nouveau rôle devrait être créé."
+  it="Aggiungi un commento per aiutare gli altri a capire perché dovrebbe essere creato un nuovo ruolo."
+  es="Añade un comentario para ayudar a los demás a entender por qué debería crearse un nuevo rol."
 
 [invitationMessageHelp]
   en="Write an invitation message."
   fr="Ecrire un message d’invitation."
+  it="Scrivi un messaggio di invito."
+  es="Escribe un mensaje de invitación."
 
 [tensionAdded]
   en="{{_Tension_}} added."
   fr="{{_Tension_}} créée."
+  it="{{_Tension_}} aggiunta."
+  es="{{_Tension_}} añadida."
 
 [roleAdded]
   en="Role added."
   fr="Rôle créé."
+  it="Ruolo aggiunto."
+  es="Rol añadido."
 
 [circleAdded]
   en="Circle added."
   fr="Cercle créé."
+  it="Cerchio aggiunto."
+  es="Círculo añadido."
 
 [tensionSubmit]
   en="Submit {{_tension_}}"
   fr="Soumettre {{_void_}}"
+  it="Invia {{_tension_}}"
+  es="Enviar {{_tension_}}"
 
 [tensionCircleCloseSubmit]
   en="Create circle"
   fr="Créer le cercle"
+  it="Crea cerchio"
+  es="Crear círculo"
 
 [tensionRoleCloseSubmit]
   en="Create role"
   fr="Créer le rôle"
+  it="Crea ruolo"
+  es="Crear rol"
 
 [update]
   en="Update"
   fr="Valider"
+  it="Aggiorna"
+  es="Actualizar"
 
 [addResponsabilities]
   en="Add accountabilities"
   fr="Ajouter des responsabilités"
+  it="Aggiungi responsabilità"
+  es="Añadir responsabilidades"
 
 [addDomains]
   en="Add domains"
   fr="Ajouter des domaines"
+  it="Aggiungi domini"
+  es="Añadir dominios"
 
 [addPolicies]
   en="Add policies"
   fr="Ajouter des politiques"
+  it="Aggiungi politiche"
+  es="Añadir políticas"
 
 [addRules]
   en="Add rules"
   fr="Ajouter des règles"
+  it="Aggiungi regole"
+  es="Añadir reglas"
 
 [addColumn]
   en="Add a column"
   fr="Ajouter une colone"
+  it="Aggiungi una colonna"
+  es="Añadir una columna"
 
 [columnAboutHelp]
   en="Short description about this column"
   fr="Courte description pour cette colonne"
+  it="Breve descrizione di questa colonna"
+  es="Breve descripción de esta columna"
 
 [editColumn]
   en="Edit column"
   fr="Editer la colone"
+  it="Modifica colonna"
+  es="Editar columna"
 
 [columnLayout]
   en="Column layout"
   fr="Colonnes"
+  it="Disposizione delle colonne"
+  es="Disposición de columnas"
 
 [customizeColumns]
   en="Customize the columns of the project board."
   fr="Personnalisez les colonnes du tableau du projet."
+  it="Personalizza le colonne della bacheca del progetto."
+  es="Personaliza las columnas del tablero del proyecto."
 
 [moreTemplatesSoon]
   en="More templates coming soon"
   fr="D’autres modèles arrivent bientôt"
+  it="Altri modelli in arrivo"
+  es="Más plantillas próximamente"
 
 [descriptionOptional]
   en="Description (optional)"
   fr="Description (optionnel)"
+  it="Descrizione (facoltativa)"
+  es="Descripción (opcional)"
 
 [changeColor]
   en="Click to change color"
   fr="Cliquez pour changer la couleur"
+  it="Clicca per cambiare colore"
+  es="Haz clic para cambiar el color"
 
 [moveUp]
   en="Move up"
   fr="Monter"
+  it="Sposta su"
+  es="Subir"
 
 [moveDown]
   en="Move down"
   fr="Descendre"
+  it="Sposta giù"
+  es="Bajar"
 
 [removeColumn]
   en="Remove column"
   fr="Supprimer la colonne"
+  it="Rimuovi colonna"
+  es="Eliminar columna"
 
 [entryColumn]
   en="entry"
   fr="entrée"
+  it="ingresso"
+  es="entrada"
 
 [colTriageName]
   en="Triage"
   fr="Tri"
+  it="Smistamento"
+  es="Triaje"
 
 [colTriageDesc]
   en=""
   fr=""
+  it=""
+  es=""
 
 [colTodoName]
   en="Todo"
   fr="À faire"
+  it="Da fare"
+  es="Por hacer"
 
 [colTodoDesc]
   en="This item hasn't been started"
   fr="Cet élément n’a pas encore été commencé"
+  it="Questo elemento non è ancora stato iniziato"
+  es="Este elemento aún no se ha iniciado"
 
 [colInProgressName]
   en="In Progress"
   fr="En cours"
+  it="In corso"
+  es="En curso"
 
 [colInProgressDesc]
   en="This is actively being worked on"
   fr="Cet élément est en cours de traitement"
+  it="Ci si sta lavorando attivamente"
+  es="Se está trabajando activamente en esto"
 
 [colDoneName]
   en="Done"
   fr="Terminé"
+  it="Fatto"
+  es="Hecho"
 
 [colDoneDesc]
   en="This has been completed"
   fr="Cet élément est terminé"
+  it="Questo elemento è stato completato"
+  es="Este elemento se ha completado"
 
 [selectRoleTemplate]
   en="Select a role template"
   fr="Sélectionner un modèle de rôle"
+  it="Seleziona un modello di ruolo"
+  es="Selecciona una plantilla de rol"
 
 [selectCircleVisibility]
   en="Choose the sub-circle visibility"
   fr="Selectionnez la visibilité du sous-cercle"
+  it="Scegli la visibilità del sotto-cerchio"
+  es="Elige la visibilidad del subcírculo"
 
 [noTemplateRole]
   en="No template role yet."
   fr="Aucun modèle de rôle pour le moment."
+  it="Nessun modello di ruolo per ora."
+  es="Ninguna plantilla de rol por ahora."
 
 [templateRoleHint]
   en="A template role is a generic role that you can reuse in your organisation."
   fr="Un rôle modèle est un rôle générique que vous pouvez réutiliser dans votre organisation."
+  it="Un modello di ruolo è un ruolo generico che puoi riutilizzare nella tua organizzazione."
+  es="Una plantilla de rol es un rol genérico que puedes reutilizar en tu organización."
 
 [adhocRoleHint]
   en="An ad-hoc role is a role that you create from scratch."
   fr="Un rôle ad-hoc est un rôle que vous créez de zéro, pour un besoin particulier."
+  it="Un ruolo ad hoc è un ruolo che crei da zero."
+  es="Un rol ad hoc es un rol que creas desde cero."
 
 [youCanMake]
   en="You can make a"
   fr="Vous pouvez créer un"
+  it="Puoi creare un"
+  es="Puedes crear un"
 
 [orAdd]
   en="or add a"
   fr="ou ajouter un"
+  it="o aggiungere un"
+  es="o añadir un"
 
 [makeA]
   en="Make a"
   fr="Créer un"
+  it="Crea un"
+  es="Crear un"
 
 [needNewRole]
   en="Need a new role?"
   fr="Besoin d’un nouveau rôle ?"
+  it="Ti serve un nuovo ruolo?"
+  es="¿Necesitas un nuevo rol?"
 
 [templateRole]
   en="Role template"
   fr="Modèle de Rôle"
+  it="Modello di ruolo"
+  es="Plantilla de rol"
 
 [templateRoles]
   en="Role templates"
   fr="Modèles de Rôles"
+  it="Modelli di ruolo"
+  es="Plantillas de rol"
 
 [tensionTemplate]
   en="Tension template"
   fr="Modèle de Tension"
+  it="Modello di tensione"
+  es="Plantilla de tensión"
 
 [tensionTemplates]
   en="Tension templates"
   fr="Modèles de Tensions"
+  it="Modelli di tensione"
+  es="Plantillas de tensión"
 
 [noTensionTemplates]
   en="No tension templates"
   fr="Aucun modèle de tension"
+  it="Nessun modello di tensione"
+  es="Ninguna plantilla de tensión"
 
 [tensionTemplatesInfoHeader]
   en="Tension templates allow to pre-fill tension forms with predefined values."
   fr="Les modèles de tension permettent de pré-remplir les formulaires de tension avec des valeurs prédéfinies."
+  it="I modelli di tensione permettono di precompilare i moduli di tensione con valori predefiniti."
+  es="Las plantillas de tensión permiten rellenar previamente los formularios de tensión con valores predefinidos."
 
 [tensionTemplatesInfoDoc]
   en="Templates defined in a circle with the recursive flag enabled are also available in sub-circles."
   fr="Les modèles définis dans un cercle avec l'option récursive sont également disponibles dans les sous-cercles."
+  it="I modelli definiti in un cerchio con l’opzione ricorsiva attivata sono disponibili anche nei sotto-cerchi."
+  es="Las plantillas definidas en un círculo con la opción recursiva activada también están disponibles en los subcírculos."
 
 [templateDeleteInfoHeader]
   en="This will remove the template from this circle."
   fr="Cela supprimera le modèle de ce cercle."
+  it="Questo rimuoverà il modello da questo cerchio."
+  es="Esto eliminará la plantilla de este círculo."
 
 [confirmDeleteTemplate]
   en="Are you sure you want to delete "
   fr="Êtes-vous sûr de vouloir supprimer "
+  it="Sei sicuro di voler eliminare "
+  es="¿Seguro que quieres eliminar "
 
 [isRecursive]
   en="Recursive"
   fr="Récursif"
+  it="Ricorsivo"
+  es="Recursivo"
 
 [isRecursiveHelp]
   en="When enabled, this template is also available in sub-circles."
   fr="Lorsqu'activé, ce modèle est aussi disponible dans les sous-cercles."
+  it="Se attivato, questo modello è disponibile anche nei sotto-cerchi."
+  es="Si se activa, esta plantilla también está disponible en los subcírculos."
 
 [selectTemplate]
   en="Select a template"
   fr="Sélectionner un modèle"
+  it="Seleziona un modello"
+  es="Selecciona una plantilla"
 
 [blankTension]
   en="Blank tension"
   fr="Tension vierge"
+  it="Tensione vuota"
+  es="Tensión en blanco"
 
 [blankTensionHelp]
   en="Start from scratch without a template."
   fr="Commencer à partir de zéro sans modèle."
+  it="Parti da zero senza un modello."
+  es="Empieza desde cero sin plantilla."
 
 [isTemplateTensionOnly]
   en="Only allow template-based tensions"
   fr="N'autoriser que les tensions basées sur des modèles"
+  it="Consenti solo tensioni basate su modelli"
+  es="Permitir solo tensiones basadas en plantillas"
 
 [isTemplateTensionOnlyHelp]
   en="When enabled and templates exist, users must pick a template to create a tension."
   fr="Lorsqu'activé et que des modèles existent, les utilisateurs doivent choisir un modèle pour créer une tension."
+  it="Se attivato e se esistono modelli, gli utenti devono scegliere un modello per creare una tensione."
+  es="Si se activa y existen plantillas, los usuarios deben elegir una plantilla para crear una tensión."
 
 [isPinnedTensionfetchRecursively]
   en="Show pinned tensions from sub-circles"
   fr="Afficher les tensions épinglées des sous-cercles"
+  it="Mostra le tensioni fissate dei sotto-cerchi"
+  es="Mostrar las tensiones fijadas de los subcírculos"
 
 [isPinnedTensionfetchRecursivelyHelp]
   en="When enabled, the pinned tensions panel of any circle also shows tensions pinned in its descendant circles."
   fr="Lorsqu'activé, le panneau des tensions épinglées d'un cercle affiche également les tensions épinglées dans ses sous-cercles."
+  it="Se attivato, il pannello delle tensioni fissate di un cerchio mostra anche le tensioni fissate nei suoi cerchi discendenti."
+  es="Si se activa, el panel de tensiones fijadas de un círculo también muestra las tensiones fijadas en sus círculos descendientes."
 
 [morePinnedNotShown]
   en="More pinned tensions exist but are not shown."
   fr="D'autres tensions épinglées existent mais ne sont pas affichées."
+  it="Esistono altre tensioni fissate ma non sono mostrate."
+  es="Existen más tensiones fijadas, pero no se muestran."
 
 [templateName]
   en="Template name"
   fr="Nom du modèle"
+  it="Nome del modello"
+  es="Nombre de la plantilla"
 
 [templateTitle]
   en="Pre-filled title"
   fr="Titre pré-rempli"
+  it="Titolo precompilato"
+  es="Título prellenado"
 
 [templateComment]
   en="Pre-filled description"
   fr="Description pré-remplie"
+  it="Descrizione precompilata"
+  es="Descripción prellenada"
 
 [templateDescription]
   en="Description"
   fr="Description"
+  it="Descrizione"
+  es="Descripción"
 
 [templateDescriptionHelp]
   en="Short description to help identify this template."
   fr="Courte description pour identifier ce modèle."
+  it="Breve descrizione per identificare questo modello."
+  es="Breve descripción para identificar esta plantilla."
 
 [inheritedTemplates]
   en="Inherited templates"
   fr="Modèles hérités"
+  it="Modelli ereditati"
+  es="Plantillas heredadas"
 
 [subTemplates]
   en="Sub-circle templates"
   fr="Modèles des sous-cercles"
+  it="Modelli dei sotto-cerchi"
+  es="Plantillas de subcírculos"
 
 [projectTemplate]
   en="Project template"
   fr="Modèle de Projet"
+  it="Modello di progetto"
+  es="Plantilla de proyecto"
 
 [projectTemplates]
   en="Project templates"
   fr="Modèles de Projets"
+  it="Modelli di progetto"
+  es="Plantillas de proyecto"
 
 [noProjectTemplates]
   en="No project templates"
   fr="Aucun modèle de projet"
+  it="Nessun modello di progetto"
+  es="Ninguna plantilla de proyecto"
 
 [projectTemplatesInfoHeader]
   en="Project templates allow to pre-fill project columns with predefined values."
   fr="Les modèles de projet permettent de pré-remplir les colonnes du projet avec des valeurs prédéfinies."
+  it="I modelli di progetto permettono di precompilare le colonne del progetto con valori predefiniti."
+  es="Las plantillas de proyecto permiten rellenar previamente las columnas del proyecto con valores predefinidos."
 
 [projectTemplatesInfoDoc]
   en="Templates defined in a circle with the recursive flag enabled are also available in sub-circles."
   fr="Les modèles définis dans un cercle avec l'option récursive sont également disponibles dans les sous-cercles."
+  it="I modelli definiti in un cerchio con l’opzione ricorsiva attivata sono disponibili anche nei sotto-cerchi."
+  es="Las plantillas definidas en un círculo con la opción recursiva activada también están disponibles en los subcírculos."
 
 [columns]
   en="Columns"
   fr="Colonnes"
+  it="Colonne"
+  es="Columnas"
 
 [selectAProjectTemplate]
   en="Select a project template"
   fr="Sélectionner un modèle de projet"
+  it="Seleziona un modello di progetto"
+  es="Selecciona una plantilla de proyecto"
 
 [createANewProjectTemplate]
   en="Create a new project template"
   fr="Créer un nouveau modèle de projet"
+  it="Crea un nuovo modello di progetto"
+  es="Crear una nueva plantilla de proyecto"
 
 [simpleKanban]
   en="Simple Kanban"
   fr="Kanban simple"
+  it="Kanban semplice"
+  es="Kanban simple"
 
 [adhocRole]
   en="Ad-hoc Role"
   fr="Rôle ad-hoc"
+  it="Ruolo ad hoc"
+  es="Rol ad hoc"
 
 [unknown]
   en="unknown"
   fr="inconu"
+  it="sconosciuto"
+  es="desconocido"
 
 [notImplemented]
   en="not implemented"
   fr="non implémenté"
+  it="non implementato"
+  es="no implementado"
 
 
 [askCoordo]
   en="Please, ask a coordinator of this circle to perform this action."
   fr="Veuillez demander à un coordinateur de ce cercle d’effectuer cette action."
+  it="Chiedi a un coordinatore di questo cerchio di eseguire questa azione."
+  es="Pide a un coordinador de este círculo que realice esta acción."
 
 [onlyMemberCanCreate]
   en="Only member of this organisation can create"
   fr="Seuls les membres de cette organisation peuvent créer des"
+  it="Solo i membri di questa organizzazione possono creare"
+  es="Solo los miembros de esta organización pueden crear"
 
 [onlyMemberCanParticipate]
   en="Only member of this organisation can participate to this conversation."
   fr="Seuls les membres de cette organisation peuvent participer à cette conversation."
+  it="Solo i membri di questa organizzazione possono partecipare a questa conversazione."
+  es="Solo los miembros de esta organización pueden participar en esta conversación."
 
 [joinForTension]
   en="this organisation to be able to create"
   fr="cette organisation pour pouvoir créer des"
+  it="questa organizzazione per poter creare"
+  es="esta organización para poder crear"
 
 [thisOrgaToParticipate]
   en="this organisation to participate to this conversation."
   fr="cette organisation pour participer à cette conversation."
+  it="questa organizzazione per partecipare a questa conversazione."
+  es="esta organización para participar en esta conversación."
 
 [nodeNotExist]
   en="Sorry, this circle doesn’t exist."
   fr="Désolé, ce cercle n’existe pas."
+  it="Spiacenti, questo cerchio non esiste."
+  es="Lo sentimos, este círculo no existe."
 
 [confirmToUnlinkUser]
   en="Confirm to unlink user"
   fr="Confirmer pour détacher l’utilisateur"
+  it="Conferma per scollegare l’utente"
+  es="Confirma para desvincular al usuario"
 
 [confirmDetachProject]
   en="Please confirm to detach this project from this circle."
   fr="Veuillez confirmer pour détacher ce projet de ce cercle."
+  it="Conferma per scollegare questo progetto da questo cerchio."
+  es="Confirma para desvincular este proyecto de este círculo."
 
 [goHome]
   en="Go to home page."
   fr="Aller à la page d’accueil."
+  it="Vai alla pagina iniziale."
+  es="Ir a la página de inicio."
 
 [goBack]
   en="Go back"
   fr="revenir en arrière"
+  it="Torna indietro"
+  es="Volver atrás"
 
 [goRoot]
   en="Go to root circle"
   fr="Aller au cercle racine"
+  it="Vai al cerchio radice"
+  es="Ir al círculo raíz"
 
 [goParent]
   en="Go to parent circle"
   fr="Aller au cercle parent"
+  it="Vai al cerchio genitore"
+  es="Ir al círculo padre"
 
 [goContract]
   en="View the contract"
   fr="Voir le contrat"
+  it="Vedi il contratto"
+  es="Ver el contrato"
 
 [goContracts]
   en="View to contracts"
   fr="Voir les contrats"
+  it="Vedi i contratti"
+  es="Ver los contratos"
 
 [clickMe]
   en="Click me"
   fr="cliquez-moi"
+  it="Cliccami"
+  es="Haz clic aquí"
 
 [newReceiver]
   en="New destination"
   fr="Nouvelle destination"
+  it="Nuova destinazione"
+  es="Nuevo destino"
 
 [noMemberYet]
   en="No member in this circle yet"
   fr="Aucun membre dans ce cercle"
+  it="Nessun membro in questo cerchio per ora"
+  es="Ningún miembro en este círculo por ahora"
 
 [noNotificationsYet]
   en="No notifications yet."
   fr="Aucune notifications pour le moment"
+  it="Nessuna notifica per ora."
+  es="Ninguna notificación por ahora."
 
 [noAssignedYet]
   en="No assigned {{_tension_}}s."
   fr="Aucune {{_tension_}} assignée."
+  it="Nessuna {{_tension_}} assegnata."
+  es="Ninguna {{_tension_}} asignada."
 
 [noTensionsYet]
   en="No {{_tension_}}s yet."
   fr="Aucune {{_tension_}} pour le moment"
+  it="Nessuna {{_tension_}} per ora."
+  es="Ninguna {{_tension_}} por ahora."
 
 [noTensionsAssigneesYet]
   en="No {{_tension_}}s assigned yet."
   fr="Aucune {{_tension_}} assignée pour le moment"
+  it="Nessuna {{_tension_}} assegnata per ora."
+  es="Ninguna {{_tension_}} asignada por ahora."
 
 [noTensionsLabelsYet]
   en="No {{_tension_}}s with labels yet."
   fr="Aucune {{_tension_}} étiquetée pour le moment"
+  it="Nessuna {{_tension_}} con etichette per ora."
+  es="Ninguna {{_tension_}} con etiquetas por ahora."
 
 [rolesHere]
   en="Roles in this circle"
   fr="Roles dans ce cercle"
+  it="Ruoli in questo cerchio"
+  es="Roles en este círculo"
 
 [rolesInOrga]
   en="Roles in this organisation"
   fr="Rôles dans cette organisation"
+  it="Ruoli in questa organizzazione"
+  es="Roles en esta organización"
 
 [noLabels]
   en="No label in this circle yet"
   fr="Aucune étiquette dans ce cercle"
+  it="Nessuna etichetta in questo cerchio per ora"
+  es="Ninguna etiqueta en este círculo por ahora"
 
 [noRoles]
   en="No role in this circle yet"
   fr="Aucun rôles dans ce cercle"
+  it="Nessun ruolo in questo cerchio per ora"
+  es="Ningún rol en este círculo por ahora"
 
 [labelsSub]
   en="Labels in sub-circles"
   fr="Etiquettes dans les sous-cercles"
+  it="Etichette nei sotto-cerchi"
+  es="Etiquetas en los subcírculos"
 
 [labelsTop]
   en="Labels in parent circles"
   fr="Etiquettes dans les cercles parents"
+  it="Etichette nei cerchi genitori"
+  es="Etiquetas en los círculos padre"
 
 [rolesSub]
   en="Roles in sub-circles"
   fr="Rôles dans les sous-cercles"
+  it="Ruoli nei sotto-cerchi"
+  es="Roles en los subcírculos"
 
 [rolesTop]
   en="Roles in parent circles"
   fr="Rôles dans les cercles parents"
+  it="Ruoli nei cerchi genitori"
+  es="Roles en los círculos padre"
 
 [noDataError]
   en="No data returned. You may try to refresh the page."
   fr="Aucune donnée n’est retournée. Vous pouvez essayer de rafraîchir la page."
+  it="Nessun dato restituito. Prova ad aggiornare la pagina."
+  es="No se han devuelto datos. Prueba a recargar la página."
 
 [authorizationNeeded]
   en="Authorization required"
   fr="Autorisation requise"
+  it="Autorizzazione richiesta"
+  es="Autorización requerida"
 
 [authenticationNeeded]
   en="Authentication required"
   fr="Authentification requise"
+  it="Autenticazione richiesta"
+  es="Autenticación requerida"
 
 [please]
   en="Please"
   fr="Veuillez"
+  it="Per favore"
+  es="Por favor"
 
 [toPerformThis]
   en="to perform this action."
   fr="afin d’effectuer cette action."
+  it="per eseguire questa azione."
+  es="para realizar esta acción."
 
 [refresh]
   en="Refresh"
   fr="Rafraîchir"
+  it="Aggiorna"
+  es="Recargar"
 
 [sessionExpired]
   en="Your session has expired. Please, confirm your password"
   fr="Votre session a expiré. Veuillez confirmer votre mot de passe"
+  it="La tua sessione è scaduta. Conferma la tua password"
+  es="Tu sesión ha caducado. Confirma tu contraseña"
 
 [sessionExpired2]
   en="The session has expired, please try again."
   fr="Votre session a expiré. Veuillez réessayer."
+  it="La sessione è scaduta, riprova."
+  es="La sesión ha caducado, inténtalo de nuevo."
 
 [passwordUpdated]
   en="Your password has been updated."
   fr="Votre mot de passe a été mis à jour."
+  it="La tua password è stata aggiornata."
+  es="Tu contraseña se ha actualizado."
 
 [enterYourEmail]
   en="Enter your email"
   fr="Saisisser votre e-mail"
+  it="Inserisci la tua email"
+  es="Introduce tu correo electrónico"
 
 [enterTheCode]
   en="Enter the code below"
   fr="Entrez le code ci-dessous"
+  it="Inserisci il codice qui sotto"
+  es="Introduce el código a continuación"
 
 [newPassword]
   en="New password"
   fr="Nouveau mot de passe"
+  it="Nuova password"
+  es="Nueva contraseña"
 
 [confirmYourPassword]
   en="Confirm your password"
   fr="Confirmez votre mot de passe"
+  it="Conferma la tua password"
+  es="Confirma tu contraseña"
 
 [resetPassword]
   en="Reset Password"
   fr="Réinitialiser le mot de passe"
+  it="Reimposta password"
+  es="Restablecer contraseña"
 
 [reverseTooltip]
   en="Reverse the organisation graph."
   fr="Inverser le graphe de l’organisation."
+  it="Inverti il grafo dell’organizzazione."
+  es="Invertir el grafo de la organización."
 
 [tensionsListTooltip]
   en="Display {{_tension_}}s as List."
   fr="Afficher les {{_tension_}}s sous forme de liste."
+  it="Mostra ogni {{_tension_}} come elenco."
+  es="Mostrar cada {{_tension_}} como lista."
 
 [tensionsIntExtTooltip]
   en="Display indegenous and exogenous {{_tension_}}s with respect to the focused circle."
   fr="Afficher les {{_tension_}}s indigènes et exogènes par rapport au cercle focalisé."
+  it="Mostra ogni {{_tension_}} interna ed esterna rispetto al cerchio selezionato."
+  es="Mostrar cada {{_tension_}} interna y externa respecto al círculo seleccionado."
 
 [tensionsCircleTooltip]
   en="Display {{_tension_}}s by (targeted) circles."
   fr="Afficher les {{_tension_}}s par cercles (ciblés)."
+  it="Mostra ogni {{_tension_}} per cerchio (destinatario)."
+  es="Mostrar cada {{_tension_}} por círculo (destinatario)."
 
 [tensionsAssigneeTooltip]
   en="Display {{_tension_}}s by assigned members."
   fr="Afficher les {{_tension_}}s par membres assignés."
+  it="Mostra ogni {{_tension_}} per membro assegnato."
+  es="Mostrar cada {{_tension_}} por miembro asignado."
 
 [tensionsLabelTooltip]
   en="Display {{_tension_}}s by labels."
   fr="Afficher les {{_tension_}}s par étiquettes."
+  it="Mostra ogni {{_tension_}} per etichetta."
+  es="Mostrar cada {{_tension_}} por etiqueta."
 
 [explainJoin]
   en="Explain your motivations for joining this organisation ?"
   fr="Expliquez vos motivations pour rejoindre cette organisation ?"
+  it="Spiega le tue motivazioni per unirti a questa organizzazione?"
+  es="¿Explica tus motivos para unirte a esta organización?"
 
 [showOlderEvents]
   en="Show {{}} older events"
   fr="Afficher {{}} autres événements"
+  it="Mostra {{}} eventi precedenti"
+  es="Mostrar {{}} eventos anteriores"
 
 [markdownSupport]
   en="Markdown formatting is supported"
   fr="Le formatage Markdown est pris en charge"
+  it="La formattazione Markdown è supportata"
+  es="Se admite el formato Markdown"
 
 [headingText]
   en="Heading text"
   fr="Titre"
+  it="Titolo"
+  es="Título"
 
 [boldText]
   en="Bold text"
   fr="Texte en gras"
+  it="Testo in grassetto"
+  es="Texto en negrita"
 
 [italicText]
   en="Italic text"
   fr="Texte en italique"
+  it="Testo in corsivo"
+  es="Texto en cursiva"
 
 [strikethroughText]
   en="Strikethrough"
   fr="Texte barré"
+  it="Barrato"
+  es="Tachado"
 
 [quoteText]
   en="Quote"
   fr="Citation"
+  it="Citazione"
+  es="Cita"
 
 [linkText]
   en="Link"
   fr="Lien"
+  it="Link"
+  es="Enlace"
 
 [listText]
   en="List"
   fr="Liste"
+  it="Elenco"
+  es="Lista"
 
 [orderedListText]
   en="Ordered list"
   fr="Liste numérotée"
+  it="Elenco numerato"
+  es="Lista numerada"
 
 [checkListText]
   en="Check list"
   fr="Liste à cocher"
+  it="Elenco di controllo"
+  es="Lista de verificación"
 
 [collapsibleSectionText]
   en="Collapsible section"
   fr="Section repliable"
+  it="Sezione comprimibile"
+  es="Sección desplegable"
 
 [mentionUserText]
   en="Mention an user"
   fr="Mentionner un utilisateur"
+  it="Menziona un utente"
+  es="Mencionar a un usuario"
 
 [mentionTensionText]
   en="Reference a tension"
   fr="Référencer une tension"
+  it="Fai riferimento a una tensione"
+  es="Referenciar una tensión"
 
 [confirmAction]
   en="Confirm action"
   fr="Confirmer l’action"
+  it="Conferma l’azione"
+  es="Confirmar la acción"
 
 [confirmOwner]
   en="Add new owner"
   fr="Ajouter un nouveau propriétaire"
+  it="Aggiungi un nuovo proprietario"
+  es="Añadir un nuevo propietario"
 
 [lockMenu]
   en="Lock menu open"
   fr="Garder ouvert"
+  it="Tieni il menu aperto"
+  es="Mantener el menú abierto"
 
 [reactedWith]
   en="reacted with"
   fr="a réagi avec"
+  it="ha reagito con"
+  es="reaccionó con"
 
 [and]
   en="and"
   fr="et"
+  it="e"
+  es="y"
 
 [youPlay]
   en="You play the role: {{role}}\nin the circle: {{circle}}\n{{since}}"
   fr="Vous jouez le rôle: {{role}}\ndans le cercle: {{circle}}\n{{since}}"
+  it="Svolgi il ruolo: {{role}}\nnel cerchio: {{circle}}\n{{since}}"
+  es="Desempeñas el rol: {{role}}\nen el círculo: {{circle}}\n{{since}}"
 
 [theyPlay]
   en="Role: {{role}}\nin the circle: {{circle}}\n{{since}}"
   fr="Rôle: {{role}}\ndans le cercle: {{circle}}\n{{since}}"
+  it="Ruolo: {{role}}\nnel cerchio: {{circle}}\n{{since}}"
+  es="Rol: {{role}}\nen el círculo: {{circle}}\n{{since}}"
 
 [pendingRole]
   en="Invitation to play: {{role}}\nin the circle: {{circle}}\n{{since}}"
   fr="Invitation à jouer: {{role}}\ndans le cercle: {{circle}}\n{{since}}"
+  it="Invito a svolgere: {{role}}\nnel cerchio: {{circle}}\n{{since}}"
+  es="Invitación a desempeñar: {{role}}\nen el círculo: {{circle}}\n{{since}}"
 
 [addTensionColumn]
   en="Add {{_tension_}}s here"
   fr="Ajouter des {{_tension_}}s ici"
+  it="Aggiungi una {{_tension_}} qui"
+  es="Añadir una {{_tension_}} aquí"
 
 [deleteDraft]
   en="Delete draft"
   fr="Supprimer le draft"
+  it="Elimina bozza"
+  es="Eliminar borrador"
 
 [convertDraft]
   en="Convert draft to {{_tension_}}"
   fr="Convertir le draft en {{_tension_}}"
+  it="Converti la bozza in {{_tension_}}"
+  es="Convertir el borrador en {{_tension_}}"
 
 [deleteColumn]
   en="Delete column"
   fr="Supprimer la colonne"
+  it="Elimina colonna"
+  es="Eliminar columna"
 
 [addLinkedTensions]
   en="Add {{_tension_}} to this project"
   fr="Ajouter des {{_tension_}}s à ce projet"
+  it="Aggiungi una {{_tension_}} a questo progetto"
+  es="Añadir una {{_tension_}} a este proyecto"
 
 [addSelectedItems]
   en="Add selected items"
   fr="Ajouter les éléments sélectionnés"
+  it="Aggiungi gli elementi selezionati"
+  es="Añadir los elementos seleccionados"
 
 [removeFromProject]
   en="Remove from project"
   fr="Retirer du projet"
+  it="Rimuovi dal progetto"
+  es="Quitar del proyecto"
 
 [removeSelectedFromProject]
   en="Remove selected from project"
   fr="Retirer la sélection du projet"
+  it="Rimuovi la selezione dal progetto"
+  es="Quitar la selección del proyecto"
 
 [removeItemsColumn]
   en="Remove items from this column"
   fr="Retirer les éléments de cette colonne"
+  it="Rimuovi gli elementi da questa colonna"
+  es="Quitar los elementos de esta columna"
 
 [removeSelectedItemsColumn]
   en="Remove selected items from this column"
   fr="Retirer les éléments sélectionnés de cette colonne"
+  it="Rimuovi gli elementi selezionati da questa colonna"
+  es="Quitar los elementos seleccionados de esta columna"
 
 [selectAllCards]
   en="Select all cards"
   fr="Sélectionner toutes les cartes"
+  it="Seleziona tutte le schede"
+  es="Seleccionar todas las tarjetas"
 
 [openNewTab]
   en="Open in a new tab"
   fr="Ouvrir dans un nouvel onglet"
+  it="Apri in una nuova scheda"
+  es="Abrir en una nueva pestaña"
 
 [ownerPromotion]
   en="This member has been successfully promoted to Owner"
   fr="Ce membre a été promu Owner avec succès"
+  it="Questo membro è stato promosso Proprietario con successo"
+  es="Este miembro ha sido promovido a Propietario con éxito"
 
 
 # ADDME NEW END @next ^
@@ -2694,48 +4056,72 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [orgaSubject]
   en="the organisation"
   fr="de l’organisation"
+  it="l’organizzazione"
+  es="la organización"
 [circleSubject]
   en="the circle"
   fr="du cercle"
+  it="il cerchio"
+  es="el círculo"
 [roleSubject]
   en="the role"
   fr="du rôle"
+  it="il ruolo"
+  es="el rol"
 
 [circlesLegend]
   en="Circles and sub-circles (group, team, etc)"
   fr="Cercles et sous-cercles (groupe, équipe, etc)"
+  it="Cerchi e sotto-cerchi (gruppo, team, ecc.)"
+  es="Círculos y subcírculos (grupo, equipo, etc.)"
 
 [focusLegend]
   en="Focused circle/role"
   fr="Cercle/rôle courant"
+  it="Cerchio/ruolo selezionato"
+  es="Círculo/rol seleccionado"
 
 [circleLegend]
   en="Symbol for circle"
   fr="Symbole de cercle"
+  it="Simbolo del cerchio"
+  es="Símbolo de círculo"
 
 [roleLegend]
   en="Symbol for role"
   fr="Symbole de rôle"
+  it="Simbolo del ruolo"
+  es="Símbolo de rol"
 
 [ownerLegend]
   en="Symbol for owner role"
   fr="Symbole de rôle propriétaire"
+  it="Simbolo del ruolo proprietario"
+  es="Símbolo de rol propietario"
 
 [coordoLegend]
   en="Symbol for coordinator role"
   fr="Symbole de rôle coordinateur"
+  it="Simbolo del ruolo coordinatore"
+  es="Símbolo de rol coordinador"
 
 [visibilityPublicLegend]
   en="Public visibility"
   fr="Visibilité publique"
+  it="Visibilità pubblica"
+  es="Visibilidad pública"
 
 [visibilityPrivateLegend]
   en="Private visibility (members only)"
   fr="Visibilité privé (membres uniquement)"
+  it="Visibilità privata (solo membri)"
+  es="Visibilidad privada (solo miembros)"
 
 [visibilitySecretLegend]
   en="Secret visibility (roles only)"
   fr="Visibilité secrète (rôles uniquement)"
+  it="Visibilità segreta (solo ruoli)"
+  es="Visibilidad secreta (solo roles)"
 
 #
 # Action Panel
@@ -2744,100 +4130,148 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [visibility_header]
   en="Change Visibility of"
   fr="Modifier la visibilié de"
+  it="Modifica la visibilità di"
+  es="Cambiar la visibilidad de"
 
 [authority_role_header]
   en="Change Authority of"
   fr="Modifier l’authorité de"
+  it="Modifica l’autorità di"
+  es="Cambiar la autoridad de"
 
 [authority_circle_header]
   en="Change Governance process of"
   fr="Modifier la gouvernance de"
+  it="Modifica il processo di governance di"
+  es="Cambiar el proceso de gobernanza de"
 
 [link_header]
   en="New lead for role"
   fr="Nouveau lead pour le role"
+  it="Nuovo lead per il ruolo"
+  es="Nuevo lead para el rol"
 
 [unlink_header]
   en="Unlink lead for role"
   fr="Détacher le lead pour le role"
+  it="Scollega il lead del ruolo"
+  es="Desvincular el lead del rol"
 
 [archive_header]
   en="Archive {{type}}"
   fr="Archiver le {{type}}"
+  it="Archivia {{type}}"
+  es="Archivar {{type}}"
 
 [unarchive_header]
   en="Unarchive {{type}}"
   fr="Désarchiver le {{type}}"
+  it="Ripristina {{type}} dall’archivio"
+  es="Desarchivar {{type}}"
 
 [archiveRootInfo]
   en="Nothing will be deleted, you can unarchive the organisation at any time."
   fr="Rien ne sera supprimé, vous pouvez désarchiver l'organisation à tout moment."
+  it="Non verrà eliminato nulla, puoi ripristinare l’organizzazione dall’archivio in qualsiasi momento."
+  es="No se eliminará nada, puedes desarchivar la organización en cualquier momento."
 
 [archiveChildrenInfo]
   en="All children of this circle will be archived too."
   fr="Tous les enfants de ce cercle seront également archivés."
+  it="Anche tutti i figli di questo cerchio verranno archiviati."
+  es="Todos los hijos de este círculo también se archivarán."
 
 [closeTensionsAsk]
   en="Close all open tensions attached to it and its children."
   fr="Fermer toutes les tensions ouvertes qui lui sont rattachées, ainsi qu’à ses enfants."
+  it="Chiudi tutte le tensioni aperte collegate ad esso e ai suoi figli."
+  es="Cerrar todas las tensiones abiertas vinculadas a él y a sus hijos."
 
 [archiveSubAuthNeeded]
   en="You need authority on all the sub-circles to archive this circle. Please, ask a coordinator of the sub-circles to perform this action."
   fr="Vous devez avoir l’autorité sur tous les sous-cercles pour archiver ce cercle. Veuillez demander à un coordinateur des sous-cercles d’effectuer cette action."
+  it="Ti serve l’autorità su tutti i sotto-cerchi per archiviare questo cerchio. Chiedi a un coordinatore dei sotto-cerchi di eseguire questa azione."
+  es="Necesitas autoridad sobre todos los subcírculos para archivar este círculo. Pide a un coordinador de los subcírculos que realice esta acción."
 
 [leave_header]
   en="Leave {{type}}"
   fr="Quitter le {{type}}"
+  it="Lascia {{type}}"
+  es="Abandonar {{type}}"
 
 # Success
 
 [tensionType_action_success]
   en="{{_Tension_}} type changed."
   fr="Type de la {{_tension_}} modifié."
+  it="Tipo di {{_Tension_}} modificato."
+  es="Tipo de {{_Tension_}} cambiado."
 
 [archive_action_success]
   en="{{type}} archived"
   fr="{{type}} archivé"
+  it="{{type}} archiviato"
+  es="{{type}} archivado"
 
 [unarchive_action_success]
   en="{{type}} unarchived"
   fr="{{type}} désarchivé"
+  it="{{type}} ripristinato dall’archivio"
+  es="{{type}} desarchivado"
 
 [left_action_success]
   en="Role left"
   fr="Rôle quitté"
+  it="Ruolo lasciato"
+  es="Rol abandonado"
 
 [move_action_success]
   en="{{_Tension_}} moved"
   fr="{{_tension_}} déplacée"
+  it="{{_Tension_}} spostata"
+  es="{{_Tension_}} movida"
 
 [move_circle_action_success]
   en="Circle moved"
   fr="Cercle déplacé"
+  it="Cerchio spostato"
+  es="Círculo movido"
 
 [move_role_action_success]
   en="Role moved"
   fr="Rôle déplacé"
+  it="Ruolo spostato"
+  es="Rol movido"
 
 [visibility_action_success]
   en="Visibility changed"
   fr="Visibilité modifié"
+  it="Visibilità modificata"
+  es="Visibilidad cambiada"
 
 [authority_action_success]
   en="Authority changed"
   fr="Authorité modifié"
+  it="Autorità modificata"
+  es="Autoridad cambiada"
 
 [link_action_success]
   en="User has been invited"
   fr="L’utilisateur a été invité"
+  it="L’utente è stato invitato"
+  es="El usuario ha sido invitado"
 
 [self_link_action_success]
   en="Welcome to your new role"
   fr="Bienvenue dans votre nouveau rôle"
+  it="Benvenuto nel tuo nuovo ruolo"
+  es="Bienvenido a tu nuevo rol"
 
 [unlink_action_success]
   en="User unlinked"
   fr="Utilisateur détaché"
+  it="Utente scollegato"
+  es="Usuario desvinculado"
 
 
 #
@@ -2848,78 +4282,116 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [orgaUserInvitation]
   en="Users can join this organisation"
   fr="Les utilisateurs peuvent rejoindre cette organisation"
+  it="Gli utenti possono unirsi a questa organizzazione"
+  es="Los usuarios pueden unirse a esta organización"
 
 [orgaUserInvitationHelp]
   en="User will be able to open a contract to join the organisation. The user will join as a Guest only after a coordinator validate the contract. For public organisation only."
   fr="L’utilisateur pourra ouvrir un contrat pour rejoindre cette organisation. L’utilisateur ne pourra rejoindre l’organisation en tant qu’invité qu’après qu’un coordinateur ait validé le contrat. Pour les organisations publiques uniquement"
+  it="L’utente potrà aprire un contratto per unirsi all’organizzazione. L’utente si unirà come Ospite solo dopo che un coordinatore avrà convalidato il contratto. Solo per organizzazioni pubbliche."
+  es="El usuario podrá abrir un contrato para unirse a la organización. El usuario se unirá como Invitado solo después de que un coordinador valide el contrato. Solo para organizaciones públicas."
 
 [guestCanCreateTension]
   en="Guests can create {{_tension_}}"
   fr="Les invités peuvent créer des {{_tension_}}s"
+  it="Gli ospiti possono creare una {{_tension_}}"
+  es="Los invitados pueden crear una {{_tension_}}"
 
 [guestCanCreateTensionHelp]
   en="Guests are users who have been invited but do not yet have a role in the organisation."
   fr="Les invités sont des utilisateurs qui ont été invités mais qui n’ont pas encore de rôle dans l’organisation."
+  it="Gli ospiti sono utenti che sono stati invitati ma non hanno ancora un ruolo nell’organizzazione."
+  es="Los invitados son usuarios que han sido invitados pero que aún no tienen un rol en la organización."
 
 [terminology]
   en="Terminology"
   fr="Terminologie"
+  it="Terminologia"
+  es="Terminología"
 
 [terminologyHelp]
   en="You can rename some terminology to better match your culture."
   fr="Vous pouvez renommer certaine terminologie pour correspondre mieux à votre culture."
+  it="Puoi rinominare alcuni termini per adattarli meglio alla tua cultura."
+  es="Puedes renombrar algunos términos para que se ajusten mejor a tu cultura."
 
 [tensionTerminologyHelp]
   en="A tension represents an issue, request, or topic within your organisation."
   fr="Une tension représente un problème, une demande ou un sujet au sein de votre organisation."
+  it="Una tensione rappresenta un problema, una richiesta o un argomento all’interno della tua organizzazione."
+  es="Una tensión representa un problema, una solicitud o un tema dentro de tu organización."
 
 [tensionTerminologyPlaceholder]
   en="Ticket, Issue, Task, Topic..."
   fr="Ticket, Tâche, Sujet..."
+  it="Ticket, Problema, Attività, Argomento..."
+  es="Ticket, Incidencia, Tarea, Tema..."
 
 [mandateTerminologyHelp]
   en="A mandate describes the purpose and operating rules of a circle or role."
   fr="Un mandat décrit l'objectif et les règles de fonctionnement d'un cercle ou d'un rôle."
+  it="Un mandato descrive lo scopo e le regole di funzionamento di un cerchio o di un ruolo."
+  es="Un mandato describe el propósito y las reglas de funcionamiento de un círculo o de un rol."
 
 [mandateTerminologyPlaceholder]
   en="Readme, Constitution, Guidelines..."
   fr="Readme, Constitution, Charte..."
+  it="Readme, Costituzione, Linee guida..."
+  es="Readme, Constitución, Pautas..."
 
 [settingsSavedRefresh]
   en="Saved! Reload the page to apply changes everywhere."
   fr="Enregistré ! Rechargez la page pour appliquer les changements partout."
+  it="Salvato! Ricarica la pagina per applicare le modifiche ovunque."
+  es="¡Guardado! Recarga la página para aplicar los cambios en todas partes."
 
 [notifyByEmail]
   en="Enable email notifications."
   fr="Activer les notifications par e-mail."
+  it="Attiva le notifiche via email."
+  es="Activar las notificaciones por correo electrónico."
 
 [beenUnsubscribe]
   en="You've been unsubscribed from this {{_tension_}}."
   fr="Vous avez été désabonné de cette {{_tension_}}."
+  it="Hai annullato l’iscrizione a questa {{_tension_}}."
+  es="Has cancelado la suscripción a esta {{_tension_}}."
 
 [beenUnwatch]
   en="You’ve been unsubscribed from this organisation."
   fr="Vous avez été désabonné de cette organisation."
+  it="Hai annullato l’iscrizione a questa organizzazione."
+  es="Has cancelado la suscripción a esta organización."
 
 [markAsRead]
   en="Mark as read."
   fr="Marquer comme lu."
+  it="Segna come letto."
+  es="Marcar como leído."
 
 [markAllAsRead]
   en="Mark all as read"
   fr="Tout marquer comme lu"
+  it="Segna tutto come letto"
+  es="Marcar todo como leído"
 
 [unreadEvents]
   en="Unread events"
   fr="Évènements non lus"
+  it="Eventi non letti"
+  es="Eventos no leídos"
 
 [readEvents]
   en="Read events"
   fr="Évènements lus"
+  it="Eventi letti"
+  es="Eventos leídos"
 
 [voteWaited]
   en="A vote is waited from you."
   fr="Un vote est attendu de votre part."
+  it="Si attende un tuo voto."
+  es="Se espera tu voto."
 
 #
 # Blob State
@@ -2928,10 +4400,14 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [newContractCreated]
   en="New contract created."
   fr="Nouveau contrat créé."
+  it="Nuovo contratto creato."
+  es="Nuevo contrato creado."
 
 [onNode_blob]
   en="Document created"
   fr="Document créé"
+  it="Documento creato"
+  es="Documento creado"
 
 
 #
@@ -2942,94 +4418,140 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [created_event]
   en="New {{_tension_}}"
   fr="Nouvelle {{_tension_}}"
+  it="Nuova {{_tension_}}"
+  es="Nueva {{_tension_}}"
 
 [closed_event]
   en="{{_Tension_}} closed"
   fr="{{_Tension_}} fermée"
+  it="{{_Tension_}} chiusa"
+  es="{{_Tension_}} cerrada"
 
 [reopened_event]
   en="{{_Tension_}} reopened"
   fr="{{_Tension_}} réouverte"
+  it="{{_Tension_}} riaperta"
+  es="{{_Tension_}} reabierta"
 
 [commentPushed_event]
   en="New comment"
   fr="Nouveau commentaire"
+  it="Nuovo commento"
+  es="Nuevo comentario"
 
 [moved_event]
   en="{{_Tension_}} moved"
   fr="{{_Tension_}} déplacée"
+  it="{{_Tension_}} spostata"
+  es="{{_Tension_}} movida"
 
 [titleUpdated_event]
   en="Title updated"
   fr="Sujet mis à jour"
+  it="Titolo aggiornato"
+  es="Título actualizado"
 
 [typeUpdated_event]
   en="Type updated"
   fr="Type modifié"
+  it="Tipo aggiornato"
+  es="Tipo actualizado"
 
 [authority_event]
   en="Authority updated"
   fr="Authorité modifié"
+  it="Autorità aggiornata"
+  es="Autoridad actualizada"
 
 [visibility_event]
   en="Visibility updated"
   fr="Visibilité modifié"
+  it="Visibilità aggiornata"
+  es="Visibilidad actualizada"
 
 [labelAdded_event]
   en="Label added"
   fr="Etiquette ajouté"
+  it="Etichetta aggiunta"
+  es="Etiqueta añadida"
 
 [labelRemoved_event]
   en="Label removed"
   fr="Etiquette retiré"
+  it="Etichetta rimossa"
+  es="Etiqueta quitada"
 
 [assigneeAdded_event]
   en="New assignment"
   fr="Nouvelle assignation"
+  it="Nuova assegnazione"
+  es="Nueva asignación"
 
 [assigneeRemoved_event]
   en="Assignee removed"
   fr="Assigné retiré"
+  it="Assegnatario rimosso"
+  es="Asignado quitado"
 
 [blobCommitted_event]
   en="{{_Mandate_}} committed"
   fr="{{_Mandate_}} modifié (draft)"
+  it="{{_Mandate_}} modificato (bozza)"
+  es="{{_Mandate_}} modificado (borrador)"
 
 [blobPushed_event]
   en="{{_Mandate_}} updated"
   fr="{{_Mandate_}} modifié"
+  it="{{_Mandate_}} aggiornato"
+  es="{{_Mandate_}} actualizado"
 
 [memberLinked_event]
   en="A role has been linked"
   fr="Un rôle a été lié"
+  it="Un ruolo è stato collegato"
+  es="Se ha vinculado un rol"
 
 [memberUnlinked_event]
   en="Member unlinked"
   fr="Membre détaché"
+  it="Membro scollegato"
+  es="Miembro desvinculado"
 
 [userJoined_event]
   en="An user joined us"
   fr="Un utilisateur nous a rejoint"
+  it="Un utente si è unito a noi"
+  es="Un usuario se ha unido"
 
 [userLeft_event]
   en="An user left his role"
   fr="Un utilisateur à quitté son rôle"
+  it="Un utente ha lasciato il suo ruolo"
+  es="Un usuario ha abandonado su rol"
 
 [userLeft_owner_event]
   en="An user left his Owner role"
   fr="Un utilisateur a quitté son rôle de propriétaire"
+  it="Un utente ha lasciato il suo ruolo di Proprietario"
+  es="Un usuario ha abandonado su rol de Propietario"
 
 [userLeft_orga_event]
   en="An user left us"
   fr="Un utilisateur nous a quitté"
+  it="Un utente ci ha lasciato"
+  es="Un usuario nos ha dejado"
 
 [pinned_event]
   en="{{_Tension_}} pinned"
   fr="{{_Tension_}} épinglée"
+  it="{{_Tension_}} fissata"
+  es="{{_Tension_}} fijada"
 
 [unpinned_event]
   en="{{_Tension_}} unpinned"
   fr="{{_Tension_}} désépinglée"
+  it="{{_Tension_}} non più fissata"
+  es="{{_Tension_}} desfijada"
 
 
 
@@ -3042,60 +4564,88 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [moved_contract]
   en="Move {{_tension_}}"
   fr="Déplacer la {{_tension_}}"
+  it="Sposta {{_tension_}}"
+  es="Mover {{_tension_}}"
 
 [moved_circle]
   en="Move circle"
   fr="Deplacer le cercle"
+  it="Sposta cerchio"
+  es="Mover círculo"
 
 [moved_role]
   en="Move role"
   fr="Deplacer la rôle"
+  it="Sposta ruolo"
+  es="Mover rol"
 
 [memberLinked_contract]
   en="New lead link"
   fr="Nouveau lead link"
+  it="Nuovo lead link"
+  es="Nuevo lead link"
 
 [memberUnlinked_contract]
   en="Retired lead link"
   fr="Lead link retiré"
+  it="Lead link ritirato"
+  es="Lead link retirado"
 
 [userJoined_contract]
   en="New member"
   fr="Nouveau membre"
+  it="Nuovo membro"
+  es="Nuevo miembro"
 
 # Completed Success
 
 [moved_contract_success]
   en="Congratulations, {{_tension_}} has been moved."
   fr="Félicitations, la {{_tension_}} a été déplacée."
+  it="Congratulazioni, la {{_tension_}} è stata spostata."
+  es="Enhorabuena, la {{_tension_}} se ha movido."
 
 [moved_circle_contract_success]
   en="Congratulations, circle has been moved."
   fr="Félicitations, la cercle a été déplacée."
+  it="Congratulazioni, il cerchio è stato spostato."
+  es="Enhorabuena, el círculo se ha movido."
 
 [moved_role_contract_success]
   en="Congratulations, role has been moved."
   fr="Félicitations, le rôle a été déplacée."
+  it="Congratulazioni, il ruolo è stato spostato."
+  es="Enhorabuena, el rol se ha movido."
 
 [memberLinked_contract_success]
   en="Congratulations, you have been link to this role."
   fr="Félicitations, vous avez été lié à ce rôle."
+  it="Congratulazioni, sei stato collegato a questo ruolo."
+  es="Enhorabuena, has sido vinculado a este rol."
 
 [memberUnlinked_contract_success]
   en="Congratulations, you have been unlink to this role."
   fr="Félicitations, vous avez été détaché de ce rôle."
+  it="Congratulazioni, sei stato scollegato da questo ruolo."
+  es="Enhorabuena, has sido desvinculado de este rol."
 
 [userJoined_contract_success]
   en="Congratulations, you’ve joined this organisation."
   fr="Félicitations, vous avez rejoint cette organisation."
+  it="Congratulazioni, ti sei unito a questa organizzazione."
+  es="Enhorabuena, te has unido a esta organización."
 
 [memberLinked_contract_success_ext]
   en="Congratulations, an user has been linked."
   fr="Félicitations, un utilisateur a été lié."
+  it="Congratulazioni, un utente è stato collegato."
+  es="Enhorabuena, se ha vinculado a un usuario."
 
 [userJoined_contract_success_ext]
   en="Congratulations, an user has joined the organisation."
   fr="Félicitations, un utilisateur a rejoint l’organisation."
+  it="Congratulazioni, un utente si è unito all’organizzazione."
+  es="Enhorabuena, un usuario se ha unido a la organización."
 
 
 #
@@ -3106,6 +4656,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [circleAuthorityHeader]
   en="The governance authority is characterized by the right to do a set of actions."
   fr="L’autorité de gouvernance se caractérise par le droit de faire un ensemble d’actions."
+  it="L’autorità di governance si caratterizza per il diritto di compiere un insieme di azioni."
+  es="La autoridad de gobernanza se caracteriza por el derecho a realizar un conjunto de acciones."
 
 [circleAuthorityDoc]
   en="""
@@ -3124,10 +4676,28 @@ Note: To edit {{_mandate_}}s you need to publish the modifications done in the c
 
 Note : Pour éditer des {{_mandate_}}s, vous devez publier les modifications effectuées dans la {{_tension_}} (gouvernance) correspondante.
 """
+  it="""
+- Creare e modificare ruoli e cerchi
+- Modificare ogni {{_tension_}} (titolo, stato (Aperta/Chiusa), assegnatari, ecc.)
+- Modificare ogni {{_mandate_}}
+- Invitare nuovi membri
+
+Nota: per modificare un {{_mandate_}} devi pubblicare le modifiche fatte nella {{_tension_}} (di governance) corrispondente.
+"""
+  es="""
+- Crear y editar roles y círculos
+- Editar cada {{_tension_}} (título, estado (Abierta/Cerrada), asignados, etc.)
+- Editar cada {{_mandate_}}
+- Invitar a nuevos miembros
+
+Nota: para editar un {{_mandate_}} debes publicar las modificaciones hechas en la {{_tension_}} (de gobernanza) correspondiente.
+"""
 
 [labelsInfoHeader]
   en="Creating new labels helps you sort out your {{_tension_}}s"
   fr="La création de nouvelles étiquettes vous aide à trier vos {{_tension_}}s."
+  it="Creare nuove etichette ti aiuta a ordinare ogni {{_tension_}}"
+  es="Crear nuevas etiquetas te ayuda a ordenar cada {{_tension_}}"
 
 [labelsInfoDoc]
   en="""
@@ -3140,10 +4710,22 @@ Lorsque vous créez des étiquettes ici, vous pouvez ensuite les attacher à vos
 
 **Portée** : Les étiquettes que vous pouvez attacher à une {{_tension_}} sont celles qui sont présentes soit dans son cercle récepteur, soit dans l'un des parents du cercle récepteur.
 """
+  it="""
+Quando crei delle etichette qui, puoi poi associarle a ogni {{_tension_}}. Potrai anche filtrare ogni {{_tension_}} in base alle etichette.
+
+**Ambito**: le etichette che puoi associare a una {{_tension_}} sono quelle presenti nel suo cerchio destinatario o in uno qualsiasi dei cerchi genitori del cerchio destinatario.
+"""
+  es="""
+Cuando creas etiquetas aquí, puedes asociarlas a cada {{_tension_}}. También podrás filtrar cada {{_tension_}} según sus etiquetas.
+
+**Ámbito**: las etiquetas que puedes asociar a una {{_tension_}} son las que están presentes en su círculo destinatario o en cualquiera de los círculos padres del círculo destinatario.
+"""
 
 [rolesInfoHeader]
   en="Creating new roles template help you to manage your organisation"
   fr="La création de nouveaux modèles de rôles vous aide à gérer votre organisation"
+  it="Creare nuovi modelli di ruolo ti aiuta a gestire la tua organizzazione"
+  es="Crear nuevas plantillas de rol te ayuda a gestionar tu organización"
 
 [rolesInfoDoc]
   en="""
@@ -3156,10 +4738,22 @@ Lorsque vous créez un rôle ici, vous pouvez l’utiliser comme modèle lorsque
 
 **Portée** : Le modèle de rôles que vous pouvez utiliser lorsque vous créez un nouveau rôle sont ceux qui sont présents dans l’un de ses cercles parents.
 """
+  it="""
+Quando crei un ruolo qui, puoi usarlo come modello quando aggiungi un nuovo ruolo nella tua organizzazione.
+
+**Ambito**: i modelli di ruolo che puoi usare quando crei un nuovo ruolo sono quelli presenti in uno qualsiasi dei suoi cerchi genitori.
+"""
+  es="""
+Cuando creas un rol aquí, puedes usarlo como plantilla al añadir un nuevo rol en tu organización.
+
+**Ámbito**: las plantillas de rol que puedes usar al crear un nuevo rol son las que están presentes en cualquiera de sus círculos padres.
+"""
 
 [projectsInfoHeader]
   en="Projects allow you to organize your {{_tension_}}s and track them."
   fr="Les projets vous permettent d'organiser vos {{_tension_}}s et d'accompagner leurs suivies."
+  it="I progetti ti permettono di organizzare e seguire ogni {{_tension_}}."
+  es="Los proyectos te permiten organizar y hacer seguimiento de cada {{_tension_}}."
 
 [projectsInfoDoc]
   en="""
@@ -3172,34 +4766,58 @@ Lorsque vous créez des étiquettes ici, vous pouvez ensuite les attacher à vos
 
 **Portée** : Les étiquettes que vous pouvez attacher à une {{_tension_}} sont celles qui sont présentes soit dans son cercle récepteur, soit dans l'un des parents du cercle récepteur.
 """
+  it="""
+Quando crei delle etichette qui, puoi poi associarle a ogni {{_tension_}}. Potrai anche filtrare ogni {{_tension_}} in base alle etichette.
+
+**Ambito**: le etichette che puoi associare a una {{_tension_}} sono quelle presenti nel suo cerchio destinatario o in uno qualsiasi dei cerchi genitori del cerchio destinatario.
+"""
+  es="""
+Cuando creas etiquetas aquí, puedes asociarlas a cada {{_tension_}}. También podrás filtrar cada {{_tension_}} según sus etiquetas.
+
+**Ámbito**: las etiquetas que puedes asociar a una {{_tension_}} son las que están presentes en su círculo destinatario o en cualquiera de los círculos padres del círculo destinatario.
+"""
 
 [peerRoleInfo]
   en="Default Role with restricted authorization."
   fr="Rôle par défaut avec une autorisation restreinte."
+  it="Ruolo predefinito con autorizzazioni limitate."
+  es="Rol predeterminado con autorización restringida."
 
 [coordinatorRoleInfo]
   en="Role with administration rights at the circle level."
   fr="Rôle avec des droits d’administration au niveau du cercle."
+  it="Ruolo con diritti di amministrazione a livello del cerchio."
+  es="Rol con derechos de administración a nivel del círculo."
 
 [labelDeleteInfoHeader]
   en="Label present in other circles and those used in labeled {{_tension_}}s won't be deleted."
   fr="Les étiquettes présentes dans d'autres cercles et utilisées dans les {{_tension_}}s étiquetées ne seront pas supprimées."
+  it="Le etichette presenti in altri cerchi e quelle usate in una {{_tension_}} etichettata non verranno eliminate."
+  es="Las etiquetas presentes en otros círculos y las usadas en una {{_tension_}} etiquetada no se eliminarán."
 
 [roleDeleteInfoHeader]
   en="Roles in other circles and those created in your organisation won’t be deleted."
   fr="Les rôles présents dans d’autres cercles et ceux créés dans votre organisation ne seront pas supprimés."
+  it="I ruoli presenti in altri cerchi e quelli creati nella tua organizzazione non verranno eliminati."
+  es="Los roles presentes en otros círculos y los creados en tu organización no se eliminarán."
 
 [contractInfoHeader]
   en="A peer validation is needed to complete this action."
   fr="Une validation par les pairs est nécessaire pour compléter cette action."
+  it="È necessaria una convalida tra pari per completare questa azione."
+  es="Se necesita una validación entre pares para completar esta acción."
 
 [contractInfo]
   en="When you do not have the authority to modify a ressource, you can create a contract. It will notify the organisation roles with the authority level able to validate your request. The action will be performed if the contract is accepted."
   fr="Lorsque vous n’avez pas l’autorité nécessaire pour modifier une ressource, vous pouvez créer un contrat. Il notifiera les rôles de l’organisation avec le niveau d’autorité capable de valider votre demande. L’action sera exécutée si le contrat est accepté."
+  it="Quando non hai l’autorità per modificare una risorsa, puoi creare un contratto. Verranno notificati i ruoli dell’organizzazione con il livello di autorità in grado di convalidare la tua richiesta. L’azione verrà eseguita se il contratto viene accettato."
+  es="Cuando no tienes autoridad para modificar un recurso, puedes crear un contrato. Se notificará a los roles de la organización con el nivel de autoridad capaz de validar tu solicitud. La acción se realizará si el contrato es aceptado."
 
 [tensionTypeHeader]
   en="Select the right category to help finding and solving {{_tension_}}s."
   fr="Sélectionnez la bonne catégorie pour vous aider à trouver et à résoudre les {{_tension_}}s."
+  it="Seleziona la categoria giusta per aiutare a trovare e risolvere ogni {{_tension_}}."
+  es="Selecciona la categoría adecuada para ayudar a encontrar y resolver cada {{_tension_}}."
 
 [tensionTypeDoc]
   en="""
@@ -3220,87 +4838,145 @@ Vous pouvez modifier un type de {{_tension_}} dans les catégories suivantes  :
 
 Les {{_tension_}}s d'Alerte et d'Annonce ne peuvent être définies que lorsque vous créez une nouvelle {{_tension_}}.
 """
+  it="""
+Puoi cambiare il tipo di una {{_tension_}} nelle seguenti categorie:
+
+- **Operativa**: una categoria generale, può essere un’attività, un problema o qualsiasi cosa debba essere condivisa o seguita nell’organizzazione.
+- **Governance**: riguarda la struttura dell’organizzazione, ogni {{_mandate_}}, ecc.
+- **Aiuto**: per richieste di aiuto, domande o chiarimenti.
+
+Il tipo Allerta o Annuncio di una {{_tension_}} può essere impostato solo quando crei una nuova {{_tension_}}.
+"""
+  es="""
+Puedes cambiar el tipo de una {{_tension_}} a las siguientes categorías:
+
+- **Operativa**: una categoría general, puede ser una tarea, una incidencia o cualquier cosa que deba compartirse o seguirse en la organización.
+- **Gobernanza**: relativa a la estructura de la organización, cada {{_mandate_}}, etc.
+- **Ayuda**: para solicitudes de ayuda, preguntas o aclaraciones.
+
+El tipo Alerta o Anuncio de una {{_tension_}} solo puede definirse al crear una nueva {{_tension_}}.
+"""
 
 [operationalHint]
   en="For everyday work. Tasks, issues, items, etc."
   fr="Pour le travail quotidien. Tâches, problèmes, articles, etc."
+  it="Per il lavoro quotidiano. Attività, problemi, elementi, ecc."
+  es="Para el trabajo diario. Tareas, incidencias, elementos, etc."
 
 [governanceHint]
   en="For topics related to governance, organisational structure, {{_mandate_}}s, etc."
   fr="Pour les sujets relatifs à la gouvernance, la structure de l'organisation, les {{_mandate_}}s, etc."
+  it="Per argomenti legati alla governance, alla struttura organizzativa, a ogni {{_mandate_}}, ecc."
+  es="Para temas relacionados con la gobernanza, la estructura organizativa, cada {{_mandate_}}, etc."
 
 [helpHint]
   en="For help request, question or clarification."
   fr="Pour les demandes d’aides, questions ou les clarifications."
+  it="Per richieste di aiuto, domande o chiarimenti."
+  es="Para solicitudes de ayuda, preguntas o aclaraciones."
 
 [alertHint]
   en="For alert, internal communication."
   fr="Pour les alertes, communication interne."
+  it="Per allerte, comunicazione interna."
+  es="Para alertas, comunicación interna."
 
 
 [operationalNotif]
   en="Notifies roles in the targeted circle."
   fr="Notifie les rôles dans le cercle cible."
+  it="Notifica i ruoli nel cerchio destinatario."
+  es="Notifica a los roles del círculo destinatario."
 
 [governanceNotif]
   en="Notifies roles in the targeted circle."
   fr="Notifie les rôles dans le cercle cible."
+  it="Notifica i ruoli nel cerchio destinatario."
+  es="Notifica a los roles del círculo destinatario."
 
 [helpNotif]
   en="Notifies roles in the targeted circle."
   fr="Notifie les rôles dans le cercle cible."
+  it="Notifica i ruoli nel cerchio destinatario."
+  es="Notifica a los roles del círculo destinatario."
 
 [alertNotif]
   en="Notifies all the members behind the targeted circle recursively."
   fr="Notifie tous les membres derrière le cercle ciblé recursivement."
+  it="Notifica ricorsivamente tutti i membri sotto il cerchio destinatario."
+  es="Notifica recursivamente a todos los miembros bajo el círculo destinatario."
 
 [announcementHint]
   en="For announcement, external communication."
   fr="Pour les annonces, communication externe."
+  it="Per annunci, comunicazione esterna."
+  es="Para anuncios, comunicación externa."
 
 [announcementNotif]
   en="Notifies all users watching this organisation."
   fr="Notifie tous les utilisateurs qui suivent cette organisation"
+  it="Notifica tutti gli utenti che seguono questa organizzazione."
+  es="Notifica a todos los usuarios que siguen esta organización."
 
 [visibilityInfoHeader]
   en="The change will apply on the current circle and its roles, but not recursively to the sub-circles."
   fr="La modification s’appliquera au cercle actuel et à ses rôles, mais non de manière récursive aux sous-cercles."
+  it="La modifica si applicherà al cerchio attuale e ai suoi ruoli, ma non in modo ricorsivo ai sotto-cerchi."
+  es="El cambio se aplicará al círculo actual y a sus roles, pero no de forma recursiva a los subcírculos."
 
 [visibilityPublic]
   en="The entire world can see it."
   fr="Le monde entier peut la voir."
+  it="Tutto il mondo può vederlo."
+  es="Todo el mundo puede verlo."
 
 [visibilityPrivate]
   en="Only members of the organisation can see it."
   fr="Visible uniquement par les membres de l’organisation."
+  it="Solo i membri dell’organizzazione possono vederlo."
+  es="Solo los miembros de la organización pueden verlo."
 
 [visibilitySeccret]
   en="Only roles inside this circle can see it."
   fr="Seuls les rôles à l’intérieur de ce cercle peuvent le voir."
+  it="Solo i ruoli all’interno di questo cerchio possono vederlo."
+  es="Solo los roles dentro de este círculo pueden verlo."
 
 [visibilityPublicExtra]
   en="Users can discover your organisation (public circles only), follow it to be notified of your annoucements, and (if enabled) apply to join it."
   fr="Les utilisateurs peuvent découvrir votre organisation (cercles publics uniquement), la suivre pour être informés de vos annonces, et (si l’option est activée) demander à la rejoindre."
+  it="Gli utenti possono scoprire la tua organizzazione (solo i cerchi pubblici), seguirla per ricevere i tuoi annunci e (se attivato) chiedere di unirsi."
+  es="Los usuarios pueden descubrir tu organización (solo los círculos públicos), seguirla para recibir tus anuncios y (si está activado) solicitar unirse."
 
 [visibilityPrivateExtra]
   en="Users must be invited to collaborate with you."
   fr="Les utilisateurs doivent être invités pour collaborer avec vous."
+  it="Gli utenti devono essere invitati per collaborare con te."
+  es="Los usuarios deben ser invitados para colaborar contigo."
 
 [visibilityRestriction]
   en="Users will be able to join this organisation by invitation only."
   fr="Les utilisateurs pourront rejoindre cette organisation sur invitation uniquement."
+  it="Gli utenti potranno unirsi a questa organizzazione solo su invito."
+  es="Los usuarios podrán unirse a esta organización solo por invitación."
 
 [authCoordinated]
   en="Where Coordinator roles have the governance authority."
   fr="Où seul les rôles de coordinateur ont l’autorité de gouvernance."
+  it="Dove i ruoli Coordinatore hanno l’autorità di governance."
+  es="Donde los roles Coordinador tienen la autoridad de gobernanza."
 
 [authAgile]
   en="Where all roles have equal governance authority."
   fr="Où tous les rôles ont une autorité égale en matière de gouvernance."
+  it="Dove tutti i ruoli hanno pari autorità di governance."
+  es="Donde todos los roles tienen la misma autoridad de gobernanza."
 
 [signinNeeded]
   en="You need to sign-in to access this page"
   fr="Vous devez vous connecter pour accéder à cette page"
+  it="Devi accedere per vedere questa pagina"
+  es="Debes iniciar sesión para acceder a esta página"
 
 [signinOnInvite]
   en="""You have been invited to join an organisation on **Fractale**.
@@ -3309,30 +4985,48 @@ But first, you need to **setup your account**:
   fr="""Vous avez été invité à rejoindre une organisation sur **Fractale**.
 Mais d’abord, vous devez **configurer votre compte** :
   """
+  it="""Sei stato invitato a unirti a un’organizzazione su **Fractale**.
+Ma prima devi **configurare il tuo account**:
+  """
+  es="""Has sido invitado a unirte a una organización en **Fractale**.
+Pero primero debes **configurar tu cuenta**:
+  """
 
 [youHaveBeenInvitedRole]
   en="You have been invited to play the following role:"
   fr="Vous avez été invité à jouer le rôle suivant:"
+  it="Sei stato invitato a svolgere il seguente ruolo:"
+  es="Has sido invitado a desempeñar el siguiente rol:"
 
 [userHasBeenInvitedRole]
   en="has been invited to play the following role:"
   fr="a été invité à jouer le rôle suivant:"
+  it="è stato invitato a svolgere il seguente ruolo:"
+  es="ha sido invitado a desempeñar el siguiente rol:"
 
 [youHaveBeenInvitedOrga]
   en="You have been invited to this organisation."
   fr="Vous avez été invité dans cette organisation."
+  it="Sei stato invitato in questa organizzazione."
+  es="Has sido invitado a esta organización."
 
 [userHasBeenInvitedOrga]
   en="has been invited to this organisation."
   fr="a été invité dans cette organisation."
+  it="è stato invitato in questa organizzazione."
+  es="ha sido invitado a esta organización."
 
 [invitationRejected]
   en="Invitation was declined."
   fr="L’invitation a été refusée."
+  it="L’invito è stato rifiutato."
+  es="La invitación fue rechazada."
 
 [alreadyVoted]
   en="You have already voted, but you can still change your vote."
   fr="Vous avez déjà voté, mais vous pouvez encore changer votre vote."
+  it="Hai già votato, ma puoi ancora cambiare il tuo voto."
+  es="Ya has votado, pero aún puedes cambiar tu voto."
 
 [markdownHelp]
   en="""
@@ -3427,6 +5121,98 @@ Ligne horizontale:
 ---
 ```
 """
+  it="""
+Titolo: `### Testo`
+
+**Grassetto**: `**testo**` o `__testo__`
+
+*Corsivo*: `*testo*` o `_testo_`
+
+~~Barrato~~: `~~testo~~`
+
+[Link](): `[Il mio testo](http://example.com)`
+
+`Codice`: \\`testo`
+
+> Citazione: `> Testo citato`
+
+Elenco:
+```
+* Elemento 1
+* Elemento 2
+```
+
+Elenco numerato:
+```
+1. Elemento 1
+2. Elemento 2
+```
+
+Elenco di caselle di controllo:
+```
+- [ ] Elemento non selezionato
+- [x] Elemento selezionato
+```
+
+Blocco di codice:
+\\```
+testo
+\\```
+
+Linea orizzontale:
+
+---
+
+```
+---
+```
+"""
+  es="""
+Encabezado: `### Texto`
+
+**Negrita**: `**texto**` o `__texto__`
+
+*Cursiva*: `*texto*` o `_texto_`
+
+~~Tachado~~: `~~texto~~`
+
+[Enlace](): `[Mi texto](http://example.com)`
+
+`Código`: \\`texto`
+
+> Cita: `> Texto citado`
+
+Lista:
+```
+* Elemento 1
+* Elemento 2
+```
+
+Lista numerada:
+```
+1. Elemento 1
+2. Elemento 2
+```
+
+Lista de casillas:
+```
+- [ ] Elemento sin marcar
+- [x] Elemento marcado
+```
+
+Bloque de código:
+\\```
+texto
+\\```
+
+Línea horizontal:
+
+---
+
+```
+---
+```
+"""
 
 [authorityHelper]
   en="""A role has an authority that determines the rights of users playing that role.
@@ -3445,6 +5231,22 @@ Ces droits sont circonscrits au cercle dans lequel le rôle est crée.
 
 Voir [la documentation](https://doc.fractale.co/circle/#authority) pour en savoir plus.
 """
+  it="""Un ruolo ha un’autorità che determina i diritti degli utenti che svolgono quel ruolo.
+Questi diritti sono circoscritti al cerchio in cui il ruolo è creato.
+
+- **Peer**: può creare e commentare tensioni. Proporre modifiche al {{_mandate_}}.
+- **Coordinator**: tutta l’autorità *Peer* + può modificare il tipo, le etichette e gli assegnatari delle tensioni, modificare ogni {{_mandate_}}, invitare membri e creare nuovi ruoli e sotto-cerchi (limitatamente al cerchio a cui appartiene il ruolo).
+
+Vedi [la documentazione](https://doc.fractale.co/circle/#authority) per saperne di più.
+"""
+  es="""Un rol tiene una autoridad que determina los derechos de los usuarios que desempeñan ese rol.
+Estos derechos se limitan al círculo en el que se crea el rol.
+
+- **Peer**: puede crear y comentar tensiones. Proponer cambios en el {{_mandate_}}.
+- **Coordinator**: toda la autoridad *Peer* + puede editar el tipo, las etiquetas y los asignados de las tensiones, editar cada {{_mandate_}}, invitar a miembros y crear nuevos roles y subcírculos (limitado al círculo al que pertenece el rol).
+
+Consulta [la documentación](https://doc.fractale.co/circle/#authority) para saber más.
+"""
 
 [governanceHelper]
   en="""The governance of a circle determines how the authority of roles is interpreted.
@@ -3461,6 +5263,20 @@ See [the documentation](https://doc.fractale.co/circle/#authority) to learn more
 
 Voir [la documentation](https://doc.fractale.co/circle/#authority) pour en savoir plus.
 """
+  it="""La governance di un cerchio determina come viene interpretata l’autorità dei ruoli.
+
+- **Coordinated** : solo i ruoli con autorità *Coordinator* hanno diritti di modifica nel loro cerchio.
+- **Agile** : tutti i ruoli di un cerchio hanno diritti di modifica, senza distinzione.
+
+Vedi [la documentazione](https://doc.fractale.co/circle/#authority) per saperne di più.
+"""
+  es="""La gobernanza de un círculo determina cómo se interpreta la autoridad de los roles.
+
+- **Coordinated** : solo los roles con autoridad *Coordinator* tienen derechos de edición en su círculo.
+- **Agile** : todos los roles de un círculo tienen derechos de edición/modificación, sin distinción.
+
+Consulta [la documentación](https://doc.fractale.co/circle/#authority) para saber más.
+"""
 
 [purposeHelper]
   en="""The purpose of {{}} defines the core of its mission and its objectives.
@@ -3471,40 +5287,64 @@ This document can be modified later as the organisation evolves.
 
 Ce document peut être modifié ultérieurement au fur et à mesure que l’organisation évolue.
 """
+  it="""Lo scopo {{}} definisce il cuore della sua missione e i suoi obiettivi.
+
+Questo documento può essere modificato in seguito, man mano che l’organizzazione evolve.
+  """
+  es="""El propósito {{}} define el núcleo de su misión y sus objetivos.
+
+Este documento puede modificarse más adelante a medida que la organización evoluciona.
+  """
 
 [responsabilitiesHelper]
   en="Responsibilities define the ongoing activities, work, and functions that the role or circle is expected to perform. They describe what the role is accountable for on a continuing basis."
   fr="Les responsabilités définissent les activités, travaux et fonctions continus que le rôle ou le cercle est censé accomplir. Elles décrivent ce dont le rôle est responsable de façon permanente."
+  it="Le responsabilità definiscono le attività, il lavoro e le funzioni continuative che il ruolo o il cerchio deve svolgere. Descrivono ciò di cui il ruolo è responsabile in modo permanente."
+  es="Las responsabilidades definen las actividades, el trabajo y las funciones continuas que se espera que realice el rol o el círculo. Describen aquello de lo que el rol es responsable de forma permanente."
 
 [domainsHelper]
   en="Domains are the properties, resources, processes, or areas that this role or circle has exclusive control over. Others must get permission to impact these domains."
   fr="Les domaines sont les propriétés, ressources, processus ou zones sur lesquels ce rôle ou cercle a un contrôle exclusif. Les autres doivent obtenir une permission pour impacter ces domaines."
+  it="I domini sono le proprietà, le risorse, i processi o le aree su cui questo ruolo o cerchio ha il controllo esclusivo. Gli altri devono ottenere un permesso per intervenire su questi domini."
+  es="Los dominios son las propiedades, recursos, procesos o áreas sobre los que este rol o círculo tiene control exclusivo. Los demás deben obtener permiso para afectar a estos dominios."
 
 [policiesHelper]
   en="Policies describe the principles and guidelines that govern this role or circle, including how its domains, when there are any, may be accessed or used by others. They express what is expected and why, and are meant to remain stable over time."
   fr="Les politiques décrivent les principes et directives qui gouvernent ce rôle ou cercle, ainsi que la manière dont ses domaines, lorsqu’il en existe, peuvent être accessibles ou utilisés par d’autres. Elles expriment ce qui est attendu et pourquoi, et ont vocation à rester stables dans le temps."
+  it="Le politiche descrivono i principi e le linee guida che governano questo ruolo o cerchio, incluso il modo in cui i suoi domini, se presenti, possono essere accessibili o usati da altri. Esprimono cosa ci si aspetta e perché, e sono pensate per restare stabili nel tempo."
+  es="Las políticas describen los principios y pautas que rigen este rol o círculo, incluido cómo otros pueden acceder a sus dominios, si los hay, o usarlos. Expresan lo que se espera y por qué, y están pensadas para mantenerse estables en el tiempo."
 
 [rulesHelper]
   en="Rules translate the policies into concrete and applicable conditions: what is allowed, forbidden or required, and in which circumstances. A single policy is usually carried out by several rules, which can be adjusted as often as needed without changing the policy itself."
   fr="Les règles traduisent les politiques en conditions concrètes et applicables : ce qui est autorisé, interdit ou requis, et dans quelles circonstances. Une même politique est généralement mise en œuvre par plusieurs règles, qui peuvent être ajustées aussi souvent que nécessaire sans modifier la politique elle-même."
+  it="Le regole traducono le politiche in condizioni concrete e applicabili: cosa è consentito, vietato o richiesto, e in quali circostanze. Una stessa politica è di solito attuata da più regole, che possono essere modificate quanto serve senza cambiare la politica stessa."
+  es="Las reglas traducen las políticas en condiciones concretas y aplicables: qué está permitido, prohibido o es obligatorio, y en qué circunstancias. Una misma política suele aplicarse mediante varias reglas, que pueden ajustarse tantas veces como sea necesario sin cambiar la política en sí."
 
 
 
 [discard]
   en="Discard"
   fr="Abandonner"
+  it="Scarta"
+  es="Descartar"
 
 [saveAsDraft]
   en="Save as draft"
   fr="Enregistrer comme brouillon"
+  it="Salva come bozza"
+  es="Guardar como borrador"
 
 [keepEditing]
   en="Keep editing"
   fr="Continuer l'édition"
+  it="Continua a modificare"
+  es="Seguir editando"
 
 [confirmUnsavedDraft]
   en="You have unsaved changes. What would you like to do?"
   fr="Vous avez des modifications non enregistrées. Que souhaitez-vous faire ?"
+  it="Hai modifiche non salvate. Cosa vuoi fare?"
+  es="Tienes cambios sin guardar. ¿Qué quieres hacer?"
 
 [newOwnerMessageWarning]
   en="""You are about to add a new owner.
@@ -3523,19 +5363,43 @@ De plus, un propriétaire dispose du niveau de droit et d’accès en lecture et
 
 Veuillez confirmer pour continuer.
 """
+  it="""Stai per aggiungere un nuovo proprietario.
+
+Questa azione è irreversibile. Una volta aggiunto, un proprietario può essere rimosso solo se decide di lasciare il ruolo di sua iniziativa.
+
+Inoltre, un proprietario ha il livello più alto di accesso in lettura e scrittura nell’organizzazione.
+
+Conferma per continuare.
+"""
+  es="""Estás a punto de añadir un nuevo propietario.
+
+Esta acción es irreversible. Una vez añadido, un propietario solo puede ser eliminado si decide abandonar el rol por sí mismo.
+
+Además, un propietario tiene el nivel más alto de acceso de lectura y escritura en la organización.
+
+Confirma para continuar.
+"""
 
 [nodeShape]
   en="Node shape"
   fr="Forme des nœuds"
+  it="Forma dei nodi"
+  es="Forma de los nodos"
 
 [shapeCircle]
   en="Circle"
   fr="Cercle"
+  it="Cerchio"
+  es="Círculo"
 
 [shapeHexagon]
   en="Hexagon"
   fr="Hexagone"
+  it="Esagono"
+  es="Hexágono"
 
 [shapeSquircle]
   en="Squircle"
   fr="Squircle"
+  it="Squircle"
+  es="Squircle"

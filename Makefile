@@ -1,7 +1,8 @@
 .ONESHELL:
+.NOTPARALLEL:
 SHELL := /bin/bash
 OUTPUT := dist
-LANGS := en fr
+LANGS := en fr it es
 elm-js := elm.js
 elm-min-js := elm.min.js
 uglifyjs := node_modules/uglify-js/bin/uglifyjs
@@ -212,7 +213,7 @@ $(RELEASE_BUILD_DIRS): releases/%:
 		else \
 			npm run prod -- --env lang=$* --env debug=public_build; \
 		fi && \
-		rm -rf $(RELEASE_DIR)/$(RELEASE_NAME)$* && \
+		rm -rf $(RELEASE_DIR)/$(RELEASE_NAME)/$* && \
 		mkdir $(RELEASE_DIR)/$(RELEASE_NAME)/$* && \
 		cp -r dist/* $(RELEASE_DIR)/$(RELEASE_NAME)/$* && \
 		sed -i "s/\/static\//\/$*\/static\//g" $(RELEASE_DIR)/$(RELEASE_NAME)/$*/index.html && \

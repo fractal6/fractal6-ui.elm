@@ -12,7 +12,7 @@ Commands:
 
 Options:
     -w, --write        save/replace in file.
-    -l, --lang         lang to use (DEFAULT: en).
+    -l, --lang         lang to use: en, fr, it, es (DEFAULT: en).
 
 Examples:
     i18n.py ls
@@ -82,6 +82,20 @@ DEFAULT_LEXICON = {
         "Tension": "Tension",
         "mandate": "mandat",
         "Mandate": "Mandat",
+        "void": "",
+    },
+    "it": {
+        "tension": "tensione",
+        "Tension": "Tensione",
+        "mandate": "mandato",
+        "Mandate": "Mandato",
+        "void": "",
+    },
+    "es": {
+        "tension": "tensión",
+        "Tension": "Tensión",
+        "mandate": "mandato",
+        "Mandate": "Mandato",
         "void": "",
     },
 }

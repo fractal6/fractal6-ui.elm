@@ -32,7 +32,7 @@ window.addEventListener('load', _ => {
        lang = uctx.lang;
     } else if (!lang) {
         var browserLang = (navigator.language || navigator.userLanguage || '').split('-')[0].toUpperCase();
-        var supportedLangs = ['EN', 'FR'];
+        var supportedLangs = ['EN', 'FR', 'IT', 'ES'];
         lang = supportedLangs.includes(browserLang) ? browserLang : DEFAULT_LANG;
     }
     // Lexicon
