@@ -23,34 +23,23 @@ module Pages.About exposing (Flags, Model, Msg, init, page, subscriptions, updat
 
 import Assets as A
 import Browser.Navigation as Nav
-import Components.AuthModal exposing (UserAuthForm)
-import Dict exposing (Dict)
-import Form exposing (isLoginSendable, isSignupSendable)
 import Form.Help as Help
 import Fractale.Codecs exposing (FractalBaseRoute(..), toLink)
-import Fractale.Error exposing (viewHttpErrors)
 import Fractale.User exposing (UserState(..))
-import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..))
-import Html exposing (Html, a, br, button, dd, div, dl, dt, figcaption, figure, h1, h2, hr, i, iframe, img, input, label, li, nav, p, span, strong, text, textarea, ul)
-import Html.Attributes exposing (alt, attribute, class, classList, disabled, height, href, id, name, placeholder, required, rows, src, style, target, title, type_, value, width)
-import Html.Events exposing (onClick, onInput)
+import Html exposing (Html, dd, div, dl, dt, figcaption, figure, h1, h2, hr, i, iframe, img, nav, strong, text, textarea)
+import Html.Attributes exposing (alt, class, height, id, rows, src, style, title, width)
 import Http
-import Loading exposing (RestData)
 import Markdown exposing (renderMarkdown)
-import Maybe exposing (withDefault)
-import ModelSchema exposing (..)
 import Page exposing (Document, Page)
+import Pages.Login as Login
 import Ports
-import RemoteData exposing (RemoteData)
-import Requests exposing (fetchStaticPage, login, signup)
+import Requests exposing (fetchStaticPage)
 import Schema.Enum.Lang as Lang
 import Session exposing (GlobalCmd(..))
 import Text as T
 import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendSleep)
-import Utils.DomEvents exposing (onClickPD, onKeydown)
-import Utils.Html exposing (textH)
+import Utils.Cmd exposing (send)
 import Utils.String exposing (upH)
 
 
@@ -101,9 +90,7 @@ mapGlobalOutcmds gcmds =
 
 
 type alias Model =
-    { form : UserAuthForm
-    , result : RestData UserCtx
-    , viewMode : ViewMode
+    { signBox : Login.Model
     , lang : Lang.Lang
     , isHome : Bool
     , empty : {}
@@ -119,11 +106,6 @@ type StaticContentState
     | LoadingStatic
     | StaticSuccess String
     | StaticFailure
-
-
-type ViewMode
-    = Login
-    | Signup
 
 
 
@@ -149,9 +131,7 @@ init global flags =
                     Cmd.none
 
         model =
-            { form = { post = Dict.fromList [ ( "lang", Lang.toString global.session.common.lang ) ] }
-            , result = RemoteData.NotAsked
-            , viewMode = Login
+            { signBox = Login.initModel global
             , lang = global.session.common.lang
             , isHome = isHome
             , empty = {}
@@ -174,12 +154,7 @@ init global flags =
 
 
 type Msg
-    = SubmitUser UserAuthForm
-    | ChangeUserPost String String
-    | GotSignin (RestData UserCtx)
-    | GotSignup (RestData Bool)
-    | ChangeViewMode ViewMode
-    | SubmitEnter Int
+    = LoginMsg Login.Msg
     | GotStaticContent String (Result Http.Error String)
     | HelpMsg Help.Msg
 
@@ -195,84 +170,12 @@ update global message model =
             global.session.apis
     in
     case message of
-        ChangeUserPost field value ->
+        LoginMsg msg ->
             let
-                form =
-                    model.form
-
-                formUpdated =
-                    { form | post = Dict.insert field value form.post }
+                ( signBox, cmd, gcmd ) =
+                    Login.update global msg model.signBox
             in
-            ( { model | form = formUpdated }, Cmd.none, Cmd.none )
-
-        SubmitUser form ->
-            ( { model | result = RemoteData.Loading }
-            , case model.viewMode of
-                Login ->
-                    login apis form.post GotSignin
-
-                Signup ->
-                    signup apis form.post GotSignup
-            , Cmd.none
-            )
-
-        GotSignin result ->
-            let
-                cmds =
-                    case result of
-                        RemoteData.Success uctx ->
-                            [ send (UpdateUserSession uctx)
-                            , sendSleep RedirectOnLoggedIn 333
-                            ]
-
-                        _ ->
-                            []
-            in
-            ( { model | result = result }
-            , Cmd.none
-            , Cmd.batch cmds
-            )
-
-        GotSignup result ->
-            ( case result of
-                RemoteData.Failure err ->
-                    { model | result = RemoteData.Failure err }
-
-                _ ->
-                    model
-            , case result of
-                RemoteData.Success ok ->
-                    Nav.pushUrl global.key (toHref Route.Verification ++ "?email=" ++ (Dict.get "email" model.form.post |> withDefault ""))
-
-                _ ->
-                    Cmd.none
-            , Cmd.none
-            )
-
-        ChangeViewMode viewMode ->
-            ( { model | viewMode = viewMode, result = RemoteData.NotAsked }, Cmd.none, Ports.bulma_driver "" )
-
-        SubmitEnter key ->
-            case key of
-                13 ->
-                    --ENTER
-                    let
-                        isSendable =
-                            case model.viewMode of
-                                Login ->
-                                    isLoginSendable model.form.post
-
-                                Signup ->
-                                    isSignupSendable model.form.post
-                    in
-                    if isSendable then
-                        ( model, send (SubmitUser model.form), Cmd.none )
-
-                    else
-                        ( model, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
+            ( { model | signBox = signBox }, Cmd.map LoginMsg cmd, gcmd )
 
         GotStaticContent elementId result ->
             case result of
@@ -343,7 +246,7 @@ viewHero model =
                 ]
             , div [ class "column is-5-desktop is-4-widescreen is-3-fullhd is-hidden-mobile" ]
                 [ if model.isHome then
-                    viewSignBox model
+                    Login.viewCard model.signBox |> Html.map LoginMsg
 
                   else
                     --div [ class "has-text-centered" ] [ A.logo_about "#34663d" ]
@@ -368,204 +271,3 @@ viewStaticContent model =
 
         StaticFailure ->
             text ""
-
-
-viewSignBox : Model -> Html Msg
-viewSignBox model =
-    div [ class "card has-background-evidence" ]
-        [ div [ class "card-header" ]
-            [ div [ class "card-header-title tabs is-fullwidth p-0" ]
-                [ ul []
-                    [ li [ classList [ ( "is-active", model.viewMode == Login ) ] ]
-                        [ a [ onClickPD (ChangeViewMode Login), target "_blank" ] [ text T.signin_ ] ]
-                    , li [ classList [ ( "is-active", model.viewMode == Signup ) ] ]
-                        [ a [ onClickPD (ChangeViewMode Signup), target "_blank" ] [ text T.signup_ ] ]
-                    ]
-                ]
-            ]
-        , div [ class "card-content" ]
-            [ case model.viewMode of
-                Login ->
-                    viewLogin model
-
-                Signup ->
-                    viewSignup model
-            , case model.result of
-                RemoteData.Failure err ->
-                    viewHttpErrors err
-
-                _ ->
-                    text ""
-            ]
-        ]
-
-
-viewLogin : Model -> Html Msg
-viewLogin model =
-    div []
-        [ A.welcome
-        , div [ class "field is-horizntl" ]
-            [ div [ class "field-lbl" ] [ label [ class "label" ] [ text T.username ] ]
-            , div [ class "field-body" ]
-                [ div [ class "field" ]
-                    [ div [ class "control" ]
-                        [ input
-                            [ class "input autofocus followFocus"
-                            , attribute "data-nextfocus" "passwordInput"
-                            , type_ "text"
-                            , placeholder "username or email"
-                            , name "username"
-                            , value (Dict.get "username" model.form.post |> withDefault "")
-                            , attribute "autocomplete" "username"
-                            , required True
-                            , onInput (ChangeUserPost "username")
-                            , onKeydown SubmitEnter
-                            ]
-                            []
-                        ]
-                    ]
-                ]
-            ]
-        , div [ class "field is-horizntl" ]
-            [ div [ class "field-lbl" ] [ label [ class "label" ] [ text T.password ] ]
-            , div [ class "field-body" ]
-                [ div [ class "field" ]
-                    [ div [ class "control" ]
-                        [ input
-                            [ id "passwordInput"
-                            , class "input"
-                            , type_ "password"
-                            , placeholder "password"
-                            , name "password"
-                            , value (Dict.get "password" model.form.post |> withDefault "")
-                            , attribute "autocomplete" "password"
-                            , required True
-                            , onInput (ChangeUserPost "password")
-                            , onKeydown SubmitEnter
-                            ]
-                            []
-                        , span [ class "passwordVisibilityTrigger icon-input-flex-right is-clickable" ]
-                            [ A.icon "icon-eye" ]
-                        ]
-                    ]
-                ]
-            ]
-        , br [] []
-        , div [ class "is-size-7 is-pulled-left" ]
-            [ span [ class "mr-2" ] [ text T.needAnAccount ]
-            , a [ class "underlined-link", onClickPD (ChangeViewMode Signup), target "_blank" ] [ text T.signupNow ]
-            , br [ class "mb-1" ] []
-            , a [ class "underlined-link", href (toHref Route.PasswordReset) ] [ textH T.passwordForgotten ]
-            ]
-        , div [ class "field is-grouped is-grouped-right" ]
-            [ div [ class "control" ]
-                [ if isLoginSendable model.form.post then
-                    button
-                        [ id "submitButton"
-                        , class "button is-success"
-                        , classList [ ( "is-loading", Loading.isLoadingRest model.result ) ]
-                        , onClick (SubmitUser model.form)
-                        ]
-                        [ text T.signin ]
-
-                  else
-                    button [ class "button", disabled True ] [ text T.signin ]
-                ]
-            ]
-        ]
-
-
-viewSignup : Model -> Html Msg
-viewSignup model =
-    div []
-        [ A.welcome
-        , div [ class "subtitle is-size-6 is-strong" ] [ text T.createYourAccount, text ":" ]
-        , div [ class "field is-horizntl" ]
-            [ div [ class "field-lbl" ] [ label [ class "label" ] [ text T.email ] ]
-            , div [ class "field-body" ]
-                [ div [ class "field" ]
-                    [ div [ class "control" ]
-                        [ input
-                            [ class "input autofocus followFocus"
-                            , attribute "data-nextfocus" "usernameInput2"
-                            , type_ "text"
-                            , placeholder "email"
-                            , name "email"
-                            , value (Dict.get "email" model.form.post |> withDefault "")
-                            , attribute "autocomplete" "email"
-                            , required True
-                            , onInput (ChangeUserPost "email")
-                            ]
-                            []
-                        ]
-                    ]
-                ]
-            ]
-        , div [ class "field is-horizntl" ]
-            [ div [ class "field-lbl" ] [ label [ class "label" ] [ text T.username ] ]
-            , div [ class "field-body" ]
-                [ div [ class "field" ]
-                    [ div [ class "control" ]
-                        [ input
-                            [ id "usernameInput2"
-                            , class "input followFocus"
-                            , attribute "data-nextfocus" "passwordInput2"
-                            , type_ "text"
-                            , placeholder "username"
-                            , name "username"
-                            , value (Dict.get "username" model.form.post |> withDefault "")
-                            , attribute "autocomplete" "username"
-                            , required True
-                            , onInput (ChangeUserPost "username")
-                            ]
-                            []
-                        ]
-                    ]
-                ]
-            ]
-        , div [ class "field is-horizntl" ]
-            [ div [ class "field-lbl" ] [ label [ class "label" ] [ text T.password ] ]
-            , div [ class "field-body" ]
-                [ div [ class "field" ]
-                    [ div [ class "control" ]
-                        [ input
-                            [ id "passwordInput2"
-                            , class "input"
-                            , type_ "password"
-                            , placeholder "password"
-                            , name "password"
-                            , value (Dict.get "password" model.form.post |> withDefault "")
-                            , attribute "autocomplete" "password"
-                            , required True
-                            , onInput (ChangeUserPost "password")
-                            , onKeydown SubmitEnter
-                            ]
-                            []
-                        , span [ class "passwordVisibilityTrigger icon-input-flex-right is-clickable" ]
-                            [ A.icon "icon-eye" ]
-                        ]
-                    , p [ class "help" ] [ text T.passwordRequirements ]
-                    ]
-                ]
-            ]
-        , br [] []
-        , div [ class "is-size-7 is-pulled-left" ]
-            [ span [ class "mr-2" ] [ text T.alreadyAnAccount ]
-            , a [ class "underlined-link", onClickPD (ChangeViewMode Login), target "_blank" ] [ textH T.signinNow ]
-            ]
-        , div [ class "field is-grouped is-grouped-right" ]
-            [ div [ class "control" ]
-                [ if isSignupSendable model.form.post then
-                    button
-                        [ id "submitButton2"
-                        , class "button is-success"
-                        , classList [ ( "is-loading", Loading.isLoadingRest model.result ) ]
-                        , onClick (SubmitUser model.form)
-                        ]
-                        [ text T.signup ]
-
-                  else
-                    button [ class "button", disabled True ] [ text T.signup ]
-                ]
-            ]
-        ]

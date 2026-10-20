@@ -459,12 +459,8 @@ a.tag-circle {
 .is-flex-grow {
     flex-grow: 1 !important;
 }
-.flex-break {
-    flex-basis: 100%;
-    height: 0;
-}
 .level-with-breakline {
-    flex-direction: column;
+    flex-direction: column !important;
     align-items: flex-start;
 }
 .is-aligned-center {

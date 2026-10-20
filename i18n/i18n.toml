@@ -75,11 +75,11 @@
   it="Provalo ora"
   es="Pruébalo ahora"
 
-[tryFree]
-  en="Join"
-  fr="Rejoindre"
-  it="Unisciti"
-  es="Únete"
+[getStarted]
+  en="Get Started"
+  fr="Commencer"
+  it="Inizia"
+  es="Empezar"
 
 #
 # [I am an NPO]

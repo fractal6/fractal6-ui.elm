@@ -422,11 +422,8 @@ userButtons session replaceUrl =
 
                     else
                         [ div [ class "navbar-item" ]
-                            [ a [ class "button is-rounded is-outlined has-background-primary", href (toHref Login) ] [ text T.signin ]
-                            ]
-                        , div [ class "navbar-item" ]
                             [ a [ class "button is-rounded is-signup", href (toHref Signup) ]
-                                [ text T.tryFree ]
+                                [ text T.getStarted ]
                             ]
                         ]
                    )

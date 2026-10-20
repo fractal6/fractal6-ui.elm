@@ -46,7 +46,7 @@
         & > .navbar {
             .is-signup {
                 border-color: var(--primary);
-                color: var(--primary) !important;
+                color: var(--text) !important;
                 background-color: map.get($f6-dark-palette, link) !important;
                 &:hover {
                     color: var(--bulma-navbar-item-color) !important;
@@ -65,20 +65,7 @@
         @include mobile {
             & > .navbar {
                 height: $navbar-height;
-                border-bottom: 1px solid var(--border-color-light);
-
-                .navbar-item, .navbar-link {
-                    color: var(--text);
-                    &:hover {
-                        color: var(--text-strong);
-                    }
-                }
-
-                .navbar-item {
-                    &.is-active, .navbar-link.is-active {
-                        background-color: var(--background-hover) !important;
-                    }
-                }
+                border-bottom: 1px solid var(--border-color);
             }
         }
 
@@ -110,7 +97,6 @@
                 background: var(--primary);
                 margin: $size-small auto 0;
 
-
                 // Bulma responsive width logic
                 @include desktop {
                     width: calc(11 / 12 * 100%);
@@ -129,27 +115,27 @@
                     border-radius: 12px;
                 }
 
-                // Fix colors
-                // --
-                color: var(--bulma-navbar-item-color) !important;
-                .button, .vbar, .logo-fractale-text {
-                    color: var(--bulma-navbar-item-color) !important;
-                }
-                .vbar {
-                    color: var(--bulma-navbar-item-color) !important;
-                }
-                svg {
-                    fill: var(--bulma-navbar-item-color) !important;
-                }
-                .navbar-brand > .navbar-item {
-                    background-color: inherit !important;
-                }
                 .navbar-brand:first-child {
                   // Fix bad alignement in mobile (because navbar-brand wrap all the navbar ?)
                   padding: 0 0.75rem;
                 }
 
 
+            }
+        }
+
+        & > .navbar {
+            // Fix colors
+            // --
+            color: var(--bulma-navbar-item-color) !important;
+            .button, .vbar, .logo-fractale-text, .navbar-burger {
+                color: var(--bulma-navbar-item-color);
+            }
+            svg {
+                fill: var(--bulma-navbar-item-color) !important;
+            }
+            .navbar-brand > .navbar-item {
+                background-color: inherit !important;
             }
         }
 
@@ -516,7 +502,7 @@
     padding: 0 !important;
 }
 
-#loginForm, #signupForm {
+#loginForm {
     @include desktop {
         min-width: 400px;
         & > .card {
