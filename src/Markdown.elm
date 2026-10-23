@@ -491,6 +491,7 @@ frac6Parser content =
         |> processOutsideCodeBlocks
             (\segment ->
                 segment
+                    |> escapeInvalidHtmlBlocks content
                     -- Escape "_" in link to give the priority to autolink
                     |> escapeLinks
                     -- Force line break (except for Table rows starting with |)
@@ -678,6 +679,49 @@ escapeLinks input =
     input
         |> Regex.find urlRegex
         |> List.foldl (\match acc -> replaceUnderscores match.match acc) input
+
+
+{-| elm-markdown parses any line-start `<name` as an HTML block and fails on what it can't parse
+(`<NOTE : x>`, `<a b>`, unclosed `<NOTE>`). Escape those to `&lt;` so they render as text.
+The closing tag is looked up in `full`, as `content` may be a segment split at code fences.
+-}
+escapeInvalidHtmlBlocks : String -> String -> String
+escapeInvalidHtmlBlocks full content =
+    Regex.replace lineTagRegex
+        (\m ->
+            case m.submatches of
+                [ _, _, Just name ] ->
+                    let
+                        tagStart =
+                            String.length m.match - String.length name - 1
+
+                        rest =
+                            String.dropLeft (m.index + tagStart) content
+                    in
+                    if Regex.contains validTagRegex rest && String.contains ("</" ++ name) full then
+                        m.match
+
+                    else
+                        String.left tagStart m.match ++ "&lt;" ++ name
+
+                _ ->
+                    m.match
+        )
+        content
+
+
+{-| `<name` at line start, after up to 3 spaces of indent and optional list/quote markers.
+-}
+lineTagRegex : Regex.Regex
+lineTagRegex =
+    regexFromString "(^|\\n)((?: {0,3}(?:[-*+>]|\\d+[.)])[ \\t]+)* {0,3})<([A-Za-z][\\w-]*)(?=[\\s/>]|$)"
+
+
+{-| An open tag elm-markdown accepts: every attribute has a value.
+-}
+validTagRegex : Regex.Regex
+validTagRegex =
+    regexFromString "^<[A-Za-z][\\w-]*(?:\\s+[A-Za-z_:][\\w.:-]*\\s*=\\s*(?:\"[^\"]*\"|'[^']*'|[^\\s\"'=<>`]+))*\\s*/?>"
 
 
 {-| Apply a transformation only to content outside code: fenced blocks (\`\`\` or ~~~)

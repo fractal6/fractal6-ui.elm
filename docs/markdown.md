@@ -52,7 +52,9 @@ checkboxes rendered with the `checkbox_readonly` class.
 The `frac6Parser` preprocessing skips code: fenced blocks and inline code spans are left
 untouched. Inside HTML blocks (`<details>`, `<div>`), `&` and `<` in code (spans and fences)
 are swapped for private-use sentinels (the parser would otherwise read them as HTML), and the
-`codeSpan`/`codeBlock` renderers restore them.
+`codeSpan`/`codeBlock` renderers restore them. A line-start `<name …` that elm-markdown can't
+parse as an HTML block (attribute without value, no closing tag, e.g. `- <NOTE : x>`) would fail
+the whole comment, so `escapeInvalidHtmlBlocks` escapes it to `&lt;`.
 
 ### Image dimensions
 

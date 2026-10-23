@@ -133,6 +133,10 @@ frac6ParserTests =
                 in
                 -- escapeLinks should NOT have escaped the _ inside the fence
                 Expect.equal False (String.contains "\\_" result)
+        , test "escapes unparseable line-start tags, keeps valid ones" <|
+            \_ ->
+                frac6Parser "- <A b : c>\n<span class=\"x\">y</span>"
+                    |> Expect.equal "- &lt;A b : c>  \n<span class=\"x\">y</span>"
         ]
 
 
@@ -146,8 +150,12 @@ frac6ParserTests =
 parseMarkdownTests : Test
 parseMarkdownTests =
     describe "parseMarkdown (integration — should not crash)"
-        [ -- Basic details
-          expectParseOk "basic details block"
+        [ expectParseOk "line-start pseudo tag with invalid attributes"
+            "<details>\n<summary>T</summary>\n\n- <ANCIEN President : **GRINO Nicolas** : x@y.com >\n</details>"
+        , expectParseOk "line-start unclosed pseudo tag" "<NOTE>\ntext"
+
+        -- Basic details
+        , expectParseOk "basic details block"
             "<details>\n<summary>Title</summary>\n\nContent here.\n\n</details>"
 
         -- URL with & inside details
