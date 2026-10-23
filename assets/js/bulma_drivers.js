@@ -80,16 +80,8 @@ export function updateLang(app, lang, referer) {
     setTimeout(() => {
         var loc = window.location;
         var target = loc.protocol + '//' + loc.host + "/" + lang.toLowerCase() + loc.pathname + loc.search;
-        // The reload wipes the Elm referer: insert it below the current entry so GoBack (history.back) lands on it.
-        if (referer) {
-            // Also restore it as the Elm referer after reload (read once in index.js).
-            sessionStorage.setItem('referer', referer);
-            try {
-                var cur = loc.href;
-                history.replaceState(null, '', referer);
-                history.pushState(null, '', cur);
-            } catch (e) { /* cross-origin referer: keep default behavior */ }
-        }
+        // The reload wipes the Elm referer: restore it after reload (read once in index.js).
+        if (referer) sessionStorage.setItem('referer', referer);
         // This document keeps the old lang: if the browser restores it from bfcache on back, reload it.
         window.addEventListener('pageshow', e => { if (e.persisted) window.location.reload() });
         window.location.replace(target);
