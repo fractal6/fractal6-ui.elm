@@ -178,6 +178,7 @@ type alias SessionFlags =
     , screen : Screen
     , theme : Maybe JD.Value
     , lexicon : Maybe JD.Value
+    , referer : Maybe String
     }
 
 
@@ -471,7 +472,7 @@ fromLocalSession url flags =
     in
     ( { isAdmin = Nothing
       , apis = flags.apis
-      , referer = Nothing
+      , referer = flags.referer |> Maybe.andThen Url.fromString
       , can_referer = Nothing
       , token_data = RemoteData.NotAsked
       , common =

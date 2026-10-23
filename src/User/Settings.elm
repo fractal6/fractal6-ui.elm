@@ -31,7 +31,7 @@ import Dict
 import File exposing (File)
 import Form exposing (getd, isPostSendable, isPostSendableOr)
 import Form.Help as Help
-import Fractale.Codecs exposing (FractalBaseRoute(..))
+import Fractale.Codecs exposing (FractalBaseRoute(..), toLink)
 import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
 import Fractale.Form exposing (..)
 import Fractale.Graph exposing (..)
@@ -440,7 +440,7 @@ update global message model =
                                 ++ (r.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault "")
 
                 Nothing ->
-                    send NavigateBack
+                    send (NavigateRaw (toLink UsersBaseUri model.username []))
             )
 
         -- Help

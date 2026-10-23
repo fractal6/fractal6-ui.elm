@@ -37,6 +37,9 @@ window.addEventListener('load', _ => {
     }
     // Lexicon
     var lexicon = JSON.parse(localStorage.getItem("lexicon"));
+    // Referer saved before a lang reload (see updateLang)
+    var referer = sessionStorage.getItem("referer");
+    sessionStorage.removeItem("referer");
 
     // Init Elm
     // --
@@ -64,6 +67,7 @@ window.addEventListener('load', _ => {
                 screen: { w: window.innerWidth, h: window.innerHeight },
                 theme: theme,
                 lexicon: lexicon,
+                referer: referer,
             }
         })
     );

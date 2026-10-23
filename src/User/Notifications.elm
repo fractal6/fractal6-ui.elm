@@ -27,10 +27,10 @@ import Browser.Navigation as Nav
 import Components.AuthModal as AuthModal
 import Dict exposing (Dict)
 import Form.Help as Help
-import Fractale.Codecs exposing (FractalBaseRoute(..), focusFromNameid, nid2rootid)
+import Fractale.Codecs exposing (FractalBaseRoute(..), focusFromNameid, nid2rootid, toLink)
 import Fractale.Error exposing (viewGqlErrors)
 import Fractale.Event exposing (contractEventToText, contractToJonction, contractToLink, contractTypeToText, eventToIcon, eventToLink, eventTypeToText, viewContractMedia, viewEventMedia, viewNotifMedia)
-import Fractale.User exposing (UserState(..))
+import Fractale.User exposing (UserState(..), uctxFromUser)
 import Fractale.View exposing (counter, mediaTension, viewGoBack, viewOrga)
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..))
@@ -493,7 +493,7 @@ update global message model =
                                 ++ (r.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault "")
 
                 Nothing ->
-                    send NavigateBack
+                    send (NavigateRaw (toLink UsersBaseUri (uctxFromUser model.session.user).username []))
             )
 
         -- Help

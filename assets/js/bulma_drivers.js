@@ -82,6 +82,8 @@ export function updateLang(app, lang, referer) {
         var target = loc.protocol + '//' + loc.host + "/" + lang.toLowerCase() + loc.pathname + loc.search;
         // The reload wipes the Elm referer: insert it below the current entry so GoBack (history.back) lands on it.
         if (referer) {
+            // Also restore it as the Elm referer after reload (read once in index.js).
+            sessionStorage.setItem('referer', referer);
             try {
                 var cur = loc.href;
                 history.replaceState(null, '', referer);
