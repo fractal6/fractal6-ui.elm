@@ -199,7 +199,7 @@ type Msg
     | OnClose_
     | SetTensionid String
     | SetAction OnClickAction
-    | OnChangePattern String
+    | OnChangePattern (List String) String
     | ChangeLabelLookup (List Label)
     | OnLabelClick Label Bool Time.Posix
     | OnLabelClickInt Label Bool
@@ -286,9 +286,9 @@ update_ apis message model =
                     noOut
             )
 
-        OnChangePattern pattern ->
+        OnChangePattern targets pattern ->
             ( setPattern pattern model
-            , out0 [ Ports.searchLabel pattern ]
+            , out0 [ Ports.searchLabel pattern targets ]
             )
 
         ChangeLabelLookup data ->
@@ -480,8 +480,11 @@ view_ isEmbedded op model =
                         if model.pattern == "" then
                             -- selection
                             op.selectedLabels
-                                -- sort by username
-                                ++ List.sortBy .name (List.take 42 labels_d)
+                                -- labels of the target circles first, then by name
+                                ++ (labels_d
+                                        |> List.sortBy (\l -> ( ternary (List.any (\n -> List.member n.nameid op.targets) l.nodes) 0 1, l.name ))
+                                        |> List.take 42
+                                   )
                                 -- uniq
                                 |> LE.uniqueBy .name
 
@@ -498,12 +501,12 @@ view_ isEmbedded op model =
                                     , type_ "text"
                                     , placeholder T.searchLabels
                                     , value model.pattern
-                                    , onInput OnChangePattern
+                                    , onInput (OnChangePattern op.targets)
                                     ]
                                     []
                                 , span [ class "icon is-left" ] [ i [ attribute "aria-hidden" "true", class "icon-search" ] [] ]
                                 , if model.pattern /= "" then
-                                    span [ class "icon is-right is-clickable", onMousedownPD (OnChangePattern "") ] [ A.icon "icon-x" ]
+                                    span [ class "icon is-right is-clickable", onMousedownPD (OnChangePattern op.targets "") ] [ A.icon "icon-x" ]
 
                                   else
                                     text ""

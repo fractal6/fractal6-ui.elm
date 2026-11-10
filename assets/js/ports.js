@@ -104,7 +104,7 @@ window.addEventListener('load', _ => {
                 qsl: new MiniSearch({
                     idField: 'id',
                     fields: ['name'],
-                    storeFields: ['id', 'name', 'color'],
+                    storeFields: ['id', 'name', 'color', 'nodes'],
                     searchOptions: { fuzzy: 0.3 },
                 }),
                 // Orga Quick Search
@@ -284,9 +284,15 @@ export const actions = {
         var res = qs.search(pattern, {prefix:true}).slice(0,11);
         app.ports.lookupUserFromJs.send(res);
     },
-    'SEARCH_LABELS': (app, session, pattern) => {
+    'SEARCH_LABELS': (app, session, { pattern, targets }) => {
         var qs = session.qsl;
-        var res = qs.search(pattern, {prefix:true}).slice(0,11);
+        // Boost labels declared on the target circles. MiniSearch weights prefix matches 0.375 vs 1 for exact,
+        // so ~2.7 is the threshold above which a target prefix match outranks a non-target exact match.
+        var boost = 2;
+        var res = qs.search(pattern, {
+            prefix: true,
+            boostDocument: (id, term, f) => (f.nodes || []).some(n => targets.includes(n.nameid)) ? boost : 1,
+        }).slice(0,11);
         app.ports.lookupLabelFromJs.send(res);
     },
     'INIT_ORGASEARCH': (app, session, data) => {

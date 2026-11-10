@@ -616,11 +616,11 @@ searchUser pattern =
         }
 
 
-searchLabel : String -> Cmd msg
-searchLabel pattern =
+searchLabel : String -> List String -> Cmd msg
+searchLabel pattern targets =
     outgoing
         { action = "SEARCH_LABELS"
-        , data = JE.string pattern
+        , data = JE.object [ ( "pattern", JE.string pattern ), ( "targets", JE.list JE.string targets ) ]
         }
 
 

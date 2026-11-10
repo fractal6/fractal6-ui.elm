@@ -84,6 +84,7 @@ labelEncoder u =
     [ ( "id", JE.string u.id )
     , ( "name", JE.string u.name )
     , ( "color", JEE.maybe JE.string u.color )
+    , ( "nodes", JE.list (\n -> JE.object [ ( "nameid", JE.string n.nameid ) ]) u.nodes )
     ]
 
 

@@ -24,6 +24,10 @@ site) and `queryMembers` filters on the rootid plus active membership role types
 list, project page). Targets `[ rootnameid ]` and walks all descendants, i.e. every label in
 the organisation.
 
+**Label ordering** — labels declared on the view's `op.targets` (project circles, focus circle)
+come first, each group sorted by name. While searching, the same labels get a `boostDocument`
+factor in MiniSearch (`SEARCH_LABELS` in `assets/js/ports.js`).
+
 | Call site | Panel | Rule |
 |-----------|-------|------|
 | `Org/Tension.elm`, `Components/CardPanel.elm`, `Components/LinkTensionPanel.elm`, `Form/NewTension.elm` | label, project | 1 |
