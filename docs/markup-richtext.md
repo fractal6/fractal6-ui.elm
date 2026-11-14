@@ -4,12 +4,20 @@ Keyboard interactions wired into comment/tension textareas. Implemented as a `ke
 
 ## Triggers
 
-Two inline pickers attach to any textarea registered via `setupHandler("keydown", markupRichText, ...)`:
+Three inline pickers attach to any textarea registered via `setupHandler("keydown", markupRichText, ...)`:
 
 - `@` at start-of-line or after whitespace → opens the user search panel (`searchInput`).
 - `:` at start-of-line or after whitespace → opens the emoji picker (`emojiInput`).
+- `0x` at start-of-line or after whitespace → opens the tension picker (`tensionInput`). Picking a tension replaces `0x<pattern>` with its id, rendered as a link by `Markdown.elm`.
 
-Both are routed through the shared `handlePickerKey()` helper, which exchanges keystrokes with Elm via ports (`changePatternFromJs` / `changeEmojiPatternFromJs`, `arrowFromJs`, `selectActiveItemFromJs`).
+All are routed through the shared `handlePickerKey()` helper, which exchanges keystrokes with Elm via ports (`changePatternFromJs` / `changeEmojiPatternFromJs` / `changeTensionPatternFromJs`, `arrowFromJs`, `selectActiveItemFromJs`).
+
+### Tension picker
+
+- The pattern can hold spaces: a single Space does not close this picker; two consecutive spaces, or a pattern over 48 chars (the `handlePickerKey` lookback), do.
+- Scope is always the whole organisation (root nameid of the `UserInput` targets).
+- The list is a pool of up to 100 tensions filtered client-side: a tension matches if any word of the pattern is in its title or prefixes its id, best matches first, 15 shown.
+- The pool is the latest open tensions until a word is complete (followed by a space); then it is a server `anyoftext` title search, refetched each time a complete word is added or removed.
 
 ## Picker Key Handling
 
@@ -17,7 +25,7 @@ Both are routed through the shared `handlePickerKey()` helper, which exchanges k
 
 **Pattern mode** (panel open, no item highlighted):
 - `ArrowDown` or `Tab` → enter arrow mode and highlight the first item.
-- `Space`, `Enter`, `Escape`, `ArrowUp/Left/Right`, or backspacing past the trigger char → close the panel.
+- `Space` (the tension picker needs two in a row), `Enter`, `Escape`, `ArrowUp/Left/Right`, or backspacing past the trigger → close the panel.
 - Any pattern char (or `Backspace` within the pattern) → forward the updated query to Elm.
 
 **Arrow mode** (an item is highlighted):
@@ -47,14 +55,15 @@ disabled element can't take focus and the Tab would be swallowed.
 
 All textarea mutations in `markupRichText` go through the `replaceRange(el, start, end, text, caretStart, caretEnd)` helper exported from `assets/js/textutils.js`. It tries `document.execCommand('insertText', ...)` first so the browser's native Ctrl+Z stack survives the edit. `execCommand` is deprecated but remains the only cross-browser way to mutate a `<textarea>` without wiping undo, and every shipping browser still implements it (no spec'd replacement). If the call returns `false` or throws, the helper falls back to a direct `el.value = ...` assignment plus a manual `input` event — the edit still applies but is not undoable.
 
-The same helper is used by `ports.js` for `@`-mention and emoji picker insertions, so all programmatic textarea edits in the app share one undo-preserving path.
+The same helper is used by `ports.js` for `@`-mention, emoji and tension picker insertions, so all programmatic textarea edits in the app share one undo-preserving path.
 
 ## Files
 
 | File | Role |
 |------|------|
-| `assets/js/bulma_drivers.js` | `markupRichText`, `handlePickerKey`, `show/hideSearchInput`, `show/hideEmojiInput` |
+| `assets/js/bulma_drivers.js` | `markupRichText`, `handlePickerKey`, `show/hideSearchInput`, `show/hideEmojiInput`, `show/hideTensionInput` |
 | `assets/js/textutils.js` | `replaceRange` (undo-preserving textarea edit), `getCaretCoordinates`, `caretAtAnchor` |
 | `src/Components/UserInput.elm` | Elm side of the `@` user picker |
 | `src/Components/EmojiPicker.elm` | Elm side of the `:` emoji picker |
-| `src/Ports.elm` | Port declarations used by both pickers |
+| `src/Components/TensionPicker.elm` | Elm side of the `0x` tension picker (fetch, filter, view) |
+| `src/Ports.elm` | Port declarations used by the pickers |

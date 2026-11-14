@@ -19,13 +19,14 @@
 -}
 
 
-port module Components.UserInput exposing (Msg(..), State, init, isOpen_, subscriptions, update, view, viewUserSeeker)
+port module Components.UserInput exposing (Msg(..), State, init, isOpen_, rootnameid_, subscriptions, update, view, viewUserSeeker)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (userDecoder)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.Out as O exposing (noOut, out0, out2)
+import Fractale.Codecs exposing (nid2rootid)
 import Fractale.Error exposing (viewGqlErrors)
 import Fractale.Form exposing (UserForm, initUserForm)
 import Fractale.User exposing (UserState(..), uctxFromUser)
@@ -109,6 +110,13 @@ init targets isInvite multiSelect session =
 isOpen_ : State -> Bool
 isOpen_ (State model) =
     model.isOpen
+
+
+{-| Organisation of the current targets.
+-}
+rootnameid_ : State -> String
+rootnameid_ (State model) =
+    model.targets |> LE.last |> withDefault "" |> nid2rootid
 
 
 

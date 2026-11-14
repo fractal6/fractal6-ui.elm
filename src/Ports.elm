@@ -668,6 +668,14 @@ pushEmojiSelection emoji =
         }
 
 
+pushTensionSelection : String -> Cmd msg
+pushTensionSelection tid =
+    outgoing
+        { action = "PUSH_TENSION_SELECTION"
+        , data = JE.string tid
+        }
+
+
 
 --- Popups
 

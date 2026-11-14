@@ -19,7 +19,7 @@
  */
 
 import MiniSearch from 'minisearch'
-import { InitBulma, catchEsc, getThemePref, updateLang, showSearchInput, hideSearchInput, showEmojiInput, hideEmojiInput } from './bulma_drivers'
+import { InitBulma, catchEsc, getThemePref, updateLang, showSearchInput, hideSearchInput, showEmojiInput, hideEmojiInput, showTensionInput, hideTensionInput, TENSION_REF } from './bulma_drivers'
 import { replaceRange, caretAtAnchor } from './textutils'
 import { GraphPack } from './graphpack_d3'
 import { initAvatarCapture, initUserCard } from './avatars'
@@ -356,6 +356,17 @@ export const actions = {
         // Remove the emoji input
         const emojiTooltip = document.getElementById($i.id + "emojiInput");
         hideEmojiInput(emojiTooltip, app);
+    },
+    'PUSH_TENSION_SELECTION': (app, session, tid) => {
+        var $i = document.activeElement;
+        var start = $i.selectionStart;
+        if (!$i || start == null) return
+
+        // Replace the 0x<pattern> before the cursor. Idempotent: several pickers can be open and each emits the selection.
+        var m = $i.value.slice(0, start).match(TENSION_REF);
+        if (m) replaceRange($i, start - m[0].length, $i.selectionEnd, tid + " ");
+
+        hideTensionInput(document.getElementById($i.id + "tensionInput"), app);
     },
 
     //
@@ -815,6 +826,7 @@ export const actions = {
             showSearchInput($input, document.getElementById(target + "searchInput"), app);
         } else if (c == "MentionTension") {
             pushLine($input, "0x", true)
+            showTensionInput($input, document.getElementById(target + "tensionInput"), app);
         } else if (c == "Details") {
             insertBlock($input,
                 "<details>\n<summary>", "</summary>\n\n", "\n</details>")

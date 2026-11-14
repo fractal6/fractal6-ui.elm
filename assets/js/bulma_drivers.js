@@ -529,6 +529,7 @@ export function markupRichText(e, el, app) {
 
     const userTooltip = document.getElementById(el.id + "searchInput");
     const emojiTooltip = document.getElementById(el.id + "emojiInput");
+    const tensionTooltip = document.getElementById(el.id + "tensionInput");
 
     if (!isHidden(userTooltip) && !e.ctrlKey && !e.shiftKey && !e.altKey) {
         handlePickerKey(e, el, userTooltip, {
@@ -552,6 +553,24 @@ export function markupRichText(e, el, app) {
             hide: () => hideEmojiInput(emojiTooltip, app),
         });
     }
+    else if (!isHidden(tensionTooltip) &&
+        (!TENSION_REF.test(el.value.slice(Math.max(0, el.selectionStart - 50), el.selectionStart)) ||
+         (e.key == " " && el.value[el.selectionStart - 1] == " "))) {
+        // ponytail: the pattern is capped by the 50-char lookback; widen it in handlePickerKey if longer searches are needed.
+        // A second consecutive space ends the reference.
+        hideTensionInput(tensionTooltip, app);
+    }
+    else if (!isHidden(tensionTooltip) && !e.ctrlKey && !e.altKey) {
+        handlePickerKey(e, el, tensionTooltip, {
+            prefix: "0x",
+            patternRegex: TENSION_REF,
+            patternChars: /^.$/,
+            patternPort: app.ports.changeTensionPatternFromJs,
+            arrowPort: app.ports.arrowFromJs,
+            selectPort: app.ports.selectActiveItemFromJs,
+            hide: () => hideTensionInput(tensionTooltip, app),
+        });
+    }
 
     // Handle toggle up tooltip
     if (e.key == "@" &&
@@ -564,6 +583,12 @@ export function markupRichText(e, el, app) {
     if (e.key == ":" &&
         (el.selectionStart == 0 || [" ", "\n", "\t"].includes(el.value[el.selectionStart - 1]))) {
         showEmojiInput(el, emojiTooltip, app);
+    }
+
+    // Handle toggle up tension tooltip, on "0x"
+    if (e.key == "x" && !e.ctrlKey && !e.metaKey && el.selectionStart == el.selectionEnd &&
+        /(^|\s)0$/.test(el.value.slice(Math.max(0, el.selectionStart - 2), el.selectionStart))) {
+        showTensionInput(el, tensionTooltip, app);
     }
 
     /*
@@ -726,49 +751,37 @@ export function markupRichText(e, el, app) {
     }
 }
 
-export function showSearchInput(content, input, app) {
+// Show/hide an inline picker tooltip at the caret; `openPort`/`closePort` notify the Elm component.
+function showPickerInput(content, input, openPort, hide) {
     if (!input) return
     const { x, y } = getCaretCoordinates(content, content.selectionStart);
     input.setAttribute("aria-hidden", "false");
     input.setAttribute("style", `display: inline-block; left: ${x}px; top: ${y + 30}px`);
     input.dataset.arrowMode = "false";
-    installClickOutside(input, () => hideSearchInput(input, app));
-
-    app.ports.openMembersFromJs.send(null);
+    installClickOutside(input, hide);
+    openPort.send(null);
 }
 
-export function hideSearchInput(input, app) {
+function hidePickerInput(input, closePort) {
     if (!input) return
     input.setAttribute("aria-hidden", "true");
     input.setAttribute("style", "display: none;");
     input.dataset.arrowMode = "false";
     removeClickOutside(input);
-
-    app.ports.closeMembersFromJs.send(null);
+    closePort.send(null);
 }
 
-export function showEmojiInput(content, input, app) {
-    if (!input) return
-    const { x, y } = getCaretCoordinates(content, content.selectionStart);
-    input.setAttribute("aria-hidden", "false");
-    input.setAttribute("style", `display: inline-block; left: ${x}px; top: ${y + 30}px`);
-    input.dataset.arrowMode = "false";
-    installClickOutside(input, () => hideEmojiInput(input, app));
+export const showSearchInput = (content, input, app) => showPickerInput(content, input, app.ports.openMembersFromJs, () => hideSearchInput(input, app));
+export const hideSearchInput = (input, app) => hidePickerInput(input, app.ports.closeMembersFromJs);
+export const showEmojiInput = (content, input, app) => showPickerInput(content, input, app.ports.openEmojiPickerFromJs, () => hideEmojiInput(input, app));
+export const hideEmojiInput = (input, app) => hidePickerInput(input, app.ports.closeEmojiPickerFromJs);
+export const showTensionInput = (content, input, app) => showPickerInput(content, input, app.ports.openTensionPickerFromJs, () => hideTensionInput(input, app));
+export const hideTensionInput = (input, app) => hidePickerInput(input, app.ports.closeTensionPickerFromJs);
 
-    app.ports.openEmojiPickerFromJs.send(null);
-}
+// "0x" + pattern up to the caret, from the last 0x of the current line (the pattern can hold spaces).
+export const TENSION_REF = /0x(?:(?!0x)[^\n])*$/;
 
-export function hideEmojiInput(input, app) {
-    if (!input) return
-    input.setAttribute("aria-hidden", "true");
-    input.setAttribute("style", "display: none;");
-    input.dataset.arrowMode = "false";
-    removeClickOutside(input);
-
-    app.ports.closeEmojiPickerFromJs.send(null);
-}
-
-// Shared keydown handler for the @-mention and :emoji pickers.
+// Shared keydown handler for the @-mention, :emoji and 0x-tension pickers.
 // `opts` differs per picker: { prefix, patternRegex, patternChars, patternPort, arrowPort, selectPort, hide }
 function handlePickerKey(e, el, tooltip, opts) {
     var start = el.selectionStart;
@@ -780,12 +793,14 @@ function handlePickerKey(e, el, tooltip, opts) {
             e.preventDefault();
             e.stopPropagation();
             opts.arrowPort.send(e.key.replace("Arrow", "").toLowerCase());
+            requestAnimationFrame(() => tooltip.querySelector(".is-active")?.scrollIntoView?.({ block: "nearest" }));
             return
         }
         if (e.key === "Tab") {
             e.preventDefault();
             e.stopPropagation();
             opts.arrowPort.send("next"); // cycle through items
+            requestAnimationFrame(() => tooltip.querySelector(".is-active")?.scrollIntoView?.({ block: "nearest" }));
             return
         }
         if (e.key === "Enter" || e.key === "Return") {
@@ -807,7 +822,7 @@ function handlePickerKey(e, el, tooltip, opts) {
         return
     }
 
-    if (e.key == " " ||
+    if ((e.key == " " && !opts.patternChars.test(" ")) ||
         e.key == "Enter" ||
         e.key == "Return" ||
         e.key == "Escape" ||
@@ -815,7 +830,7 @@ function handlePickerKey(e, el, tooltip, opts) {
         e.key == "ArrowLeft" ||
         e.key == "ArrowRight" ||
         // Trigger char was just backspaced — exit
-        (e.key == "Backspace" && el.value[start - 1] == opts.prefix)
+        (e.key == "Backspace" && el.value.endsWith(opts.prefix, start))
     ) {
         if (e.key == "Escape") e.stopPropagation();
         opts.hide();
@@ -831,7 +846,7 @@ function handlePickerKey(e, el, tooltip, opts) {
         extra = e.key;
     }
     if (m) {
-        opts.patternPort.send((m[m.length - 1] + extra).slice(1));
+        opts.patternPort.send((m[m.length - 1] + extra).slice(opts.prefix.length));
     }
 }
 

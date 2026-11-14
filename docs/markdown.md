@@ -24,7 +24,7 @@ port, and the JS text manipulation handlers.
 | Ordered | `List-ol` | `pushLine` | `1. ` prefix |
 | Check | `List-check` | `pushLine` | `- [ ] ` prefix |
 | @user | `MentionUser` | `pushLine` + tooltip | `@` prefix + user search |
-| Tension | `MentionTension` | `pushLine` | `0x` prefix |
+| Tension | `MentionTension` | `pushLine` + tooltip | `0x` prefix + tension search |
 | Details | `Details` | `insertBlock` | `<details><summary>` block |
 
 The three JS primitives (`assets/js/ports.js`):

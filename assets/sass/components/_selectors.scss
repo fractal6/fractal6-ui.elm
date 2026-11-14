@@ -30,6 +30,13 @@
         left: auto;
         right: 0;
     }
+
+    &.tensionPicker {
+        max-width: 520px;
+        @include tablet {
+            min-width: 380px;
+        }
+    }
 }
 
 .is-reversed > .dropList {

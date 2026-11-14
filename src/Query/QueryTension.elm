@@ -41,6 +41,7 @@ module Query.QueryTension exposing
     , queryIntTension
     , queryOrgTensions
     , queryPinnedTensions
+    , queryTensionRefs
     , tensionPayload
     )
 
@@ -721,6 +722,32 @@ queryAllTension url targetids first offset query_ status_ type_ msg =
             tensionPayload
         )
         (RemoteData.fromResult >> decodeResponse subTensionDecoder >> msg)
+
+
+{-| Tensions of an organisation for the `0x` reference picker: the latest open ones, or those whose title has any of `words`.
+-}
+queryTensionRefs url rootnameid first words msg =
+    makeGQLQuery url
+        (Query.queryTension
+            (\a ->
+                { a
+                    | first = Present first
+                    , order = Input.buildTensionOrder (\b -> { b | desc = Present TensionOrderable.CreatedAt }) |> Present
+                    , filter =
+                        Input.buildTensionFilter
+                            (\c ->
+                                { c
+                                    | receiverid = Present { eq = Absent, in_ = Absent, regexp = Present ("/^" ++ rootnameid ++ "(#|$)/") }
+                                    , title = ternary (words == []) Absent (Present { alloftext = Absent, anyoftext = Present (String.join " " words) })
+                                    , status = ternary (words == []) (Present { eq = Present TensionStatus.Open, in_ = Absent }) Absent
+                                }
+                            )
+                            |> Present
+                }
+            )
+            pinPayload
+        )
+        (RemoteData.fromResult >> decodeResponse (Maybe.map (List.filterMap identity)) >> msg)
 
 
 

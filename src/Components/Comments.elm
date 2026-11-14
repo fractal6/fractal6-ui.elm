@@ -52,6 +52,7 @@ import Components.Attachments as Attachments
 import Components.EmojiPicker as EmojiPicker
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.Out as O exposing (noOut, out0, out2)
+import Components.TensionPicker as TensionPicker
 import Components.UserInput as UserInput
 import Dict
 import Form exposing (isPostSendable)
@@ -138,6 +139,7 @@ type alias Model =
     -- Components
     , userInput : UserInput.State
     , emojiPicker : EmojiPicker.State
+    , tensionPicker : TensionPicker.State
     , modal_confirm : ModalConfirm Msg
 
     -- Fade-out animation for deleted comments
@@ -190,6 +192,7 @@ initModel nameid tensionid session =
     -- Components
     , userInput = UserInput.init [ nameid ] False False session
     , emojiPicker = EmojiPicker.init
+    , tensionPicker = TensionPicker.init
     , modal_confirm = ModalConfirm.init NoMsg
 
     -- Fade-out animation for deleted comments
@@ -402,6 +405,7 @@ type Msg
     | AttachmentsMsg Attachments.Msg
     | UserInputMsg UserInput.Msg
     | EmojiPickerMsg EmojiPicker.Msg
+    | TensionPickerMsg TensionPicker.Msg
 
 
 type alias Out =
@@ -1057,6 +1061,16 @@ update_ apis message model =
             in
             ( { model | emojiPicker = data }, out2 (cmd :: (out.cmds |> List.map (\m -> Cmd.map EmojiPickerMsg m))) out.gcmds )
 
+        TensionPickerMsg msg ->
+            let
+                ( data, out ) =
+                    TensionPicker.update apis (UserInput.rootnameid_ model.userInput) msg model.tensionPicker
+
+                cmd =
+                    out.result |> Maybe.map Ports.pushTensionSelection |> withDefault Cmd.none
+            in
+            ( { model | tensionPicker = data }, out2 (cmd :: List.map (Cmd.map TensionPickerMsg) out.cmds) out.gcmds )
+
 
 type alias Checkbox =
     { isChecked : Bool
@@ -1081,6 +1095,7 @@ hasEscConsumer (State model) =
         /= ""
         || model.modal_confirm.isOpen
         || EmojiPicker.isOpen_ model.emojiPicker
+        || TensionPicker.isOpen_ model.tensionPicker
         || UserInput.isOpen_ model.userInput
 
 
@@ -1099,6 +1114,7 @@ subscriptions (State model) =
         ++ (Attachments.subscriptions model.attachments |> List.map (\s -> Sub.map AttachmentsMsg s))
         ++ (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
         ++ (EmojiPicker.subscriptions model.emojiPicker |> List.map (\s -> Sub.map EmojiPickerMsg s))
+        ++ (TensionPicker.subscriptions model.tensionPicker |> List.map (Sub.map TensionPickerMsg))
         ++ [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose ]
 
 
@@ -1114,7 +1130,7 @@ viewCommentsContract session (State model) =
         [ model.comments
             |> List.map
                 (\c ->
-                    viewComment session c model.comment_form model.comment_result model.comment_delete_result ( model.highlightedCommentId, model.highlightedUntil ) model.userInput model.emojiPicker model.attachments (List.member c.id model.fadingOut)
+                    viewComment session c model.comment_form model.comment_result model.comment_delete_result ( model.highlightedCommentId, model.highlightedUntil ) model.userInput model.emojiPicker model.tensionPicker model.attachments (List.member c.id model.fadingOut)
                 )
             |> div []
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
@@ -1124,7 +1140,7 @@ viewCommentsContract session (State model) =
 viewCommentsTension : SessionCommon -> { t | governed_node : Maybe GovernedNode, draft_node_type : Maybe NodeType.NodeType } -> State -> Html Msg
 viewCommentsTension session tension (State model) =
     div []
-        [ viewComments_ session tension model.history model.comments model.comment_form model.comment_result model.comment_delete_result model.expandedEvents ( model.highlightedCommentId, model.highlightedUntil ) model.userInput model.emojiPicker model.attachments model.fadingOut
+        [ viewComments_ session tension model.history model.comments model.comment_form model.comment_result model.comment_delete_result model.expandedEvents ( model.highlightedCommentId, model.highlightedUntil ) model.userInput model.emojiPicker model.tensionPicker model.attachments model.fadingOut
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
 
@@ -1141,10 +1157,11 @@ viewComments_ :
     -> ( String, String )
     -> UserInput.State
     -> EmojiPicker.State
+    -> TensionPicker.State
     -> Attachments.State
     -> List String
     -> Html Msg
-viewComments_ session tension history comments comment_form comment_result comment_delete_result expandedEvents highlightedCommentId userInput emojiPicker attachments fadingOut =
+viewComments_ session tension history comments comment_form comment_result comment_delete_result expandedEvents highlightedCommentId userInput emojiPicker tensionPicker attachments fadingOut =
     let
         nodeType =
             getTensionNode tension |> Maybe.map .type_ |> withDefault NodeType.Role
@@ -1186,7 +1203,7 @@ viewComments_ session tension history comments comment_form comment_result comme
                 Nothing ->
                     case LE.getAt e.i comments of
                         Just c ->
-                            viewComment session c comment_form comment_result comment_delete_result highlightedCommentId userInput emojiPicker attachments (List.member c.id fadingOut)
+                            viewComment session c comment_form comment_result comment_delete_result highlightedCommentId userInput emojiPicker tensionPicker attachments (List.member c.id fadingOut)
 
                         Nothing ->
                             text ""
@@ -1261,8 +1278,8 @@ viewComments_ session tension history comments comment_form comment_result comme
         |> div []
 
 
-viewComment : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> ( String, GqlData IdPayload ) -> ( String, String ) -> UserInput.State -> EmojiPicker.State -> Attachments.State -> Bool -> Html Msg
-viewComment session c form result delete_result highlightedCommentId userInput emojiPicker attachments isFadingOut =
+viewComment : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> ( String, GqlData IdPayload ) -> ( String, String ) -> UserInput.State -> EmojiPicker.State -> TensionPicker.State -> Attachments.State -> Bool -> Html Msg
+viewComment session c form result delete_result highlightedCommentId userInput emojiPicker tensionPicker attachments isFadingOut =
     let
         isAuthor =
             c.createdBy.username == form.uctx.username
@@ -1293,7 +1310,7 @@ viewComment session c form result delete_result highlightedCommentId userInput e
             , attribute "style" "width: 66.66667%;"
             ]
             [ if form.id == c.id && Dict.get "stealth" form.post /= Just "true" then
-                viewUpdateInput session c form result userInput emojiPicker attachments
+                viewUpdateInput session c form result userInput emojiPicker tensionPicker attachments
 
               else
                 div [ id c.id, class "message commentMessage", classList [ ( "is-focusing", isFocused ) ] ]
@@ -1518,7 +1535,7 @@ viewNewTensionCommentInput session opts (State model) =
         [ div [ class "message-header" ] [ viewCommentInputHeader opHeader "textAreaModal" model.tension_form ]
         , div [ class "message-body" ]
             [ div [ class "field" ]
-                [ div [ class "control" ] [ viewCommentTextarea session "textAreaModal" opts model.tension_form model.userInput model.emojiPicker model.attachments ]
+                [ div [ class "control" ] [ viewCommentTextarea session "textAreaModal" opts model.tension_form model.userInput model.emojiPicker model.tensionPicker model.attachments ]
                 , div [ class "is-flex is-flex-wrap-wrap is-align-items-center is-justify-content-space-between mt-1", style "gap" "0.4rem" ]
                     [ showIf opts.attachmentsEnabled <|
                         Html.map AttachmentsMsg (Attachments.viewPendingsRow True Nothing "textAreaModal" model.attachments)
@@ -1537,8 +1554,8 @@ viewNewTensionCommentInput session opts (State model) =
         ]
 
 
-viewUpdateInput : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> UserInput.State -> EmojiPicker.State -> Attachments.State -> Html Msg
-viewUpdateInput session comment form_ result userInput emojiPicker attachments =
+viewUpdateInput : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> UserInput.State -> EmojiPicker.State -> TensionPicker.State -> Attachments.State -> Html Msg
+viewUpdateInput session comment form_ result userInput emojiPicker tensionPicker attachments =
     let
         expandedCommentMessage =
             expandFileUrls session.file_server_url comment.message
@@ -1569,7 +1586,7 @@ viewUpdateInput session comment form_ result userInput emojiPicker attachments =
         , div [ class "message-body submitFocus" ]
             [ div [ class "field" ]
                 [ div [ class "control" ]
-                    [ viewCommentTextarea session "updateCommentInput" defaultCommentOpts form userInput emojiPicker attachments ]
+                    [ viewCommentTextarea session "updateCommentInput" defaultCommentOpts form userInput emojiPicker tensionPicker attachments ]
                 , Html.map AttachmentsMsg (Attachments.viewPendingsRow False (Just comment.id) "updateCommentInput" attachments)
                 ]
             , case result of
@@ -1645,7 +1662,7 @@ viewTensionCommentInput session tension (State model) =
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
-                            [ viewCommentTextarea session "commentInput" defaultCommentOpts form model.userInput model.emojiPicker model.attachments ]
+                            [ viewCommentTextarea session "commentInput" defaultCommentOpts form model.userInput model.emojiPicker model.tensionPicker model.attachments ]
                         , Html.map AttachmentsMsg (Attachments.viewPendingsRow False Nothing "commentInput" model.attachments)
                         ]
                     , case model.tension_patch of
@@ -1706,7 +1723,7 @@ viewContractCommentInput session (State model) =
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
-                            [ viewCommentTextarea session "commentContractInput" { defaultCommentOpts | attachmentsEnabled = False } form model.userInput model.emojiPicker model.attachments ]
+                            [ viewCommentTextarea session "commentContractInput" { defaultCommentOpts | attachmentsEnabled = False } form model.userInput model.emojiPicker model.tensionPicker model.attachments ]
                         ]
                     , case model.comment_result of
                         Failure err ->
@@ -1822,8 +1839,8 @@ viewCommentInputHeader op targetid form =
         ]
 
 
-viewCommentTextarea : SessionCommon -> String -> CommentOpts -> FormCommon a -> UserInput.State -> EmojiPicker.State -> Attachments.State -> Html Msg
-viewCommentTextarea session targetid opts form userInput emojiPicker attachments =
+viewCommentTextarea : SessionCommon -> String -> CommentOpts -> FormCommon a -> UserInput.State -> EmojiPicker.State -> TensionPicker.State -> Attachments.State -> Html Msg
+viewCommentTextarea session targetid opts form userInput emojiPicker tensionPicker attachments =
     let
         message =
             Dict.get "message" form.post |> withDefault ""
@@ -1892,4 +1909,6 @@ viewCommentTextarea session targetid opts form userInput emojiPicker attachments
             [ UserInput.viewUserSeeker userInput |> Html.map UserInputMsg ]
         , span [ id (targetid ++ "emojiInput"), class "searchInput", attribute "aria-hidden" "true", attribute "style" "display:none;" ]
             [ EmojiPicker.viewEmojiSeeker emojiPicker |> Html.map EmojiPickerMsg ]
+        , span [ id (targetid ++ "tensionInput"), class "searchInput", attribute "aria-hidden" "true", attribute "style" "display:none;" ]
+            [ TensionPicker.viewTensionSeeker tensionPicker |> Html.map TensionPickerMsg ]
         ]
