@@ -1,3 +1,0 @@
-docopt-ng
-
-fonttools[woff]
